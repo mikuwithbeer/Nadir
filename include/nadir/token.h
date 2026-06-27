@@ -3,7 +3,15 @@
 
 #include "nadir/common.h"
 
+// [--------------------------------------------------------------] //
+// > Constants                                                    < //
+// [--------------------------------------------------------------] //
+
 constexpr nadir_u8_t NADIR_TOKEN_BUFFER_SIZE = 1 << 7;
+
+// [--------------------------------------------------------------] //
+// > Data Structures                                              < //
+// [--------------------------------------------------------------] //
 
 /**
  * @brief Token types for the assembler.
@@ -67,6 +75,20 @@ typedef struct {
 } nadir_token_t;
 
 /**
+ * @brief List of tokens for the assembler.
+ */
+typedef struct {
+    nadir_token_t *tokens;
+
+    nadir_u64_t token_count;
+    nadir_u64_t token_capacity;
+} nadir_token_list_t;
+
+// [--------------------------------------------------------------] //
+// > Function Declarations                                        < //
+// [--------------------------------------------------------------] //
+
+/**
  * @brief Creates a new token with the given parameters.
  */
 nadir_token_t nadir_token_new(nadir_token_id_t id,
@@ -80,5 +102,25 @@ nadir_token_t nadir_token_new(nadir_token_id_t id,
  */
 bool nadir_token_append(nadir_token_t *token,
                         char character);
+
+/**
+ * @brief Creates a new token list with the given initial capacity.
+ *
+ * @warning Allocates memory for the token list, which must be freed.
+ */
+nadir_token_list_t *nadir_token_list_new(nadir_u64_t initial_capacity);
+
+/**
+ * @brief Appends a token to the token list.
+ *
+ * @return false if the reallocation fails, true otherwise.
+ */
+bool nadir_token_list_append(nadir_token_list_t *token_list,
+                             nadir_token_t token);
+
+/**
+ * @brief Frees the memory allocated for the token list.
+ */
+void nadir_token_list_free(nadir_token_list_t *token_list);
 
 #endif //NADIR_TOKEN_H

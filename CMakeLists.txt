@@ -22,5 +22,5 @@ target_include_directories(NadirCore PUBLIC
 )
 
 # --- Executable ---
-add_executable(Nadir nadir/main.c)
+add_executable(Nadir src/main.c)
 target_link_libraries(Nadir PRIVATE Nadir::Core)

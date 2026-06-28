@@ -6,7 +6,7 @@
 
 bool nadir_common_string_to_i128(const char *input,
                                  nadir_i128_t *value) {
-    auto result = (nadir_i128_t) 0;
+    auto result = (typeof(*value)) 0;
     auto negative = false;
 
     // Check for sign.

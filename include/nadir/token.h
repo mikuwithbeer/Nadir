@@ -9,6 +9,16 @@
 
 constexpr nadir_u8_t NADIR_TOKEN_BUFFER_SIZE = 1 << 7;
 
+constexpr char NADIR_TOKEN_VALUE_COMMENT = '#';
+constexpr char NADIR_TOKEN_VALUE_LEFT_BRACE = '{';
+constexpr char NADIR_TOKEN_VALUE_RIGHT_BRACE = '}';
+constexpr char NADIR_TOKEN_VALUE_LEFT_PAREN = '(';
+constexpr char NADIR_TOKEN_VALUE_RIGHT_PAREN = ')';
+constexpr char NADIR_TOKEN_VALUE_EQUAL = '=';
+constexpr char NADIR_TOKEN_VALUE_COMMA = ',';
+constexpr char NADIR_TOKEN_VALUE_DOT = '.';
+constexpr char NADIR_TOKEN_VALUE_SEMICOLON = ';';
+
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //
 // [--------------------------------------------------------------] //
@@ -25,6 +35,9 @@ typedef enum : nadir_u8_t {
     NADIR_TOKEN_ID_LEFT_PAREN,
     NADIR_TOKEN_ID_RIGHT_PAREN,
     NADIR_TOKEN_ID_EQUAL,
+    NADIR_TOKEN_ID_COMMA,
+    NADIR_TOKEN_ID_DOT,
+    NADIR_TOKEN_ID_SEMICOLON,
 
     NADIR_TOKEN_ID_CONST,
     NADIR_TOKEN_ID_INSTRUCTION,
@@ -99,5 +112,41 @@ typedef struct {
  * @brief Frees the memory allocated for the token list.
  */
 void nadir_token_list_free(nadir_token_list_t *token_list);
+
+/**
+ * @brief Checks if a character is a whitespace character.
+ */
+static inline bool nadir_token_value_whitespace(const char character) {
+    return character == ' ' || character == '\n' || character == '\t' || character == '\r';
+}
+
+/**
+ * @brief Checks if a character is an alphabetic character (a-z, A-Z).
+ */
+static inline bool nadir_token_value_alpha(const char character) {
+    return (character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z');
+}
+
+/**
+ * @brief Checks if a character is a digit (0-9).
+ */
+static inline bool nadir_token_value_digit(const char character) {
+    return character >= '0' && character <= '9';
+}
+
+/**
+ * @brief Checks if a character is a single-character token.
+ */
+static inline bool nadir_token_value_single(const char character) {
+    return character == NADIR_TOKEN_VALUE_COMMENT ||
+           character == NADIR_TOKEN_VALUE_LEFT_BRACE ||
+           character == NADIR_TOKEN_VALUE_RIGHT_BRACE ||
+           character == NADIR_TOKEN_VALUE_LEFT_PAREN ||
+           character == NADIR_TOKEN_VALUE_RIGHT_PAREN ||
+           character == NADIR_TOKEN_VALUE_EQUAL ||
+           character == NADIR_TOKEN_VALUE_COMMA ||
+           character == NADIR_TOKEN_VALUE_DOT ||
+           character == NADIR_TOKEN_VALUE_SEMICOLON;
+}
 
 #endif //NADIR_TOKEN_H

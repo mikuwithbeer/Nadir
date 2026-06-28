@@ -74,6 +74,21 @@ typedef struct {
 // [--------------------------------------------------------------] //
 
 /**
+ * @brief Creates a new lexer error with the given parameters.
+ */
+static inline nadir_lexer_error_t nadir_lexer_error_new(const nadir_lexer_error_id_t id,
+                                                        const nadir_u64_t line,
+                                                        const nadir_u64_t column) {
+    auto error = (nadir_lexer_error_t){};
+
+    error.id = id;
+    error.line = line;
+    error.column = column;
+
+    return error;
+}
+
+/**
  * @brief Creates a new lexer with the given source code.
  *
  * @warning Allocates memory for the lexer, which must be freed.
@@ -90,20 +105,5 @@ nadir_lexer_error_t nadir_lexer_collect(nadir_lexer_t *lexer);
  * @brief Frees the memory allocated for the lexer.
  */
 void nadir_lexer_free(nadir_lexer_t *lexer);
-
-/**
- * @brief Creates a new lexer error with the given parameters.
- */
-static inline nadir_lexer_error_t nadir_lexer_error_new(const nadir_lexer_error_id_t id,
-                                                        const nadir_u64_t line,
-                                                        const nadir_u64_t column) {
-    auto error = (nadir_lexer_error_t){};
-
-    error.id = id;
-    error.line = line;
-    error.column = column;
-
-    return error;
-}
 
 #endif //NADIR_LEXER_H

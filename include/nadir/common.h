@@ -37,7 +37,7 @@ constexpr nadir_i128_t NADIR_I128_MIN = -NADIR_I128_MAX - 1;
  *
  * @return true if the conversion was successful, false otherwise.
  */
-bool nadir_common_string_to_i128(const char *input,
-                                 nadir_i128_t *value);
+[[nodiscard]] bool nadir_common_string_to_i128(const char *input,
+                                               nadir_i128_t *value);
 
 #endif //NADIR_COMMON_H

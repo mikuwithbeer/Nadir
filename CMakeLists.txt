@@ -15,6 +15,7 @@ add_library(Nadir::Core ALIAS NadirCore)
 
 target_sources(NadirCore PRIVATE
     src/token.c
+    src/lexer.c
 )
 
 target_include_directories(NadirCore PUBLIC

@@ -1,35 +1,26 @@
-#include "nadir/token.h"
+#include <stdio.h>
+#include <string.h>
+
+#include "nadir/lexer.h"
 
 int main(void) {
-    nadir_token_list_t *token_list = nadir_token_list_new(1);
+    const char *source = "AbcLol\n5124\n{; lol ()\n } wow 41";
+    const auto lexer = nadir_lexer_new(source, strlen(source));
+    const auto result = nadir_lexer_run(lexer);
 
-    auto token = nadir_token_new(NADIR_TOKEN_ID_IDENT, 1, 1);
+    if (result.id != NADIR_LEXER_ERROR_ID_NONE) {
+        printf("Lexer error at line %llu, column %llu: unexpected character '%c'\n",
+               result.line, result.column, result.specific.unexpected_character);
 
-    nadir_token_append(&token, 'a');
-    nadir_token_append(&token, 'b');
-    nadir_token_append(&token, 'c');
+        nadir_lexer_free(lexer);
+        return 1;
+    }
 
-    nadir_token_list_append(token_list, token);
+    for (nadir_u64_t i = 0; i < lexer->token_list->token_count; ++i) {
+        const auto token = lexer->token_list->tokens[i];
+        printf("%d %s\n", token.id, token.value);
+    }
 
-    token = nadir_token_new(NADIR_TOKEN_ID_NUMBER, 2, 2);
-
-    nadir_token_append(&token, '1');
-    nadir_token_append(&token, '2');
-    nadir_token_append(&token, '3');
-    token.specific.number = 123;
-
-    nadir_token_list_append(token_list, token);
-
-    token = nadir_token_new(NADIR_TOKEN_ID_EQUAL, 3, 3);
-
-    nadir_token_append(&token, '=');
-
-    nadir_token_list_append(token_list, token);
-
-    token = nadir_token_new(NADIR_TOKEN_ID_EOF, 4, 4);
-
-    nadir_token_list_append(token_list, token);
-
-    nadir_token_list_free(token_list);
+    nadir_lexer_free(lexer);
     return 0;
 }

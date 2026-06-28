@@ -14,14 +14,14 @@ int main(void) {
             "# Working? 123... Test!\n"
             "instruction jmp u16 {\n"
             "    10;\n"
-            "    bitAnd(at(0), 255);\n"
-            "    bitAnd(bitShr(at(0), 8), 255);\n"
+            "    @bitAnd(@at(0), 255);\n"
+            "    @bitAnd(@bitShr(@at(0), 8), 255);\n"
             "}\n"
             "\n"
             "binary {\n"
             "    add(Register.A, 11, 30);\n"
             "    add(Register.# boo hoo\n"
-            "    A, +10, -100);"
+            "    B, +10, -100);"
             "}\n";
 
     const auto lexer = nadir_lexer_new(source, strlen(source));
@@ -46,6 +46,9 @@ int main(void) {
                 break;
             case NADIR_TOKEN_ID_IDENT:
                 printf("IDENT(%s)", token.value);
+                break;
+            case NADIR_TOKEN_ID_BUILTIN:
+                printf("BUILTIN(%s)", token.value);
                 break;
             case NADIR_TOKEN_ID_CONST:
                 printf("CONST");

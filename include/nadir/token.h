@@ -10,10 +10,14 @@
 constexpr nadir_u8_t NADIR_TOKEN_BUFFER_SIZE = 1 << 7;
 
 constexpr char NADIR_TOKEN_VALUE_COMMENT = '#';
+constexpr char NADIR_TOKEN_VALUE_BUILTIN = '@';
+
 constexpr char NADIR_TOKEN_VALUE_LEFT_BRACE = '{';
 constexpr char NADIR_TOKEN_VALUE_RIGHT_BRACE = '}';
+
 constexpr char NADIR_TOKEN_VALUE_LEFT_PAREN = '(';
 constexpr char NADIR_TOKEN_VALUE_RIGHT_PAREN = ')';
+
 constexpr char NADIR_TOKEN_VALUE_EQUAL = '=';
 constexpr char NADIR_TOKEN_VALUE_COMMA = ',';
 constexpr char NADIR_TOKEN_VALUE_DOT = '.';
@@ -29,11 +33,14 @@ constexpr char NADIR_TOKEN_VALUE_SEMICOLON = ';';
 typedef enum : nadir_u8_t {
     NADIR_TOKEN_ID_NUMBER,
     NADIR_TOKEN_ID_IDENT,
+    NADIR_TOKEN_ID_BUILTIN,
 
     NADIR_TOKEN_ID_LEFT_BRACE,
     NADIR_TOKEN_ID_RIGHT_BRACE,
+
     NADIR_TOKEN_ID_LEFT_PAREN,
     NADIR_TOKEN_ID_RIGHT_PAREN,
+
     NADIR_TOKEN_ID_EQUAL,
     NADIR_TOKEN_ID_COMMA,
     NADIR_TOKEN_ID_DOT,

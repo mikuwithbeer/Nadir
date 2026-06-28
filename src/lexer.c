@@ -45,6 +45,7 @@ nadir_lexer_t *nadir_lexer_new(const char *source,
 
     lexer->source = source;
     lexer->source_length = source_length;
+    lexer->source_index = 0;
 
     lexer->line = 1;
     lexer->column = 1;
@@ -56,9 +57,8 @@ nadir_lexer_t *nadir_lexer_new(const char *source,
 nadir_lexer_error_t nadir_lexer_collect(nadir_lexer_t *lexer) {
     auto error = (nadir_lexer_error_t){};
 
-    nadir_u64_t source_index = 0;
-    while (source_index < lexer->source_length) {
-        const char character = lexer->source[source_index];
+    while (lexer->source_index < lexer->source_length) {
+        const char character = lexer->source[lexer->source_index];
         bool recollect = false;
 
         switch (lexer->state) {
@@ -87,13 +87,13 @@ nadir_lexer_error_t nadir_lexer_collect(nadir_lexer_t *lexer) {
         }
 
         if (character == '\n') {
-            lexer->line++;
+            ++lexer->line;
             lexer->column = 1;
         } else {
-            lexer->column++;
+            ++lexer->column;
         }
 
-        source_index++;
+        ++lexer->source_index;
     }
 
     error = nadir_lexer_collect_eof(lexer);
@@ -147,6 +147,14 @@ static nadir_lexer_error_t nadir_lexer_collect_default(nadir_lexer_t *lexer,
         lexer->state = NADIR_LEXER_STATE_IDENT;
 
         *recollect = true;
+        return error;
+    }
+
+    // Check for builtin function.
+    if (character == NADIR_TOKEN_VALUE_BUILTIN) {
+        lexer->temporary_token.id = NADIR_TOKEN_ID_BUILTIN;
+        lexer->state = NADIR_LEXER_STATE_IDENT;
+
         return error;
     }
 

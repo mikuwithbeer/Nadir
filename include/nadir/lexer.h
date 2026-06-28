@@ -63,6 +63,7 @@ typedef struct {
 
     const char *source;
     nadir_u64_t source_length;
+    nadir_u64_t source_index;
 
     nadir_u64_t line;
     nadir_u64_t column;

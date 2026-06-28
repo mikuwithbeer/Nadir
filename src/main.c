@@ -5,7 +5,7 @@
 
 int main(void) {
     const char *source =
-            "AbcLola\nsdsdfsdffsd ;/\n\n5__12_4\n{; lol ()\n } wow 41";
+            "const Reg1ster {}() ;/\n\n5__12_4\n{; lo123l ()\n } \nmap instruction\n ()()()(}213 = -10\n +4 ";
     const auto lexer = nadir_lexer_new(source, strlen(source));
     const auto result = nadir_lexer_collect(lexer);
 

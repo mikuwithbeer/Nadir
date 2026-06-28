@@ -22,15 +22,13 @@ typedef enum : nadir_u8_t {
 
     NADIR_TOKEN_ID_LEFT_BRACE,
     NADIR_TOKEN_ID_RIGHT_BRACE,
-
     NADIR_TOKEN_ID_LEFT_PAREN,
     NADIR_TOKEN_ID_RIGHT_PAREN,
-
     NADIR_TOKEN_ID_EQUAL,
-    NADIR_TOKEN_ID_COMMA,
 
-    NADIR_TOKEN_ID_MAP,
+    NADIR_TOKEN_ID_CONST,
     NADIR_TOKEN_ID_INSTRUCTION,
+    NADIR_TOKEN_ID_BINARY,
 
     NADIR_TOKEN_ID_EOF = 0xFF
 } nadir_token_id_t;
@@ -49,7 +47,7 @@ typedef struct {
 
     // Extra data for the token, depending on token type.
     union {
-        nadir_u64_t number;
+        nadir_i128_t number;
     } specific;
 } nadir_token_t;
 

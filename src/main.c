@@ -81,6 +81,30 @@ int main(void) {
             case NADIR_TOKEN_ID_SEMICOLON:
                 printf(";");
                 break;
+            case NADIR_TOKEN_ID_TYPE_U8:
+                printf("TYPE_U8");
+                break;
+            case NADIR_TOKEN_ID_TYPE_U16:
+                printf("TYPE_U16");
+                break;
+            case NADIR_TOKEN_ID_TYPE_U32:
+                printf("TYPE_U32");
+                break;
+            case NADIR_TOKEN_ID_TYPE_U64:
+                printf("TYPE_U64");
+                break;
+            case NADIR_TOKEN_ID_TYPE_I8:
+                printf("TYPE_I8");
+                break;
+            case NADIR_TOKEN_ID_TYPE_I16:
+                printf("TYPE_I16");
+                break;
+            case NADIR_TOKEN_ID_TYPE_I32:
+                printf("TYPE_I32");
+                break;
+            case NADIR_TOKEN_ID_TYPE_I64:
+                printf("TYPE_I64");
+                break;
         }
 
         printf("\n");

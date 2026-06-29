@@ -258,11 +258,32 @@ static nadir_lexer_error_t nadir_lexer_collect_ident(nadir_lexer_t *lexer,
     if (nadir_token_value_whitespace(character) || nadir_token_value_single(character)) {
         lexer->state = NADIR_LEXER_STATE_DEFAULT;
 
-        // Check for keywords.
-        if (strncmp(lexer->temporary_token.value, "const", 6) == 0) {
-            lexer->temporary_token.id = NADIR_TOKEN_ID_CONST;
-        } else if (strncmp(lexer->temporary_token.value, "procedure", 10) == 0) {
-            lexer->temporary_token.id = NADIR_TOKEN_ID_PROCEDURE;
+        if (lexer->temporary_token.id != NADIR_TOKEN_ID_BUILTIN) {
+            // Check for keywords.
+            if (strncmp(lexer->temporary_token.value, "const", 6) == 0) {
+                lexer->temporary_token.id = NADIR_TOKEN_ID_CONST;
+            } else if (strncmp(lexer->temporary_token.value, "procedure", 10) == 0) {
+                lexer->temporary_token.id = NADIR_TOKEN_ID_PROCEDURE;
+            }
+
+            // Check for types.
+            if (strncmp(lexer->temporary_token.value, "u8", 3) == 0) {
+                lexer->temporary_token.id = NADIR_TOKEN_ID_TYPE_U8;
+            } else if (strncmp(lexer->temporary_token.value, "u16", 4) == 0) {
+                lexer->temporary_token.id = NADIR_TOKEN_ID_TYPE_U16;
+            } else if (strncmp(lexer->temporary_token.value, "u32", 4) == 0) {
+                lexer->temporary_token.id = NADIR_TOKEN_ID_TYPE_U32;
+            } else if (strncmp(lexer->temporary_token.value, "u64", 4) == 0) {
+                lexer->temporary_token.id = NADIR_TOKEN_ID_TYPE_U64;
+            } else if (strncmp(lexer->temporary_token.value, "i8", 3) == 0) {
+                lexer->temporary_token.id = NADIR_TOKEN_ID_TYPE_I8;
+            } else if (strncmp(lexer->temporary_token.value, "i16", 4) == 0) {
+                lexer->temporary_token.id = NADIR_TOKEN_ID_TYPE_I16;
+            } else if (strncmp(lexer->temporary_token.value, "i32", 4) == 0) {
+                lexer->temporary_token.id = NADIR_TOKEN_ID_TYPE_I32;
+            } else if (strncmp(lexer->temporary_token.value, "i64", 4) == 0) {
+                lexer->temporary_token.id = NADIR_TOKEN_ID_TYPE_I64;
+            }
         }
 
         if (!nadir_token_list_append(lexer->token_list, lexer->temporary_token)) {

@@ -47,8 +47,7 @@ typedef enum : nadir_u8_t {
     NADIR_TOKEN_ID_SEMICOLON,
 
     NADIR_TOKEN_ID_CONST,
-    NADIR_TOKEN_ID_INSTRUCTION,
-    NADIR_TOKEN_ID_BINARY,
+    NADIR_TOKEN_ID_PROCEDURE,
 
     NADIR_TOKEN_ID_EOF = 0xFF
 } nadir_token_id_t;

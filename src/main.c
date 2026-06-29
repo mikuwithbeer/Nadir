@@ -12,13 +12,14 @@ int main(void) {
             "}\n"
             "\n"
             "# Working? 123... Test!\n"
-            "instruction jmp u16 {\n"
+            "procedure jmp(u16) {\n"
             "    10;\n"
             "    @bitAnd(@at(0), 255);\n"
             "    @bitAnd(@bitShr(@at(0), 8), 255);\n"
             "}\n"
             "\n"
-            "binary {\n"
+            "procedure main() {\n"
+            "    3;\n"
             "    add(Register.A, 11, 30);\n"
             "    add(Register.# boo hoo\n"
             "    B, +10, -100);"
@@ -53,11 +54,8 @@ int main(void) {
             case NADIR_TOKEN_ID_CONST:
                 printf("CONST");
                 break;
-            case NADIR_TOKEN_ID_INSTRUCTION:
-                printf("INSTRUCTION");
-                break;
-            case NADIR_TOKEN_ID_BINARY:
-                printf("BINARY");
+            case NADIR_TOKEN_ID_PROCEDURE:
+                printf("PROCEDURE");
                 break;
             case NADIR_TOKEN_ID_LEFT_BRACE:
                 printf("{");

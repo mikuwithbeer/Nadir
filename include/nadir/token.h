@@ -31,41 +31,41 @@ constexpr char NADIR_TOKEN_VALUE_SEMICOLON = ';';
  * @brief Token types for the assembler.
  */
 typedef enum : nadir_u8_t {
-    NADIR_TOKEN_ID_NUMBER,
-    NADIR_TOKEN_ID_IDENT,
-    NADIR_TOKEN_ID_BUILTIN,
+    NADIR_TOKEN_KIND_NUMBER,
+    NADIR_TOKEN_KIND_IDENT,
+    NADIR_TOKEN_KIND_BUILTIN,
 
-    NADIR_TOKEN_ID_LEFT_BRACE,
-    NADIR_TOKEN_ID_RIGHT_BRACE,
+    NADIR_TOKEN_KIND_LEFT_BRACE,
+    NADIR_TOKEN_KIND_RIGHT_BRACE,
 
-    NADIR_TOKEN_ID_LEFT_PAREN,
-    NADIR_TOKEN_ID_RIGHT_PAREN,
+    NADIR_TOKEN_KIND_LEFT_PAREN,
+    NADIR_TOKEN_KIND_RIGHT_PAREN,
 
-    NADIR_TOKEN_ID_EQUAL,
-    NADIR_TOKEN_ID_COMMA,
-    NADIR_TOKEN_ID_DOT,
-    NADIR_TOKEN_ID_SEMICOLON,
+    NADIR_TOKEN_KIND_EQUAL,
+    NADIR_TOKEN_KIND_COMMA,
+    NADIR_TOKEN_KIND_DOT,
+    NADIR_TOKEN_KIND_SEMICOLON,
 
-    NADIR_TOKEN_ID_CONST,
-    NADIR_TOKEN_ID_PROCEDURE,
+    NADIR_TOKEN_KIND_CONSTANT,
+    NADIR_TOKEN_KIND_PROCEDURE,
 
-    NADIR_TOKEN_ID_TYPE_U8 = 200,
-    NADIR_TOKEN_ID_TYPE_U16,
-    NADIR_TOKEN_ID_TYPE_U32,
-    NADIR_TOKEN_ID_TYPE_U64,
-    NADIR_TOKEN_ID_TYPE_I8,
-    NADIR_TOKEN_ID_TYPE_I16,
-    NADIR_TOKEN_ID_TYPE_I32,
-    NADIR_TOKEN_ID_TYPE_I64,
+    NADIR_TOKEN_KIND_TYPE_U8,
+    NADIR_TOKEN_KIND_TYPE_U16,
+    NADIR_TOKEN_KIND_TYPE_U32,
+    NADIR_TOKEN_KIND_TYPE_U64,
+    NADIR_TOKEN_KIND_TYPE_I8,
+    NADIR_TOKEN_KIND_TYPE_I16,
+    NADIR_TOKEN_KIND_TYPE_I32,
+    NADIR_TOKEN_KIND_TYPE_I64,
 
-    NADIR_TOKEN_ID_EOF = 255
-} nadir_token_id_t;
+    NADIR_TOKEN_KIND_EOF = 0xFF
+} nadir_token_kind_t;
 
 /**
  * @brief Token structure for the assembler.
  */
 typedef struct {
-    nadir_token_id_t id;
+    nadir_token_kind_t kind;
 
     nadir_u64_t line;
     nadir_u64_t column;
@@ -79,16 +79,6 @@ typedef struct {
     } specific;
 } nadir_token_t;
 
-/**
- * @brief List of tokens for the assembler.
- */
-typedef struct {
-    nadir_token_t *tokens;
-
-    nadir_u64_t token_count;
-    nadir_u64_t token_capacity;
-} nadir_token_list_t;
-
 // [--------------------------------------------------------------] //
 // > Function Declarations                                        < //
 // [--------------------------------------------------------------] //
@@ -96,7 +86,7 @@ typedef struct {
 /**
  * @brief Creates a new token with the given parameters.
  */
-[[nodiscard]] nadir_token_t nadir_token_new(nadir_token_id_t id,
+[[nodiscard]] nadir_token_t nadir_token_new(nadir_token_kind_t kind,
                                             nadir_u64_t line,
                                             nadir_u64_t column);
 
@@ -107,26 +97,6 @@ typedef struct {
  */
 [[nodiscard]] bool nadir_token_append(nadir_token_t *token,
                                       char character);
-
-/**
- * @brief Creates a new token list with the given initial capacity.
- *
- * @warning Allocates memory for the token list, which must be freed.
- */
-[[nodiscard]] nadir_token_list_t *nadir_token_list_new(nadir_u64_t initial_capacity);
-
-/**
- * @brief Appends a token to the token list.
- *
- * @return false if the reallocation fails, true otherwise.
- */
-[[nodiscard]] bool nadir_token_list_append(nadir_token_list_t *token_list,
-                                           nadir_token_t token);
-
-/**
- * @brief Frees the memory allocated for the token list.
- */
-void nadir_token_list_free(nadir_token_list_t *token_list);
 
 /**
  * @brief Checks if a character is a whitespace character.
@@ -162,6 +132,13 @@ static inline bool nadir_token_value_single(const char character) {
            character == NADIR_TOKEN_VALUE_COMMA ||
            character == NADIR_TOKEN_VALUE_DOT ||
            character == NADIR_TOKEN_VALUE_SEMICOLON;
+}
+
+/**
+ * @brief Checks if a token kind is a type token.
+ */
+static inline bool nadir_token_is_type(const nadir_token_kind_t kind) {
+    return kind >= NADIR_TOKEN_KIND_TYPE_U8 && kind <= NADIR_TOKEN_KIND_TYPE_I64;
 }
 
 #endif //NADIR_TOKEN_H

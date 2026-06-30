@@ -142,6 +142,13 @@ static nadir_parser_error_t nadir_parser_run_constant(nadir_parser_t *parser) {
         return error;
     }
 
+    auto token = nadir_parser_peek(parser);
+
+    // Check for an empty block.
+    if (token != nullptr && token->kind == NADIR_TOKEN_KIND_RIGHT_BRACE) {
+        return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_EMPTY_BLOCK, name_token);
+    }
+
     // Should be freed if an error occurs before the declaration is appended to the AST.
     const auto entries = nadir_list_new(sizeof(nadir_ast_const_entry_t));
     if (entries == nullptr) {
@@ -149,7 +156,6 @@ static nadir_parser_error_t nadir_parser_run_constant(nadir_parser_t *parser) {
     }
 
     // Parse constant entries until the right brace is reached.
-    auto token = nadir_parser_peek(parser);
     while (token != nullptr && token->kind != NADIR_TOKEN_KIND_RIGHT_BRACE) {
         error = nadir_parser_run_constant_entry(parser, entries);
         if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
@@ -357,6 +363,11 @@ static nadir_parser_error_t nadir_parser_run_procedure_statements(nadir_parser_t
                                                                   nadir_list_t *statements) {
     auto error = (nadir_parser_error_t){};
     auto token = nadir_parser_peek(parser);
+
+    // Check for an empty block.
+    if (token != nullptr && token->kind == NADIR_TOKEN_KIND_RIGHT_BRACE) {
+        return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_EMPTY_BLOCK, token);
+    }
 
     // Parse statements until the right brace is reached.
     while (token != nullptr && token->kind != NADIR_TOKEN_KIND_RIGHT_BRACE) {

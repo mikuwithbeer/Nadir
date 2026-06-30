@@ -89,7 +89,7 @@ nadir_lexer_error_t nadir_lexer_collect(nadir_lexer_t *lexer) {
         if (character == '\n') {
             ++lexer->line;
             lexer->column = 1;
-        } else {
+        } else if (character != '\r') {
             ++lexer->column;
         }
 

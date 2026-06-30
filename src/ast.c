@@ -21,11 +21,6 @@ nadir_ast_t *nadir_ast_new(void) {
     return ast;
 }
 
-bool nadir_ast_append_declaration(const nadir_ast_t *ast,
-                                  const nadir_ast_declaration_t *declaration) {
-    return nadir_list_append(ast->declarations, declaration);
-}
-
 void nadir_ast_free(nadir_ast_t *ast) {
     // TODO: This function leaks memory, will be fixed after fully implemented parser.
     if (ast == nullptr) {

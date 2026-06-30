@@ -27,12 +27,10 @@ typedef struct {
 
     union {
         struct {
-            nadir_token_t *object;
             nadir_token_t *field;
         } member;
 
         struct {
-            nadir_token_t *name;
             nadir_list_t *arguments;
         } call;
     } data;
@@ -100,14 +98,6 @@ typedef struct {
  * @brief Creates a new abstract syntax tree.
  */
 [[nodiscard]] nadir_ast_t *nadir_ast_new(void);
-
-/**
- * @brief Appends a declaration to the abstract syntax tree.
- *
- * @return false if the reallocation fails, true otherwise.
- */
-[[nodiscard]] bool nadir_ast_append_declaration(const nadir_ast_t *ast,
-                                                const nadir_ast_declaration_t *declaration);
 
 /**
  * @brief Frees the memory allocated for the abstract syntax tree.

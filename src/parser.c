@@ -162,7 +162,7 @@ static nadir_parser_error_t nadir_parser_run_constant(nadir_parser_t *parser) {
         }
     };
 
-    if (!nadir_ast_append_declaration(parser->ast, &declaration)) {
+    if (!nadir_list_append(parser->ast->declarations, &declaration)) {
         error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, name_token);
     }
 
@@ -287,8 +287,7 @@ static nadir_parser_error_t nadir_parser_run_expression(nadir_parser_t *parser,
             }
 
             expression->kind = NADIR_AST_EXPRESSION_KIND_MEMBER;
-            expression->token = dot_token;
-            expression->data.member.object = ident_token;
+            expression->token = ident_token;
             expression->data.member.field = field_token;
 
             return (nadir_parser_error_t){};
@@ -357,7 +356,6 @@ static nadir_parser_error_t nadir_parser_run_call(nadir_parser_t *parser,
                            : NADIR_AST_EXPRESSION_KIND_BUILTIN_CALL;
 
     expression->token = token;
-    expression->data.call.name = token;
     expression->data.call.arguments = arguments;
 
     return (nadir_parser_error_t){};

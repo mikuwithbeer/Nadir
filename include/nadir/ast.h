@@ -58,8 +58,8 @@ typedef struct {
 typedef struct {
     nadir_token_t *name;
 
-    nadir_list_t *params;
-    nadir_list_t *body;
+    nadir_list_t *parameters;
+    nadir_list_t *statements;
 } nadir_ast_procedure_declaration_t;
 
 /**

@@ -27,8 +27,7 @@ bool nadir_ast_append_declaration(const nadir_ast_t *ast,
 }
 
 void nadir_ast_free(nadir_ast_t *ast) {
-    // TODO: this leaks memory, will be fixed after fully implemented parser.
-
+    // TODO: This function leaks memory, will be fixed after fully implemented parser.
     if (ast == nullptr) {
         return;
     }

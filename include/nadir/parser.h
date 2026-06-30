@@ -3,6 +3,16 @@
 
 #include "nadir/ast.h"
 
+// [--------------------------------------------------------------] //
+// > Constants                                                    < //
+// [--------------------------------------------------------------] //
+
+constexpr nadir_u8_t NADIR_PARSER_ARGUMENTS_MAX = 1 << 4;
+
+// [--------------------------------------------------------------] //
+// > Data Structures                                              < //
+// [--------------------------------------------------------------] //
+
 /**
  * @brief Error kinds for the parser.
  */
@@ -12,6 +22,9 @@ typedef enum : nadir_u8_t {
     NADIR_PARSER_ERROR_KIND_UNEXPECTED_TOKEN,
     NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF,
     NADIR_PARSER_ERROR_KIND_EMPTY_BLOCK,
+    NADIR_PARSER_ERROR_KIND_MISSING_EXPRESSION,
+    NADIR_PARSER_ERROR_KIND_MISSING_SEMICOLON,
+    NADIR_PARSER_ERROR_KIND_TOO_MANY_ARGUMENTS,
 } nadir_parser_error_kind_t;
 
 /**
@@ -42,6 +55,10 @@ static inline nadir_parser_error_t nadir_parser_error_new(const nadir_parser_err
         .token = token,
     };
 }
+
+// [--------------------------------------------------------------] //
+// > Function Declarations                                        < //
+// [--------------------------------------------------------------] //
 
 /**
  * @brief Creates a new parser with the given tokens.

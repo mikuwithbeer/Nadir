@@ -28,7 +28,7 @@ constexpr nadir_u128_t NADIR_U128_MAX = ~(nadir_u128_t) 0;
 constexpr nadir_i128_t NADIR_I128_MAX = NADIR_U128_MAX >> 1;
 constexpr nadir_i128_t NADIR_I128_MIN = -NADIR_I128_MAX - 1;
 
-constexpr nadir_u64_t NADIR_LIST_DEFAULT_CAPACITY = 1 << 10;
+constexpr nadir_u64_t NADIR_LIST_DEFAULT_CAPACITY = 1 << 6;
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //

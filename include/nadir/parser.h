@@ -62,7 +62,7 @@ nadir_parser_t *nadir_parser_new(nadir_list_t *tokens);
  */
 nadir_parser_error_t nadir_parser_consume(nadir_parser_t *parser,
                                           nadir_token_kind_t kind,
-                                          nadir_token_t **out_token);
+                                          nadir_token_t **output);
 
 /**
  * @brief Runs the parser on the given tokens.

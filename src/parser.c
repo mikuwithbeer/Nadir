@@ -8,8 +8,16 @@
 
 static nadir_parser_error_t nadir_parser_run_constant(nadir_parser_t *parser);
 
-static nadir_parser_error_t nadir_parser_run_constant_declaration(nadir_parser_t *parser,
-                                                                  nadir_list_t *entry_list);
+static nadir_parser_error_t nadir_parser_run_constant_entry(nadir_parser_t *parser,
+                                                            nadir_list_t *entries);
+
+static nadir_parser_error_t nadir_parser_run_procedure(nadir_parser_t *parser);
+
+static nadir_parser_error_t nadir_parser_run_procedure_parameters(nadir_parser_t *parser,
+                                                                  nadir_list_t *parameters);
+
+static nadir_parser_error_t nadir_parser_run_procedure_statements(nadir_parser_t *parser,
+                                                                  nadir_list_t *statements);
 
 static nadir_parser_error_t nadir_parser_run_expression(nadir_parser_t *parser,
                                                         nadir_ast_expression_t *expression);
@@ -51,22 +59,25 @@ nadir_token_t *nadir_parser_peek(const nadir_parser_t *parser) {
 }
 
 nadir_token_t *nadir_parser_advance(nadir_parser_t *parser) {
-    nadir_token_t *token = nadir_parser_peek(parser);
+    const auto token = nadir_parser_peek(parser);
     if (token == nullptr) {
         return nullptr;
     }
 
-    parser->token_index++;
+    ++parser->token_index;
     return token;
 }
 
 nadir_parser_error_t nadir_parser_consume(nadir_parser_t *parser,
                                           const nadir_token_kind_t kind,
-                                          nadir_token_t **out_token) {
-    nadir_token_t *token = nadir_parser_peek(parser);
-
+                                          nadir_token_t **output) {
+    auto token = nadir_parser_peek(parser);
     if (token && token->kind == kind) {
-        *out_token = nadir_parser_advance(parser);
+        token = nadir_parser_advance(parser);
+        if (output != nullptr) {
+            *output = token;
+        }
+
         return (nadir_parser_error_t){};
     }
 
@@ -74,25 +85,28 @@ nadir_parser_error_t nadir_parser_consume(nadir_parser_t *parser,
 }
 
 nadir_parser_error_t nadir_parser_run(nadir_parser_t *parser) {
-    while (true) {
+    auto error = (nadir_parser_error_t){};
+
+    while (error.kind == NADIR_PARSER_ERROR_KIND_NONE) {
         const auto token = nadir_parser_advance(parser);
         if (!token || token->kind == NADIR_TOKEN_KIND_EOF) {
             break;
         }
 
-        // Check if the token is a constant declaration.
-        // TODO: Add support for procedures.
-        if (token->kind != NADIR_TOKEN_KIND_CONSTANT) {
-            return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_TOKEN, token);
-        }
-
-        const auto error = nadir_parser_run_constant(parser);
-        if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
-            return error;
+        switch (token->kind) {
+            case NADIR_TOKEN_KIND_CONSTANT:
+                error = nadir_parser_run_constant(parser);
+                break;
+            case NADIR_TOKEN_KIND_PROCEDURE:
+                error = nadir_parser_run_procedure(parser);
+                break;
+            default:
+                error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_TOKEN, token);
+                break;
         }
     }
 
-    return (nadir_parser_error_t){};
+    return error;
 }
 
 void nadir_parser_free(nadir_parser_t *parser) {
@@ -109,46 +123,43 @@ void nadir_parser_free(nadir_parser_t *parser) {
 // [--------------------------------------------------------------] //
 
 static nadir_parser_error_t nadir_parser_run_constant(nadir_parser_t *parser) {
-    nadir_token_t *name_token, *brace_token, *right_brace;
-
-    // Collect the name of the constant declaration.
+    // Consume the constant declaration name.
+    nadir_token_t *name_token;
     auto error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_IDENT, &name_token);
     if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
         return error;
     }
 
-    // Collect the left brace.
-    error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_LEFT_BRACE, &brace_token);
+    // Consume the left brace.
+    error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_LEFT_BRACE, nullptr);
     if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
         return error;
     }
 
-    // Create new list to hold all our constant entries.
-    const auto entry_list = nadir_list_new(sizeof(nadir_ast_const_entry_t));
-    if (entry_list == nullptr) {
-        return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, brace_token);
+    // Create a list for constant entries.
+    const auto entries = nadir_list_new(sizeof(nadir_ast_const_entry_t));
+    if (entries == nullptr) {
+        return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, name_token);
     }
 
-    // Parse all the constant entries until right brace.
-    while (true) {
-        const auto token = nadir_parser_peek(parser);
-        if (token == nullptr) {
-            return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
-        }
-
-        // Check if it is end of the constant declaration.
-        if (token->kind == NADIR_TOKEN_KIND_RIGHT_BRACE) {
-            break;
-        }
-
-        // Parse the constant entry.
-        error = nadir_parser_run_constant_declaration(parser, entry_list);
+    // Parse constant entries until the right brace is reached.
+    auto token = nadir_parser_peek(parser);
+    while (token != nullptr && token->kind != NADIR_TOKEN_KIND_RIGHT_BRACE) {
+        error = nadir_parser_run_constant_entry(parser, entries);
         if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
             return error;
         }
+
+        token = nadir_parser_peek(parser);
     }
 
-    error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_RIGHT_BRACE, &right_brace);
+    // Check for unexpected end of file.
+    if (token == nullptr) {
+        return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, name_token);
+    }
+
+    // Consume the right brace.
+    error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_RIGHT_BRACE, nullptr);
     if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
         return error;
     }
@@ -158,10 +169,11 @@ static nadir_parser_error_t nadir_parser_run_constant(nadir_parser_t *parser) {
         .kind = NADIR_AST_DECLARATION_KIND_CONSTANT,
         .data.constant = {
             .name = name_token,
-            .entries = entry_list,
+            .entries = entries,
         }
     };
 
+    // Append the declaration to the AST.
     if (!nadir_list_append(parser->ast->declarations, &declaration)) {
         error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, name_token);
     }
@@ -169,42 +181,192 @@ static nadir_parser_error_t nadir_parser_run_constant(nadir_parser_t *parser) {
     return error;
 }
 
-static nadir_parser_error_t nadir_parser_run_constant_declaration(nadir_parser_t *parser,
-                                                                  nadir_list_t *entry_list) {
-    nadir_token_t *name_token, *equal_token, *semi_token;
-
-    // Collect the name of the constant entry.
+static nadir_parser_error_t nadir_parser_run_constant_entry(nadir_parser_t *parser,
+                                                            nadir_list_t *entries) {
+    // Consume the constant entry name.
+    nadir_token_t *name_token;
     auto error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_IDENT, &name_token);
     if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
         return error;
     }
 
-    // Collect the equal sign.
-    error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_EQUAL, &equal_token);
+    // Consume the equal sign.
+    error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_EQUAL, nullptr);
     if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
         return error;
     }
 
-    auto entry = (nadir_ast_const_entry_t){
+    auto expression = (nadir_ast_expression_t){};
+
+    // Parse the constant entry expression.
+    error = nadir_parser_run_expression(parser, &expression);
+    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+        return error;
+    }
+
+    // Consume the semicolon.
+    error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_SEMICOLON, nullptr);
+    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+        return error;
+    }
+
+    // Create the constant entry.
+    const auto entry = (nadir_ast_const_entry_t){
         .name = name_token,
-        .value = {}
+        .value = expression,
     };
 
-    // Collect the value of the constant entry.
-    error = nadir_parser_run_expression(parser, &entry.value);
-    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
-        return error;
-    }
-
-    // Collect the semicolon.
-    error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_SEMICOLON, &semi_token);
-    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
-        return error;
-    }
-
-    // Append the entry to the list of entries.
-    if (!nadir_list_append(entry_list, &entry)) {
+    // Append the entry to the list.
+    if (!nadir_list_append(entries, &entry)) {
         error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, name_token);
+    }
+
+    return error;
+}
+
+static nadir_parser_error_t nadir_parser_run_procedure(nadir_parser_t *parser) {
+    // Consume the procedure name.
+    nadir_token_t *name_token;
+    auto error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_IDENT, &name_token);
+    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+        return error;
+    }
+
+    // Consume the left parenthesis.
+    error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_LEFT_PAREN, nullptr);
+    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+        return error;
+    }
+
+    // Create a list for procedure parameters.
+    const auto parameters = nadir_list_new(sizeof(nadir_token_t *));
+    if (parameters == nullptr) {
+        return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, name_token);
+    }
+
+    // Parse procedure parameters until the right parenthesis is reached.
+    error = nadir_parser_run_procedure_parameters(parser, parameters);
+    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+        return error;
+    }
+
+    // Consume the right parenthesis.
+    error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_RIGHT_PAREN, nullptr);
+    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+        return error;
+    }
+
+    // Consume the left brace.
+    error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_LEFT_BRACE, nullptr);
+    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+        return error;
+    }
+
+    // Create a list for procedure body statements.
+    const auto body_statements = nadir_list_new(sizeof(nadir_ast_expression_t));
+    if (body_statements == nullptr) {
+        return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, name_token);
+    }
+
+    // Parse procedure body statements until the right brace is reached.
+    error = nadir_parser_run_procedure_statements(parser, body_statements);
+    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+        return error;
+    }
+
+    // Consume the right brace.
+    error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_RIGHT_BRACE, nullptr);
+    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+        return error;
+    }
+
+    const auto declaration = (nadir_ast_declaration_t){
+        .token = name_token,
+        .kind = NADIR_AST_DECLARATION_KIND_PROCEDURE,
+        .data.procedure = {
+            .name = name_token,
+            .parameters = parameters,
+            .statements = body_statements
+        }
+    };
+
+    // Append the declaration to the AST.
+    if (!nadir_list_append(parser->ast->declarations, &declaration)) {
+        error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, name_token);
+    }
+
+    return error;
+}
+
+static nadir_parser_error_t nadir_parser_run_procedure_parameters(nadir_parser_t *parser,
+                                                                  nadir_list_t *parameters) {
+    auto next_token = nadir_parser_peek(parser);
+
+    // Check if there are parameters to parse.
+    if (next_token && next_token->kind != NADIR_TOKEN_KIND_RIGHT_PAREN) {
+        bool expect_parameter = false;
+
+        do {
+            next_token = nadir_parser_advance(parser);
+            if (next_token == nullptr) {
+                return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
+            }
+
+            // Check if the token is a valid parameter type.
+            if (nadir_token_is_type(next_token->kind)) {
+                if (!nadir_list_append(parameters, &next_token)) {
+                    return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, next_token);
+                }
+            } else {
+                return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_TOKEN, next_token);
+            }
+
+            // Peek at the next token to check for a comma.
+            next_token = nadir_parser_peek(parser);
+            expect_parameter = next_token && next_token->kind == NADIR_TOKEN_KIND_COMMA;
+            if (expect_parameter) {
+                if (nadir_parser_advance(parser) == nullptr) {
+                    return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, next_token);
+                }
+            }
+        } while (expect_parameter);
+    }
+
+    return (nadir_parser_error_t){};
+}
+
+static nadir_parser_error_t nadir_parser_run_procedure_statements(nadir_parser_t *parser,
+                                                                  nadir_list_t *statements) {
+    auto error = (nadir_parser_error_t){};
+
+    auto token = nadir_parser_peek(parser);
+    while (token != nullptr && token->kind != NADIR_TOKEN_KIND_RIGHT_BRACE) {
+        auto expression = (nadir_ast_expression_t){};
+
+        // Parse the next statement in the procedure body.
+        error = nadir_parser_run_expression(parser, &expression);
+        if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+            return error;
+        }
+
+        // Consume the semicolon after the statement.
+        error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_SEMICOLON, nullptr);
+        if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+            return error;
+        }
+
+        // Append the statement to the list.
+        if (!nadir_list_append(statements, &expression)) {
+            return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, token);
+        }
+
+        // Peek at the next token.
+        token = nadir_parser_peek(parser);
+    }
+
+    // Check for unexpected end of file.
+    if (token == nullptr) {
+        error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
     }
 
     return error;
@@ -212,21 +374,24 @@ static nadir_parser_error_t nadir_parser_run_constant_declaration(nadir_parser_t
 
 static nadir_parser_error_t nadir_parser_run_expression(nadir_parser_t *parser,
                                                         nadir_ast_expression_t *expression) {
-    nadir_token_t *token = nadir_parser_peek(parser);
-    if (!token) {
+    auto error = (nadir_parser_error_t){};
+
+    // Peek at the next token to determine the expression kind.
+    auto token = nadir_parser_peek(parser);
+    if (token == nullptr) {
         return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
     }
 
-    // Handle built-in function calls.
+    // Parse built-in calls.
     if (token->kind == NADIR_TOKEN_KIND_BUILTIN) {
-        if (!nadir_parser_advance(parser)) {
+        if (nadir_parser_advance(parser) == nullptr) {
             return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
         }
 
         return nadir_parser_run_call(parser, token, expression);
     }
 
-    // Handle number literals.
+    // Parse number literals.
     if (token->kind == NADIR_TOKEN_KIND_NUMBER) {
         token = nadir_parser_advance(parser);
         if (token == nullptr) {
@@ -236,10 +401,10 @@ static nadir_parser_error_t nadir_parser_run_expression(nadir_parser_t *parser,
         expression->kind = NADIR_AST_EXPRESSION_KIND_NUMBER;
         expression->token = token;
 
-        return (nadir_parser_error_t){};
+        return error;
     }
 
-    // Handle type literals.
+    // Parse type literals.
     if (nadir_token_is_type(token->kind)) {
         token = nadir_parser_advance(parser);
         if (token == nullptr) {
@@ -249,40 +414,39 @@ static nadir_parser_error_t nadir_parser_run_expression(nadir_parser_t *parser,
         expression->kind = NADIR_AST_EXPRESSION_KIND_TYPE;
         expression->token = token;
 
-        return (nadir_parser_error_t){};
+        return error;
     }
 
-    // It could be a constant member, or a procedure call.
+    // Parse identifiers (constant members or procedure calls).
     if (token->kind == NADIR_TOKEN_KIND_IDENT) {
-        nadir_parser_error_t error;
         nadir_token_t *ident_token;
-
-        if ((error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_IDENT, &ident_token)).kind
-            != NADIR_PARSER_ERROR_KIND_NONE) {
+        error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_IDENT, &ident_token);
+        if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
             return error;
         }
 
         token = nadir_parser_peek(parser);
         if (token == nullptr) {
-            return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
+            return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, ident_token);
         }
 
-        // Handle procedure calls.
+        // Parse procedure calls.
         if (token->kind == NADIR_TOKEN_KIND_LEFT_PAREN) {
             return nadir_parser_run_call(parser, ident_token, expression);
         }
 
-        // Handle accessing a member field.
+        // Parse member field accesses.
         if (token->kind == NADIR_TOKEN_KIND_DOT) {
-            nadir_token_t *dot_token, *field_token;
-
-            if ((error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_DOT, &dot_token)).kind
-                != NADIR_PARSER_ERROR_KIND_NONE) {
+            // Consume the dot.
+            error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_DOT, nullptr);
+            if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
                 return error;
             }
 
-            if ((error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_IDENT, &field_token)).kind
-                != NADIR_PARSER_ERROR_KIND_NONE) {
+            // Consume the field identifier.
+            nadir_token_t *field_token;
+            error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_IDENT, &field_token);
+            if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
                 return error;
             }
 
@@ -290,67 +454,64 @@ static nadir_parser_error_t nadir_parser_run_expression(nadir_parser_t *parser,
             expression->token = ident_token;
             expression->data.member.field = field_token;
 
-            return (nadir_parser_error_t){};
+            return error;
         }
     }
 
-    return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_TOKEN, token);
+    error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_TOKEN, token);
+    return error;
 }
 
 static nadir_parser_error_t nadir_parser_run_call(nadir_parser_t *parser,
                                                   nadir_token_t *token,
                                                   nadir_ast_expression_t *expression) {
-    nadir_parser_error_t error;
-    nadir_token_t *left_paren, *right_paren;
-
-    // Open up parentheses!
-    if ((error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_LEFT_PAREN, &left_paren)).kind
-        != NADIR_PARSER_ERROR_KIND_NONE) {
+    // Consume the left parenthesis.
+    auto error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_LEFT_PAREN, nullptr);
+    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
         return error;
     }
 
-    // Create a new list to hold the arguments of the call.
+    // Create a list for call arguments.
     nadir_list_t *arguments = nadir_list_new(sizeof(nadir_ast_expression_t));
     if (!arguments) {
-        return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, left_paren);
+        return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, nullptr);
     }
 
-    right_paren = nadir_parser_peek(parser);
+    // Parse arguments if the parameter list is not empty.
+    auto next_token = nadir_parser_peek(parser);
+    if (next_token && next_token->kind != NADIR_TOKEN_KIND_RIGHT_PAREN) {
+        bool expect_argument = false;
 
-    // If it's not immediately empty `()`, parse the arguments.
-    if (right_paren && right_paren->kind != NADIR_TOKEN_KIND_RIGHT_PAREN) {
-        while (true) {
+        do {
+            // Parse the next argument expression.
             nadir_ast_expression_t argument_expression = {};
-
-            if ((error = nadir_parser_run_expression(parser, &argument_expression)).kind !=
-                NADIR_PARSER_ERROR_KIND_NONE) {
+            error = nadir_parser_run_expression(parser, &argument_expression);
+            if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
                 return error;
             }
 
             if (!nadir_list_append(arguments, &argument_expression)) {
-                return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, left_paren);
+                return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, next_token);
             }
 
-            right_paren = nadir_parser_peek(parser);
-
-            // Commas mean more arguments are coming.
-            if (right_paren && right_paren->kind == NADIR_TOKEN_KIND_COMMA) {
-                if (!nadir_parser_advance(parser)) {
-                    return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, right_paren);
+            // Peek at the next token to check for a comma.
+            next_token = nadir_parser_peek(parser);
+            expect_argument = next_token && next_token->kind == NADIR_TOKEN_KIND_COMMA;
+            if (expect_argument) {
+                if (nadir_parser_advance(parser) == nullptr) {
+                    return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, next_token);
                 }
-            } else {
-                break;
             }
-        }
+        } while (expect_argument);
     }
 
-    // Close the parentheses!
-    if ((error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_RIGHT_PAREN, &right_paren)).kind
-        != NADIR_PARSER_ERROR_KIND_NONE) {
+    // Consume the right parenthesis.
+    error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_RIGHT_PAREN, &next_token);
+    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
         return error;
     }
 
-    // Figure out if this was a custom procedure or a system built-in.
+    // Determine if the call is a custom procedure or a built-in.
     expression->kind = token->kind == NADIR_TOKEN_KIND_IDENT
                            ? NADIR_AST_EXPRESSION_KIND_PROCEDURE_CALL
                            : NADIR_AST_EXPRESSION_KIND_BUILTIN_CALL;
@@ -358,5 +519,5 @@ static nadir_parser_error_t nadir_parser_run_call(nadir_parser_t *parser,
     expression->token = token;
     expression->data.call.arguments = arguments;
 
-    return (nadir_parser_error_t){};
+    return error;
 }

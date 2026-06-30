@@ -246,7 +246,7 @@ static nadir_parser_error_t nadir_parser_run_procedure(nadir_parser_t *parser) {
     }
 
     // Should be freed if an error occurs before the declaration is appended to the AST.
-    const auto parameters = nadir_list_new(sizeof(nadir_token_t *));
+    const auto parameters = nadir_list_new(sizeof(nadir_token_kind_t));
     if (parameters == nullptr) {
         return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, name_token);
     }
@@ -330,8 +330,9 @@ static nadir_parser_error_t nadir_parser_run_procedure_parameters(nadir_parser_t
             }
 
             // Check if the token is a valid parameter type.
-            if (nadir_token_is_type(next_token->kind)) {
-                if (!nadir_list_append(parameters, &next_token)) {
+            const auto kind = next_token->kind;
+            if (nadir_token_is_type(kind)) {
+                if (!nadir_list_append(parameters, &kind)) {
                     return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, next_token);
                 }
             } else {

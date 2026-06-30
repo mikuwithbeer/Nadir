@@ -18,7 +18,7 @@ nadir_token_t nadir_token_new(const nadir_token_kind_t kind,
 
 bool nadir_token_append(nadir_token_t *token,
                         const char character) {
-    if (token->value_length < NADIR_TOKEN_BUFFER_SIZE) {
+    if (token->value_length < NADIR_TOKEN_BUFFER_SIZE - 1) {
         token->value[token->value_length++] = character;
         return true;
     }

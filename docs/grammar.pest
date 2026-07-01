@@ -9,35 +9,38 @@ COMMENT    = _{ "#" ~ (!"\n" ~ ANY)* }
 // Primitives and Tokens
 // =====================================================================
 
-identifier      = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC)* }
-integer_literal = @{ ("+" | "-")? ~ ASCII_DIGIT{1, 40} }
-primitive_type  = @{ "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" }
-member_access   =  { identifier ~ "." ~ identifier }
+builtin       = @{ (ASCII_ALPHA_LOWER | "_"){1, 127} }
+number        = @{ ("+" | "-")? ~ ASCII_DIGIT{1, 40} }
+store_address = @{ "<" ~ (ASCII_ALPHA_UPPER | "_"){1, 127} }
+load_address  = @{ ">" ~ (ASCII_ALPHA_UPPER | "_"){1, 127} }
+type          = @{ "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" }
+identifier    = @{ (ASCII_ALPHA_LOWER | ASCII_ALPHA_UPPER) ~ (ASCII_ALPHANUMERIC | "_"){,126} }
+member        = @{ identifier ~ "." ~ identifier }
 
 // =====================================================================
 // Call Syntax
 // =====================================================================
 
 builtin_call          = { "@" ~ identifier ~ "(" ~ builtin_argument_list? ~ ")" }
-builtin_argument      = { builtin_call | member_access | primitive_type | integer_literal }
-builtin_argument_list = { builtin_argument ~ ("," ~ builtin_argument)* }
+builtin_argument      = { builtin_call | load_address | member | type | number }
+builtin_argument_list = { builtin_argument ~ ("," ~ builtin_argument){,16} }
 
 procedure_call          = { identifier ~ "(" ~ procedure_argument_list? ~ ")" }
-procedure_argument      = { builtin_call | member_access | integer_literal }
-procedure_argument_list = { procedure_argument ~ ("," ~ procedure_argument)* }
+procedure_argument      = { builtin_call | load_address | member | number }
+procedure_argument_list = { procedure_argument ~ ("," ~ procedure_argument){,16} }
 
 // =====================================================================
 // Declarations
 // =====================================================================
 
-const_declaration = { "const" ~ identifier ~ "{" ~ const_assignment* ~ "}" }
-const_value       = { builtin_call | member_access | integer_literal }
-const_assignment  = { identifier ~ "=" ~ const_value ~ ";" }
+const_declaration = { "const" ~ identifier ~ "{" ~ const_entry* ~ "}" }
+const_value       = { builtin_call | member | number }
+const_entry       = { identifier ~ "=" ~ const_value ~ ";" }
 
 procedure_declaration    = { "procedure" ~ identifier ~ "(" ~ procedure_parameter_list? ~ ")" ~ "{" ~ procedure_statement* ~ "}" }
-procedure_parameter_list = { primitive_type ~ ("," ~ primitive_type)* }
+procedure_parameter_list = { type ~ ("," ~ type){,16} }
 procedure_statement      = { procedure_expression ~ ";" }
-procedure_expression     = { builtin_call | procedure_call | member_access | integer_literal }
+procedure_expression     = { builtin_call | procedure_call | store_address | member | number }
 
 // =====================================================================
 // Program

@@ -441,6 +441,32 @@ static nadir_parser_error_t nadir_parser_run_expression(nadir_parser_t *parser,
         return error;
     }
 
+    // Parse store address expressions.
+    if (token->kind == NADIR_TOKEN_KIND_STORE_ADDRESS) {
+        token = nadir_parser_advance(parser);
+        if (token == nullptr) {
+            return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
+        }
+
+        expression->kind = NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS;
+        expression->token = token;
+
+        return error;
+    }
+
+    // Parse load address expressions.
+    if (token->kind == NADIR_TOKEN_KIND_LOAD_ADDRESS) {
+        token = nadir_parser_advance(parser);
+        if (token == nullptr) {
+            return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
+        }
+
+        expression->kind = NADIR_AST_EXPRESSION_KIND_LOAD_ADDRESS;
+        expression->token = token;
+
+        return error;
+    }
+
     // Parse type literals.
     if (nadir_token_is_type(token->kind)) {
         token = nadir_parser_advance(parser);

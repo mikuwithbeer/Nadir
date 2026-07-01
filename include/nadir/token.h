@@ -112,17 +112,17 @@ static inline bool nadir_token_value_whitespace(const char character) {
 }
 
 /**
- * @brief Checks if a character is an uppercase alphabetic character (A-Z).
+ * @brief Checks if a character is an uppercase alphabetic character with underscore (A-Z, _).
  */
-static inline bool nadir_token_value_upper(const char character) {
-    return character >= 'A' && character <= 'Z';
+static inline bool nadir_token_value_upper_underscore(const char character) {
+    return character >= 'A' && character <= 'Z' || character == '_';
 }
 
 /**
- * @brief Checks if a character is a lowercase alphabetic character (a-z).
+ * @brief Checks if a character is a lowercase alphabetic character with underscore (a-z, _).
  */
-static inline bool nadir_token_value_lower(const char character) {
-    return character >= 'a' && character <= 'z';
+static inline bool nadir_token_value_lower_underscore(const char character) {
+    return character >= 'a' && character <= 'z' || character == '_';
 }
 
 /**

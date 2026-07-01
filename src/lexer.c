@@ -22,6 +22,10 @@ static nadir_lexer_error_t nadir_lexer_collect_ident(nadir_lexer_t *lexer,
                                                      char character,
                                                      bool *recollect);
 
+static nadir_lexer_error_t nadir_lexer_collect_address(nadir_lexer_t *lexer,
+                                                       char character,
+                                                       bool *recollect);
+
 static nadir_lexer_error_t nadir_lexer_collect_eof(nadir_lexer_t *lexer);
 
 // [--------------------------------------------------------------] //
@@ -73,6 +77,9 @@ nadir_lexer_error_t nadir_lexer_collect(nadir_lexer_t *lexer) {
                 break;
             case NADIR_LEXER_STATE_IDENT:
                 error = nadir_lexer_collect_ident(lexer, character, &recollect);
+                break;
+            case NADIR_LEXER_STATE_ADDRESS:
+                error = nadir_lexer_collect_address(lexer, character, &recollect);
                 break;
         }
 
@@ -154,6 +161,22 @@ static nadir_lexer_error_t nadir_lexer_collect_default(nadir_lexer_t *lexer,
     if (character == NADIR_TOKEN_VALUE_BUILTIN) {
         lexer->token.kind = NADIR_TOKEN_KIND_BUILTIN;
         lexer->state = NADIR_LEXER_STATE_IDENT;
+
+        return error;
+    }
+
+    // Check for store address.
+    if (character == NADIR_TOKEN_VALUE_STORE_ADDRESS) {
+        lexer->token.kind = NADIR_TOKEN_KIND_STORE_ADDRESS;
+        lexer->state = NADIR_LEXER_STATE_ADDRESS;
+
+        return error;
+    }
+
+    // Check for load address.
+    if (character == NADIR_TOKEN_VALUE_LOAD_ADDRESS) {
+        lexer->token.kind = NADIR_TOKEN_KIND_LOAD_ADDRESS;
+        lexer->state = NADIR_LEXER_STATE_ADDRESS;
 
         return error;
     }
@@ -296,6 +319,39 @@ static nadir_lexer_error_t nadir_lexer_collect_ident(nadir_lexer_t *lexer,
 
     // Check for valid characters.
     if (!nadir_token_value_alpha(character) && !nadir_token_value_digit(character)) {
+        error.kind = NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER;
+        error.specific.character = character;
+
+        return error;
+    }
+
+    if (!nadir_token_append(&lexer->token, character)) {
+        error.kind = NADIR_LEXER_ERROR_KIND_BUFFER_OVERFLOW;
+    }
+
+    return error;
+}
+
+
+static nadir_lexer_error_t nadir_lexer_collect_address(nadir_lexer_t *lexer,
+                                                       const char character,
+                                                       bool *recollect) {
+    auto error = nadir_lexer_error_new(NADIR_LEXER_ERROR_KIND_NONE, lexer->line, lexer->column);
+
+    // Check for whitespace or single-character tokens to end the number.
+    if (nadir_token_value_whitespace(character) || nadir_token_value_single(character)) {
+        lexer->state = NADIR_LEXER_STATE_DEFAULT;
+
+        if (!nadir_list_append(lexer->tokens, &lexer->token)) {
+            error.kind = NADIR_LEXER_ERROR_KIND_OUT_OF_MEMORY;
+        }
+
+        *recollect = true;
+        return error;
+    }
+
+    // Check for valid characters.
+    if (!nadir_token_value_upper(character)) {
         error.kind = NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER;
         error.specific.character = character;
 

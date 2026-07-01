@@ -12,6 +12,9 @@ constexpr nadir_u8_t NADIR_TOKEN_BUFFER_SIZE = 1 << 7;
 constexpr char NADIR_TOKEN_VALUE_COMMENT = '#';
 constexpr char NADIR_TOKEN_VALUE_BUILTIN = '@';
 
+constexpr char NADIR_TOKEN_VALUE_STORE_ADDRESS = '<';
+constexpr char NADIR_TOKEN_VALUE_LOAD_ADDRESS = '>';
+
 constexpr char NADIR_TOKEN_VALUE_LEFT_BRACE = '{';
 constexpr char NADIR_TOKEN_VALUE_RIGHT_BRACE = '}';
 
@@ -34,6 +37,9 @@ typedef enum : nadir_u8_t {
     NADIR_TOKEN_KIND_NUMBER,
     NADIR_TOKEN_KIND_IDENT,
     NADIR_TOKEN_KIND_BUILTIN,
+
+    NADIR_TOKEN_KIND_STORE_ADDRESS,
+    NADIR_TOKEN_KIND_LOAD_ADDRESS,
 
     NADIR_TOKEN_KIND_LEFT_BRACE,
     NADIR_TOKEN_KIND_RIGHT_BRACE,
@@ -103,6 +109,20 @@ typedef struct {
  */
 static inline bool nadir_token_value_whitespace(const char character) {
     return character == ' ' || character == '\n' || character == '\t' || character == '\r';
+}
+
+/**
+ * @brief Checks if a character is an uppercase alphabetic character (A-Z).
+ */
+static inline bool nadir_token_value_upper(const char character) {
+    return character >= 'A' && character <= 'Z';
+}
+
+/**
+ * @brief Checks if a character is a lowercase alphabetic character (a-z).
+ */
+static inline bool nadir_token_value_lower(const char character) {
+    return character >= 'a' && character <= 'z';
 }
 
 /**

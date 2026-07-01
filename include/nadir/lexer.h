@@ -15,6 +15,7 @@ typedef enum : nadir_u8_t {
     NADIR_LEXER_STATE_COMMENT,
     NADIR_LEXER_STATE_NUMBER,
     NADIR_LEXER_STATE_IDENT,
+    NADIR_LEXER_STATE_ADDRESS,
 } nadir_lexer_state_t;
 
 /**

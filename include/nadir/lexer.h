@@ -20,7 +20,7 @@ typedef enum : nadir_u8_t {
 } nadir_lexer_state_t;
 
 /**
- * @brief Error IDs for the lexer.
+ * @brief Error kinds for the lexer.
  */
 typedef enum [[nodiscard]] : nadir_u8_t {
     NADIR_LEXER_ERROR_KIND_NONE = 0,
@@ -31,6 +31,7 @@ typedef enum [[nodiscard]] : nadir_u8_t {
     NADIR_LEXER_ERROR_KIND_INVALID_NUMBER,
     NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER,
     NADIR_LEXER_ERROR_KIND_UNEXPECTED_STATE,
+    NADIR_LEXER_ERROR_KIND_ALREADY_FOUND_BINARY,
 } nadir_lexer_error_kind_t;
 
 /**
@@ -62,6 +63,7 @@ typedef struct {
     nadir_u64_t column;
 
     nadir_lexer_state_t state;
+    bool found_binary;
 } nadir_lexer_t;
 
 // [--------------------------------------------------------------] //

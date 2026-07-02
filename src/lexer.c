@@ -295,12 +295,22 @@ static nadir_lexer_error_t nadir_lexer_collect_ident(nadir_lexer_t *lexer,
     if (nadir_token_value_whitespace(character) || nadir_token_value_single(character)) {
         lexer->state = NADIR_LEXER_STATE_DEFAULT;
 
-        // Check for keywords and types.
+        // Check for keywords.
         if (strncmp(lexer->token.value, "constant", 9) == 0) {
             lexer->token.kind = NADIR_TOKEN_KIND_CONSTANT;
         } else if (strncmp(lexer->token.value, "procedure", 10) == 0) {
             lexer->token.kind = NADIR_TOKEN_KIND_PROCEDURE;
-        } else if (strncmp(lexer->token.value, "u8", 3) == 0) {
+        } else if (strncmp(lexer->token.value, "binary", 7) == 0) {
+            lexer->token.kind = NADIR_TOKEN_KIND_BINARY;
+            if (lexer->found_binary) {
+                error.kind = NADIR_LEXER_ERROR_KIND_ALREADY_FOUND_BINARY;
+            } else {
+                lexer->found_binary = true;
+            }
+        }
+
+        // Check for types.
+        if (strncmp(lexer->token.value, "u8", 3) == 0) {
             lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U8;
         } else if (strncmp(lexer->token.value, "u16", 4) == 0) {
             lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U16;

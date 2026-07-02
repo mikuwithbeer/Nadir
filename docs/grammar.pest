@@ -22,7 +22,7 @@ member        = @{ identifier ~ "." ~ identifier }
 // =====================================================================
 
 builtin_call          = { "@" ~ identifier ~ "(" ~ builtin_argument_list? ~ ")" }
-builtin_argument      = { builtin_call | load_address | member | type | number }
+builtin_argument      = { builtin_call | member | type | number }
 builtin_argument_list = { builtin_argument ~ ("," ~ builtin_argument){,16} }
 
 procedure_call          = { identifier ~ "(" ~ procedure_argument_list? ~ ")" }
@@ -33,17 +33,22 @@ procedure_argument_list = { procedure_argument ~ ("," ~ procedure_argument){,16}
 // Declarations
 // =====================================================================
 
-const_declaration = { "const" ~ identifier ~ "{" ~ const_entry* ~ "}" }
-const_value       = { builtin_call | member | number }
-const_entry       = { identifier ~ "=" ~ const_value ~ ";" }
+const_declaration = { "constant" ~ identifier ~ "{" ~ const_statement+ ~ "}" }
+const_statement   = { identifier ~ "=" ~ const_expression ~ ";" }
+const_expression  = { builtin_call | member | number }
 
-procedure_declaration    = { "procedure" ~ identifier ~ "(" ~ procedure_parameter_list? ~ ")" ~ "{" ~ procedure_statement* ~ "}" }
+procedure_declaration    = { "procedure" ~ identifier ~ "(" ~ procedure_parameter_list? ~ ")" ~ "{" ~ procedure_statement+ ~ "}" }
 procedure_parameter_list = { type ~ ("," ~ type){,16} }
 procedure_statement      = { procedure_expression ~ ";" }
-procedure_expression     = { builtin_call | procedure_call | store_address | member | number }
+procedure_expression     = { builtin_call | procedure_call | member | number }
+
+binary_declaration = { "binary" ~ "{" ~ binary_statement* ~ "}" }
+binary_statement   = { binary_expression ~ ";" }
+binary_expression  = { procedure_call | store_address }
 
 // =====================================================================
-// Program
+// Assembler
 // =====================================================================
-declaration = { const_declaration | procedure_declaration }
-program     = { SOI ~ declaration* ~ EOI }
+optional_declaration = { const_declaration | procedure_declaration }
+required_declaration = { binary_declaration }
+assembly_declaration = { SOI ~ optional_declaration* ~ required_declaration ~ EOI }

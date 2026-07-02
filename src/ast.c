@@ -32,13 +32,13 @@ void nadir_ast_free(nadir_ast_t *ast) {
         return;
     }
 
-    for (nadir_u64_t i = 0; i < ast->declarations->length; ++i) {
-        const auto declaration = (nadir_ast_declaration_t *) nadir_list_get(ast->declarations, i);
+    for (nadir_u64_t index = 0; index < ast->declarations->length; ++index) {
+        const auto declaration = (nadir_ast_declaration_t *) nadir_list_get(ast->declarations, index);
 
         if (declaration->kind == NADIR_AST_DECLARATION_KIND_CONSTANT) {
             const auto entries = declaration->data.constant.entries;
-            for (nadir_u64_t j = 0; j < entries->length; ++j) {
-                const auto entry = (nadir_ast_const_entry_t *) nadir_list_get(entries, j);
+            for (nadir_u64_t inner = 0; inner < entries->length; ++inner) {
+                const auto entry = (nadir_ast_const_entry_t *) nadir_list_get(entries, inner);
                 nadir_ast_free_expression(&entry->value);
             }
 
@@ -47,8 +47,8 @@ void nadir_ast_free(nadir_ast_t *ast) {
             nadir_list_free(declaration->data.procedure.parameters);
 
             const auto statements = declaration->data.procedure.statements;
-            for (nadir_u64_t j = 0; j < statements->length; ++j) {
-                const auto statement = (nadir_ast_expression_t *) nadir_list_get(statements, j);
+            for (nadir_u64_t inner = 0; inner < statements->length; ++inner) {
+                const auto statement = (nadir_ast_expression_t *) nadir_list_get(statements, inner);
                 nadir_ast_free_expression(statement);
             }
 
@@ -73,8 +73,8 @@ static void nadir_ast_free_expression(nadir_ast_expression_t *expression) {
         expression->kind == NADIR_AST_EXPRESSION_KIND_PROCEDURE_CALL) {
         const auto arguments = expression->data.call.arguments;
         if (arguments != nullptr) {
-            for (nadir_u64_t i = 0; i < arguments->length; ++i) {
-                const auto argument = nadir_list_get(arguments, i);
+            for (nadir_u64_t index = 0; index < arguments->length; ++index) {
+                const auto argument = nadir_list_get(arguments, index);
                 nadir_ast_free_expression(argument);
             }
 

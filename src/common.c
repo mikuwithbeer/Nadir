@@ -15,9 +15,9 @@ bool nadir_common_string_to_i128(const char *input,
     // Check for sign.
     if (*input == '-') {
         negative = true;
-        input++;
+        ++input;
     } else if (*input == '+') {
-        input++;
+        ++input;
     }
 
     // Loop through each character in the string.
@@ -84,9 +84,8 @@ bool nadir_list_append(nadir_list_t *list,
         list->capacity = new_capacity;
     }
 
-    memcpy((nadir_u8_t *)list->items + list->length * list->size, item, list->size);
-    ++list->length;
-
+    // Copy the item into the list and increment the length.
+    memcpy((nadir_u8_t *)list->items + (list->length++) * list->size, item, list->size);
     return true;
 }
 
@@ -96,6 +95,7 @@ void *nadir_list_get(const nadir_list_t *list,
         return nullptr;
     }
 
+    // Return a pointer to the item at the given index.
     return (nadir_u8_t *) list->items + index * list->size;
 }
 

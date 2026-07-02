@@ -59,6 +59,8 @@ typedef struct {
 
 /**
  * @brief Creates a new list with the given capacity.
+ *
+ * @warning Allocates memory for the list, which must be freed.
  */
 [[nodiscard]] nadir_list_t *nadir_list_new(nadir_u64_t size);
 

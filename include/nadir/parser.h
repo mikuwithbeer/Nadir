@@ -45,8 +45,12 @@ typedef struct {
     nadir_u64_t token_index;
 } nadir_parser_t;
 
+// [--------------------------------------------------------------] //
+// > Function Declarations                                        < //
+// [--------------------------------------------------------------] //
+
 /**
- * @brief Creates a new lexer error with the given parameters.
+ * @brief Creates a new parser error with the given kind and token.
  */
 static inline nadir_parser_error_t nadir_parser_error_new(const nadir_parser_error_kind_t id,
                                                           nadir_token_t *token) {
@@ -56,31 +60,12 @@ static inline nadir_parser_error_t nadir_parser_error_new(const nadir_parser_err
     };
 }
 
-// [--------------------------------------------------------------] //
-// > Function Declarations                                        < //
-// [--------------------------------------------------------------] //
-
 /**
  * @brief Creates a new parser with the given tokens.
+ *
+ * @warning Allocates memory for the parser and its associated resources.
  */
 nadir_parser_t *nadir_parser_new(nadir_list_t *tokens);
-
-/**
- * @brief Peeks at the next token in the parser without advancing the token index.
- */
-[[nodiscard]] nadir_token_t *nadir_parser_peek(const nadir_parser_t *parser);
-
-/**
- * @brief Advances the parser to the next token and returns the current token.
- */
-[[nodiscard]] nadir_token_t *nadir_parser_advance(nadir_parser_t *parser);
-
-/**
- * @brief Consumes a token of the given kind from the parser.
- */
-nadir_parser_error_t nadir_parser_consume(nadir_parser_t *parser,
-                                          nadir_token_kind_t kind,
-                                          nadir_token_t **output);
 
 /**
  * @brief Runs the parser on the given tokens.

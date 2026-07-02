@@ -22,9 +22,9 @@ static nadir_lexer_error_t nadir_lexer_collect_ident(nadir_lexer_t *lexer,
                                                      char character,
                                                      bool *recollect);
 
-static nadir_lexer_error_t nadir_lexer_collect_builtin(nadir_lexer_t *lexer,
-                                                       char character,
-                                                       bool *recollect);
+static nadir_lexer_error_t nadir_lexer_collect_comptime(nadir_lexer_t *lexer,
+                                                        char character,
+                                                        bool *recollect);
 
 static nadir_lexer_error_t nadir_lexer_collect_address(nadir_lexer_t *lexer,
                                                        char character,
@@ -82,8 +82,8 @@ nadir_lexer_error_t nadir_lexer_collect(nadir_lexer_t *lexer) {
             case NADIR_LEXER_STATE_IDENT:
                 error = nadir_lexer_collect_ident(lexer, character, &recollect);
                 break;
-            case NADIR_LEXER_STATE_BUILTIN:
-                error = nadir_lexer_collect_builtin(lexer, character, &recollect);
+            case NADIR_LEXER_STATE_COMPTIME:
+                error = nadir_lexer_collect_comptime(lexer, character, &recollect);
                 break;
             case NADIR_LEXER_STATE_ADDRESS:
                 error = nadir_lexer_collect_address(lexer, character, &recollect);
@@ -164,10 +164,10 @@ static nadir_lexer_error_t nadir_lexer_collect_default(nadir_lexer_t *lexer,
         return error;
     }
 
-    // Check for builtin function.
-    if (character == NADIR_TOKEN_VALUE_BUILTIN) {
-        lexer->token.kind = NADIR_TOKEN_KIND_BUILTIN;
-        lexer->state = NADIR_LEXER_STATE_BUILTIN;
+    // Check for compile-time procedures.
+    if (character == NADIR_TOKEN_VALUE_COMPTIME) {
+        lexer->token.kind = NADIR_TOKEN_KIND_COMPTIME;
+        lexer->state = NADIR_LEXER_STATE_COMPTIME;
 
         return error;
     }
@@ -295,22 +295,14 @@ static nadir_lexer_error_t nadir_lexer_collect_ident(nadir_lexer_t *lexer,
     if (nadir_token_value_whitespace(character) || nadir_token_value_single(character)) {
         lexer->state = NADIR_LEXER_STATE_DEFAULT;
 
-        // Check for keywords.
+        // Check for keywords and types.
         if (strncmp(lexer->token.value, "constant", 9) == 0) {
             lexer->token.kind = NADIR_TOKEN_KIND_CONSTANT;
         } else if (strncmp(lexer->token.value, "procedure", 10) == 0) {
             lexer->token.kind = NADIR_TOKEN_KIND_PROCEDURE;
         } else if (strncmp(lexer->token.value, "binary", 7) == 0) {
             lexer->token.kind = NADIR_TOKEN_KIND_BINARY;
-            if (lexer->found_binary) {
-                error.kind = NADIR_LEXER_ERROR_KIND_ALREADY_FOUND_BINARY;
-            } else {
-                lexer->found_binary = true;
-            }
-        }
-
-        // Check for types.
-        if (strncmp(lexer->token.value, "u8", 3) == 0) {
+        } else if (strncmp(lexer->token.value, "u8", 3) == 0) {
             lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U8;
         } else if (strncmp(lexer->token.value, "u16", 4) == 0) {
             lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U16;
@@ -352,9 +344,9 @@ static nadir_lexer_error_t nadir_lexer_collect_ident(nadir_lexer_t *lexer,
 }
 
 
-static nadir_lexer_error_t nadir_lexer_collect_builtin(nadir_lexer_t *lexer,
-                                                       const char character,
-                                                       bool *recollect) {
+static nadir_lexer_error_t nadir_lexer_collect_comptime(nadir_lexer_t *lexer,
+                                                        const char character,
+                                                        bool *recollect) {
     auto error = nadir_lexer_error_new(NADIR_LEXER_ERROR_KIND_NONE, lexer->line, lexer->column);
 
     // Check for whitespace or single-character tokens to end the builtin.

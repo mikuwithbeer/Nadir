@@ -25,6 +25,7 @@ typedef enum : nadir_u8_t {
     NADIR_PARSER_ERROR_KIND_MISSING_EXPRESSION,
     NADIR_PARSER_ERROR_KIND_MISSING_SEMICOLON,
     NADIR_PARSER_ERROR_KIND_TOO_MANY_ARGUMENTS,
+    NADIR_PARSER_ERROR_KIND_ALREADY_FOUND_BINARY,
 } nadir_parser_error_kind_t;
 
 /**
@@ -44,7 +45,7 @@ typedef struct {
     nadir_list_t *tokens;
     nadir_u64_t token_index;
 
-    bool load_binary;
+    bool seen_binary;
 } nadir_parser_t;
 
 // [--------------------------------------------------------------] //
@@ -67,8 +68,7 @@ static inline nadir_parser_error_t nadir_parser_error_new(const nadir_parser_err
  *
  * @warning Allocates memory for the parser and its associated resources.
  */
-nadir_parser_t *nadir_parser_new(nadir_list_t *tokens,
-                                 bool load_binary);
+nadir_parser_t *nadir_parser_new(nadir_list_t *tokens);
 
 /**
  * @brief Runs the parser on the given tokens.

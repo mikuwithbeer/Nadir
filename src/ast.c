@@ -77,7 +77,7 @@ static void nadir_ast_free_expression(nadir_ast_expression_t *expression) {
         return;
     }
 
-    if (expression->kind == NADIR_AST_EXPRESSION_KIND_BUILTIN_CALL ||
+    if (expression->kind == NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL ||
         expression->kind == NADIR_AST_EXPRESSION_KIND_PROCEDURE_CALL) {
         const auto arguments = expression->data.call.arguments;
         if (arguments != nullptr) {

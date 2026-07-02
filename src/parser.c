@@ -40,8 +40,7 @@ static nadir_parser_error_t nadir_parser_run_call(nadir_parser_t *parser,
 // > Function Implementations                                     < //
 // [--------------------------------------------------------------] //
 
-nadir_parser_t *nadir_parser_new(nadir_list_t *tokens,
-                                 const bool load_binary) {
+nadir_parser_t *nadir_parser_new(nadir_list_t *tokens) {
     nadir_parser_t *parser = malloc(sizeof(nadir_parser_t));
     if (parser == nullptr) {
         return nullptr;
@@ -58,7 +57,7 @@ nadir_parser_t *nadir_parser_new(nadir_list_t *tokens,
     parser->tokens = tokens;
     parser->token_index = 0;
 
-    parser->load_binary = load_binary;
+    parser->seen_binary = false;
 
     return parser;
 }
@@ -77,8 +76,13 @@ nadir_parser_error_t nadir_parser_run(nadir_parser_t *parser) {
             error = nadir_parser_run_constant(parser);
         } else if (token->kind == NADIR_TOKEN_KIND_PROCEDURE) {
             error = nadir_parser_run_procedure(parser);
-        } else if (parser->load_binary && token->kind == NADIR_TOKEN_KIND_BINARY) {
-            error = nadir_parser_run_binary(parser);
+        } else if (token->kind == NADIR_TOKEN_KIND_BINARY) {
+            if (parser->seen_binary) {
+                error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_ALREADY_FOUND_BINARY, token);
+            } else {
+                parser->seen_binary = true;
+                error = nadir_parser_run_binary(parser);
+            }
         } else {
             error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_TOKEN, token);
         }
@@ -460,8 +464,8 @@ static nadir_parser_error_t nadir_parser_run_expression(nadir_parser_t *parser,
         return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
     }
 
-    // Parse built-in calls.
-    if (token->kind == NADIR_TOKEN_KIND_BUILTIN) {
+    // Parse compile-time calls.
+    if (token->kind == NADIR_TOKEN_KIND_COMPTIME) {
         if (nadir_parser_advance(parser) == nullptr) {
             return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
         }
@@ -628,10 +632,10 @@ static nadir_parser_error_t nadir_parser_run_call(nadir_parser_t *parser,
         return error;
     }
 
-    // Determine if the call is a custom procedure or a built-in.
+    // Determine if the call is a custom procedure or a compile-time procedure.
     expression->kind = token->kind == NADIR_TOKEN_KIND_IDENT
                            ? NADIR_AST_EXPRESSION_KIND_PROCEDURE_CALL
-                           : NADIR_AST_EXPRESSION_KIND_BUILTIN_CALL;
+                           : NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL;
 
     expression->token = token;
     expression->data.call.arguments = arguments;

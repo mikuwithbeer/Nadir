@@ -43,6 +43,8 @@ typedef struct {
 
     nadir_list_t *tokens;
     nadir_u64_t token_index;
+
+    bool load_binary;
 } nadir_parser_t;
 
 // [--------------------------------------------------------------] //
@@ -65,7 +67,8 @@ static inline nadir_parser_error_t nadir_parser_error_new(const nadir_parser_err
  *
  * @warning Allocates memory for the parser and its associated resources.
  */
-nadir_parser_t *nadir_parser_new(nadir_list_t *tokens);
+nadir_parser_t *nadir_parser_new(nadir_list_t *tokens,
+                                 bool load_binary);
 
 /**
  * @brief Runs the parser on the given tokens.

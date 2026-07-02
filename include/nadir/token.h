@@ -7,7 +7,7 @@
 // > Constants                                                    < //
 // [--------------------------------------------------------------] //
 
-constexpr nadir_u8_t NADIR_TOKEN_BUFFER_SIZE = 1 << 7;
+constexpr nadir_u8_t NADIR_TOKEN_BUFFER_SIZE = 1 << 6;
 
 constexpr char NADIR_TOKEN_VALUE_COMMENT = '#';
 constexpr char NADIR_TOKEN_VALUE_COMPTIME = '@';

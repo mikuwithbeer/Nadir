@@ -28,7 +28,9 @@ constexpr nadir_u128_t NADIR_U128_MAX = ~(nadir_u128_t) 0;
 constexpr nadir_i128_t NADIR_I128_MAX = NADIR_U128_MAX >> 1;
 constexpr nadir_i128_t NADIR_I128_MIN = -NADIR_I128_MAX - 1;
 
-constexpr nadir_u64_t NADIR_LIST_DEFAULT_CAPACITY = 1 << 6;
+constexpr auto NADIR_STRING_MAXIMUM = 0x100;
+constexpr auto NADIR_LIST_DEFAULT_CAPACITY = 1 << 6;
+constexpr auto NADIR_TABLE_DEFAULT_CAPACITY = NADIR_LIST_DEFAULT_CAPACITY;
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //
@@ -45,20 +47,38 @@ typedef struct {
     nadir_u64_t size;
 } nadir_list_t;
 
+/**
+ * @brief Table entry structure for the table structure.
+ */
+typedef struct {
+    char key[NADIR_STRING_MAXIMUM];
+    void *value;
+    bool is_used;
+} nadir_table_entry_t;
+
+/**
+ * @brief Generic table structure for the assembler and components.
+ */
+typedef struct {
+    nadir_table_entry_t *entries;
+
+    nadir_u64_t length;
+    nadir_u64_t capacity;
+    nadir_u64_t size;
+} nadir_table_t;
+
 // [--------------------------------------------------------------] //
 // > Function Declarations                                        < //
 // [--------------------------------------------------------------] //
 
 /**
- * @brief Converts a string to a 128-bit signed integer.
- *
- * @return true if the conversion was successful, false otherwise.
+ * @brief Decodes a string into a 128-bit signed integer.
  */
-[[nodiscard]] bool nadir_common_string_to_i128(const char *input,
-                                               nadir_i128_t *value);
+[[nodiscard]] bool nadir_i128_decode(const char *input,
+                                     nadir_i128_t *value);
 
 /**
- * @brief Creates a new list with the given capacity.
+ * @brief Creates a new list with the given data size.
  *
  * @warning Allocates memory for the list, which must be freed.
  */
@@ -82,5 +102,30 @@ typedef struct {
  * @brief Frees the list and its items.
  */
 void nadir_list_free(nadir_list_t *list);
+
+/**
+ * @brief Creates a new table with the given data size.
+ *
+ * @warning Allocates memory for the table, which must be freed.
+ */
+[[nodiscard]] nadir_table_t *nadir_table_new(nadir_u64_t size);
+
+/**
+ * @brief Inserts a key-value pair into the table.
+ */
+[[nodiscard]] bool nadir_table_insert(nadir_table_t *table,
+                                      const char *key,
+                                      const void *value);
+
+/**
+ * @brief Fetches a value from the table by key.
+ */
+[[nodiscard]] void *nadir_table_fetch(const nadir_table_t *table,
+                                      const char *key);
+
+/**
+ * @brief Frees the table and its items.
+ */
+void nadir_table_free(nadir_table_t *table);
 
 #endif //NADIR_COMMON_H

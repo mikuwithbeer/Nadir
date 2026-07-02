@@ -252,7 +252,7 @@ static nadir_lexer_error_t nadir_lexer_collect_number(nadir_lexer_t *lexer,
         }
 
         // Convert the number string to a 128-bit signed integer.
-        if (!nadir_common_string_to_i128(lexer->token.value, &lexer->token.specific.number)) {
+        if (!nadir_i128_decode(lexer->token.value, &lexer->token.specific.number)) {
             error.kind = NADIR_LEXER_ERROR_KIND_INVALID_NUMBER;
             return error;
         }

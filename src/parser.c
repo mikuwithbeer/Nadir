@@ -239,6 +239,13 @@ static nadir_parser_error_t nadir_parser_run_constant_entry(nadir_parser_t *pars
         return error;
     }
 
+    // Check if the expression is a valid constant expression.
+    if (expression.kind != NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL &&
+        expression.kind != NADIR_AST_EXPRESSION_KIND_MEMBER &&
+        expression.kind != NADIR_AST_EXPRESSION_KIND_NUMBER) {
+        return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EXPRESSION, expression.token);
+    }
+
     // Consume the semicolon.
     error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_SEMICOLON, nullptr);
     if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
@@ -249,13 +256,6 @@ static nadir_parser_error_t nadir_parser_run_constant_entry(nadir_parser_t *pars
         .name = name_token,
         .value = expression,
     };
-
-    // Check if the expression is a valid constant expression.
-    if (expression.kind != NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL &&
-        expression.kind != NADIR_AST_EXPRESSION_KIND_MEMBER &&
-        expression.kind != NADIR_AST_EXPRESSION_KIND_NUMBER) {
-        return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EXPRESSION, expression.token);
-    }
 
     if (!nadir_list_append(entries, &entry)) {
         error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, name_token);

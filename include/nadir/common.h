@@ -31,6 +31,7 @@ constexpr nadir_i128_t NADIR_I128_MIN = -NADIR_I128_MAX - 1;
 constexpr auto NADIR_STRING_MAXIMUM = 0xFF + 1;
 constexpr auto NADIR_LIST_DEFAULT_CAPACITY = 1 << 6;
 constexpr auto NADIR_TABLE_DEFAULT_CAPACITY = NADIR_LIST_DEFAULT_CAPACITY;
+constexpr auto NADIR_STACK_MAXIMUM = 1 << 10;
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //
@@ -66,6 +67,14 @@ typedef struct {
     nadir_u64_t capacity;
     nadir_u64_t size;
 } nadir_table_t;
+
+/**
+ * @brief Generic stack structure for the assembler and components.
+ */
+typedef struct {
+    nadir_i128_t data[NADIR_STACK_MAXIMUM];
+    nadir_u64_t length;
+} nadir_stack_t;
 
 // [--------------------------------------------------------------] //
 // > Function Declarations                                        < //
@@ -127,5 +136,22 @@ void nadir_list_free(nadir_list_t *list);
  * @brief Frees the table and its items.
  */
 void nadir_table_free(nadir_table_t *table);
+
+/**
+ * @brief Creates a new stack.
+ */
+[[nodiscard]] nadir_stack_t nadir_stack_new(void);
+
+/**
+ * @brief Pushes a value onto the stack.
+ */
+[[nodiscard]] bool nadir_stack_push(nadir_stack_t *stack,
+                                    nadir_i128_t value);
+
+/**
+ * @brief Pops a value from the stack.
+ */
+[[nodiscard]] bool nadir_stack_pop(nadir_stack_t *stack,
+                                   nadir_i128_t *value);
 
 #endif //NADIR_COMMON_H

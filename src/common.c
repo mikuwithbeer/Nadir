@@ -204,6 +204,35 @@ void nadir_table_free(nadir_table_t *table) {
     free(table);
 }
 
+nadir_stack_t nadir_stack_new(void) {
+    return (nadir_stack_t){};
+}
+
+bool nadir_stack_push(nadir_stack_t *stack,
+                      const nadir_i128_t value) {
+    if (stack->length >= NADIR_STACK_MAXIMUM) {
+        return false;
+    }
+
+    stack->data[stack->length++] = value;
+    return true;
+}
+
+bool nadir_stack_pop(nadir_stack_t *stack,
+                     nadir_i128_t *value) {
+    if (stack->length == 0) {
+        return false;
+    }
+
+    if (value) {
+        *value = stack->data[--stack->length];
+    } else {
+        --stack->length;
+    }
+
+    return true;
+}
+
 // [--------------------------------------------------------------] //
 // > Internal Functions                                           < //
 // [--------------------------------------------------------------] //

@@ -1,16 +1,17 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "nadir/analyzer.h"
+#include "nadir/compiler.h"
 #include "nadir/lexer.h"
 #include "nadir/parser.h"
 
 int main(void) {
     const char *source =
             "constant Register {\n"
-            "    A = @lmao(5, u8);\n"
-            "    B = 1;\n"
-            "    C = Register.A;\n"
+            "    A = 1;\n"
+            "    B = @mul(Register.A, 10);\n"
+            "    C = @mul(Register.B, 10);\n"
+            "    D = @div(Register.C, 7);\n"
             "}\n"
             "\n"
             "procedure jmp(u16, u8) {\n"
@@ -40,34 +41,37 @@ int main(void) {
         return 1;
     }
 
-    const auto analyser = nadir_analyzer_new(parser->ast);
-    const auto analyser_result = nadir_analyzer_run(analyser);
-    if (analyser_result.kind != NADIR_ANALYZER_ERROR_KIND_NONE) {
-        printf("Analyse Error: %d, Token: %s, Line: %llu, Column: %llu\n", analyser_result.kind,
-               analyser_result.token->value,
-               analyser_result.token->line, analyser_result.token->column);
+    const auto compiler = nadir_compiler_new(parser->ast);
+    const auto compiler_result = nadir_compiler_run(compiler);
+    if (compiler_result.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+        printf("Compile Error: %d, Token: %s, Line: %llu, Column: %llu\n", compiler_result.kind,
+               compiler_result.token->value,
+               compiler_result.token->line, compiler_result.token->column);
         return 1;
     }
 
-    for (nadir_u64_t index = 0; index < analyser->constants->capacity; ++index) {
-        if (analyser->constants->entries[index].is_used) {
-            auto key = analyser->constants->entries[index].key;
-            auto value = (nadir_analyzer_constant_t *) analyser->constants->entries[index].value;
+    for (nadir_u64_t index = 0; index < compiler->constants->capacity; ++index) {
+        if (compiler->constants->entries[index].is_used) {
+            const auto key = compiler->constants->entries[index].key;
+            const auto value = (nadir_compiler_constant_t *) compiler->constants->entries[index].value;
 
-            printf("%s %d = %s\n", key, value->value->kind, value->value->token->value);
+            const auto high = (nadir_u64_t) (value->value >> 64);
+            const auto low = (nadir_u64_t) value->value;
+
+            printf("%s = 0x%016llx%016llx\n", key, high, low);
         }
     }
 
-    for (nadir_u64_t index = 0; index < analyser->procedures->capacity; ++index) {
-        if (analyser->procedures->entries[index].is_used) {
-            auto key = analyser->procedures->entries[index].key;
-            auto value = (nadir_analyzer_procedure_t *) analyser->procedures->entries[index].value;
+    for (nadir_u64_t index = 0; index < compiler->procedures->capacity; ++index) {
+        if (compiler->procedures->entries[index].is_used) {
+            const auto key = compiler->procedures->entries[index].key;
+            const auto value = (nadir_compiler_procedure_t *) compiler->procedures->entries[index].value;
 
-            printf("%s %llu parameters, %llu statements\n", key, value->parameters->length, value->statements->length);
+            printf("%s/%llu: %llu statements\n", key, value->parameters->length, value->statements->length);
         }
     }
 
-    nadir_analyzer_free(analyser);
+    nadir_compiler_free(compiler);
     nadir_parser_free(parser);
     nadir_lexer_free(lexer);
     return 0;

@@ -1,0 +1,48 @@
+name: Build Nadir
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            cc: clang-22
+            cxx: clang++-22
+            llvm: /usr/lib/llvm-22
+          - os: macos-latest
+            cc: /opt/homebrew/opt/llvm@22/bin/clang
+            cxx: /opt/homebrew/opt/llvm@22/bin/clang++
+            llvm: /opt/homebrew/opt/llvm@22
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup LLVM
+        uses: ZhongRuoyu/setup-llvm@e2e934730b624f441362ce6b5848444ace2ad688
+        with:
+          llvm-version: 22
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2.2.0
+        with:
+          cmake-version: 4.x
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_C_COMPILER="${{ matrix.cc }}" \
+          -DCMAKE_CXX_COMPILER="${{ matrix.cxx }}" \
+          -DCMAKE_PREFIX_PATH="${{ matrix.llvm }}"
+
+      - name: Build with CMake
+        run: cmake --build build --config Release

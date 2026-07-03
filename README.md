@@ -1,4 +1,4 @@
-![Banner](.github/assets/banner.png)
+![Logo](.github/assets/logo.svg)
 
 > [!WARNING]
 > **This project is currently under active development!**

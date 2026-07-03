@@ -55,7 +55,11 @@ typedef struct {
     nadir_ast_t *ast;
 
     nadir_table_t *constants;
+    nadir_table_t *addresses;
     nadir_table_t *procedures;
+
+    nadir_list_t *output;
+    nadir_u64_t expected;
 
     nadir_stack_t stack;
 } nadir_compiler_t;
@@ -79,6 +83,11 @@ static inline nadir_compiler_error_t nadir_compiler_error_new(const nadir_compil
  * @brief Creates a new compiler structure with the given abstract syntax tree.
  */
 [[nodiscard]] nadir_compiler_t *nadir_compiler_new(nadir_ast_t *ast);
+
+/**
+ * @brief Prepares the compiler by evaluating constants and procedures in the abstract syntax tree.
+ */
+nadir_compiler_error_t nadir_compiler_prepare(nadir_compiler_t *compiler);
 
 /**
  * @brief Runs the compiler on the given abstract syntax tree.

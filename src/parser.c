@@ -408,9 +408,7 @@ static nadir_parser_error_t nadir_parser_run_binary(nadir_parser_t *parser) {
     const auto declaration = (nadir_ast_declaration_t){
         .token = token,
         .kind = NADIR_AST_DECLARATION_KIND_BINARY,
-        .data.binary = {
-            .statements = statements
-        }
+        .data.binary.statements = statements
     };
 
     if (!nadir_list_append(parser->ast->declarations, &declaration)) {

@@ -40,7 +40,7 @@ const_expression  = { builtin_call | member | number }
 procedure_declaration    = { "procedure" ~ identifier ~ "(" ~ procedure_parameter_list? ~ ")" ~ "{" ~ procedure_statement+ ~ "}" }
 procedure_parameter_list = { type ~ ("," ~ type){,16} }
 procedure_statement      = { procedure_expression ~ ";" }
-procedure_expression     = { builtin_call | procedure_call | member | number }
+procedure_expression     = { builtin_call | member | number }
 
 binary_declaration = { "binary" ~ "{" ~ binary_statement* ~ "}" }
 binary_statement   = { binary_expression ~ ";" }
@@ -51,4 +51,4 @@ binary_expression  = { procedure_call | store_address }
 // =====================================================================
 optional_declaration = { const_declaration | procedure_declaration }
 required_declaration = { binary_declaration }
-assembly_declaration = { SOI ~ optional_declaration* ~ required_declaration ~ EOI }
+assembly_declaration = { SOI ~ optional_declaration* ~ required_declaration ~ optional_declaration* ~ EOI }

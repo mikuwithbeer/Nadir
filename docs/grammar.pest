@@ -9,7 +9,7 @@ COMMENT    = _{ "#" ~ (!"\n" ~ ANY)* }
 // Primitives and Tokens
 // =====================================================================
 
-builtin       = @{ (ASCII_ALPHA_LOWER | "_"){1, 127} }
+comptime      = @{ (ASCII_ALPHA_LOWER | "_"){1, 127} }
 number        = @{ ("+" | "-")? ~ ASCII_DIGIT{1, 40} }
 store_address = @{ "<" ~ (ASCII_ALPHA_UPPER | "_"){1, 127} }
 load_address  = @{ ">" ~ (ASCII_ALPHA_UPPER | "_"){1, 127} }
@@ -21,12 +21,12 @@ member        = @{ identifier ~ "." ~ identifier }
 // Call Syntax
 // =====================================================================
 
-builtin_call          = { "@" ~ identifier ~ "(" ~ builtin_argument_list? ~ ")" }
-builtin_argument      = { builtin_call | member | type | number }
-builtin_argument_list = { builtin_argument ~ ("," ~ builtin_argument){,16} }
+comptime_call          = { "@" ~ identifier ~ "(" ~ comptime_argument_list? ~ ")" }
+comptime_argument      = { comptime_call | member | type | number }
+comptime_argument_list = { comptime_argument ~ ("," ~ comptime_argument){,16} }
 
 procedure_call          = { identifier ~ "(" ~ procedure_argument_list? ~ ")" }
-procedure_argument      = { builtin_call | load_address | member | number }
+procedure_argument      = { comptime_call | load_address | member | number }
 procedure_argument_list = { procedure_argument ~ ("," ~ procedure_argument){,16} }
 
 // =====================================================================
@@ -35,12 +35,12 @@ procedure_argument_list = { procedure_argument ~ ("," ~ procedure_argument){,16}
 
 const_declaration = { "constant" ~ identifier ~ "{" ~ const_statement+ ~ "}" }
 const_statement   = { identifier ~ "=" ~ const_expression ~ ";" }
-const_expression  = { builtin_call | member | number }
+const_expression  = { comptime_call | member | number }
 
 procedure_declaration    = { "procedure" ~ identifier ~ "(" ~ procedure_parameter_list? ~ ")" ~ "{" ~ procedure_statement+ ~ "}" }
 procedure_parameter_list = { type ~ ("," ~ type){,16} }
 procedure_statement      = { procedure_expression ~ ";" }
-procedure_expression     = { builtin_call | member | number }
+procedure_expression     = { comptime_call | member | number }
 
 binary_declaration = { "binary" ~ "{" ~ binary_statement* ~ "}" }
 binary_statement   = { binary_expression ~ ";" }

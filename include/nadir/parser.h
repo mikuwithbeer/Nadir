@@ -7,7 +7,7 @@
 // > Constants                                                    < //
 // [--------------------------------------------------------------] //
 
-constexpr nadir_u8_t NADIR_PARSER_ARGUMENTS_MAX = 1 << 4;
+constexpr auto NADIR_PARSER_ARGUMENTS_MAXIMUM = 1 << 4;
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //

@@ -155,24 +155,24 @@ bool nadir_table_insert(nadir_table_t *table,
         table->entries = new_entries;
     }
 
+    // Find and locate the appropriate slot.
+    const auto entry = nadir_table_find(table->entries, table->capacity, key);
+    if (entry->is_used) {
+        return false;
+    }
+
+    // Copy the key into the entry and mark it as used.
+    strncpy(entry->key, key, NADIR_STRING_MAXIMUM - 1);
+    entry->key[NADIR_STRING_MAXIMUM - 1] = '\0';
+    entry->is_used = true;
+    ++table->length;
+
     // Allocate memory for the new value and copy the data into it.
     const auto new_value = malloc(table->size);
     if (new_value) {
         memcpy(new_value, value, table->size);
     } else {
         return false;
-    }
-
-    // Find and locate the appropriate slot.
-    const auto entry = nadir_table_find(table->entries, table->capacity, key);
-    if (entry->is_used) {
-        free(entry->value); // Free the old value before replacing it
-    } else {
-        strncpy(entry->key, key, NADIR_STRING_MAXIMUM - 1);
-        entry->key[NADIR_STRING_MAXIMUM - 1] = '\0';
-        entry->is_used = true;
-
-        ++table->length;
     }
 
     entry->value = new_value;

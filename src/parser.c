@@ -349,7 +349,7 @@ static nadir_parser_error_t nadir_parser_run_procedure_parameters(nadir_parser_t
 
         do {
             // Check if the maximum number of parameters has been reached.
-            if (parameters->length >= NADIR_PARSER_ARGUMENTS_MAX) {
+            if (parameters->length >= NADIR_PARSER_ARGUMENTS_MAXIMUM) {
                 return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_TOO_MANY_ARGUMENTS, next_token);
             }
 
@@ -623,7 +623,7 @@ static nadir_parser_error_t nadir_parser_run_call(nadir_parser_t *parser,
 
         do {
             // Check if the maximum number of arguments has been reached.
-            if (arguments->length >= NADIR_PARSER_ARGUMENTS_MAX) {
+            if (arguments->length >= NADIR_PARSER_ARGUMENTS_MAXIMUM) {
                 nadir_list_free(arguments);
                 return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_TOO_MANY_ARGUMENTS, next_token);
             }

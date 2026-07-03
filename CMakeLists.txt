@@ -14,6 +14,7 @@ add_library(NadirCore STATIC)
 add_library(Nadir::Core ALIAS NadirCore)
 
 target_sources(NadirCore PRIVATE
+    src/analyzer.c
     src/ast.c
     src/common.c
     src/lexer.c

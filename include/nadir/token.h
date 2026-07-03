@@ -7,24 +7,20 @@
 // > Constants                                                    < //
 // [--------------------------------------------------------------] //
 
-constexpr nadir_u8_t NADIR_TOKEN_BUFFER_SIZE = 1 << 6;
+constexpr auto NADIR_TOKEN_VALUE_MAXIMUM = (1 << 6) + 1;
 
-constexpr char NADIR_TOKEN_VALUE_COMMENT = '#';
-constexpr char NADIR_TOKEN_VALUE_COMPTIME = '@';
-
-constexpr char NADIR_TOKEN_VALUE_STORE_ADDRESS = '<';
-constexpr char NADIR_TOKEN_VALUE_LOAD_ADDRESS = '>';
-
-constexpr char NADIR_TOKEN_VALUE_LEFT_BRACE = '{';
-constexpr char NADIR_TOKEN_VALUE_RIGHT_BRACE = '}';
-
-constexpr char NADIR_TOKEN_VALUE_LEFT_PAREN = '(';
-constexpr char NADIR_TOKEN_VALUE_RIGHT_PAREN = ')';
-
-constexpr char NADIR_TOKEN_VALUE_EQUAL = '=';
-constexpr char NADIR_TOKEN_VALUE_COMMA = ',';
-constexpr char NADIR_TOKEN_VALUE_DOT = '.';
-constexpr char NADIR_TOKEN_VALUE_SEMICOLON = ';';
+constexpr auto NADIR_TOKEN_VALUE_COMMENT = '#';
+constexpr auto NADIR_TOKEN_VALUE_COMPTIME = '@';
+constexpr auto NADIR_TOKEN_VALUE_STORE_ADDRESS = '<';
+constexpr auto NADIR_TOKEN_VALUE_LOAD_ADDRESS = '>';
+constexpr auto NADIR_TOKEN_VALUE_LEFT_BRACE = '{';
+constexpr auto NADIR_TOKEN_VALUE_RIGHT_BRACE = '}';
+constexpr auto NADIR_TOKEN_VALUE_LEFT_PAREN = '(';
+constexpr auto NADIR_TOKEN_VALUE_RIGHT_PAREN = ')';
+constexpr auto NADIR_TOKEN_VALUE_EQUAL = '=';
+constexpr auto NADIR_TOKEN_VALUE_COMMA = ',';
+constexpr auto NADIR_TOKEN_VALUE_DOT = '.';
+constexpr auto NADIR_TOKEN_VALUE_SEMICOLON = ';';
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //
@@ -37,16 +33,13 @@ typedef enum : nadir_u8_t {
     NADIR_TOKEN_KIND_NUMBER,
     NADIR_TOKEN_KIND_IDENT,
     NADIR_TOKEN_KIND_COMPTIME,
-
     NADIR_TOKEN_KIND_STORE_ADDRESS,
     NADIR_TOKEN_KIND_LOAD_ADDRESS,
 
     NADIR_TOKEN_KIND_LEFT_BRACE,
     NADIR_TOKEN_KIND_RIGHT_BRACE,
-
     NADIR_TOKEN_KIND_LEFT_PAREN,
     NADIR_TOKEN_KIND_RIGHT_PAREN,
-
     NADIR_TOKEN_KIND_EQUAL,
     NADIR_TOKEN_KIND_COMMA,
     NADIR_TOKEN_KIND_DOT,
@@ -77,7 +70,7 @@ typedef struct {
     nadir_u64_t line;
     nadir_u64_t column;
 
-    char value[NADIR_TOKEN_BUFFER_SIZE];
+    char value[NADIR_TOKEN_VALUE_MAXIMUM];
     nadir_u64_t value_length;
 
     // Extra data for the token, depending on token type.

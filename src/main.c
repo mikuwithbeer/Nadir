@@ -11,16 +11,20 @@ int main(void) {
             "    A = 1;\n"
             "    B = @mul(Register.A, 10);\n"
             "    C = @mul(Register.B, 10);\n"
-            "    D = @div(Register.C, 7);\n"
             "}\n"
             "\n"
-            "procedure jmp(u16, u8) {\n"
+            "procedure jmp(u8, u8) {\n"
             "    10;\n"
-            "    @bit_and(@at(0), 255);\n"
-            "    @bit_and(@bit_shr(@at(0), 8), 255);\n"
+            "    @at(1);"
+            "    @at(0);"
+            "}\n"
+            "procedure trying(u64, u8, u8) {\n"
+            "    31; @at(0);\n"
+            "    @mul(@at(1), 2);"
+            "    @at(2);"
             "}\n"
             "\n"
-            "binary { <LOL; jmp(); <LMAO; jmp(); <XD; }\n";
+            "binary { jmp(1, @mod(@add(Register.A, 1337), Register.B)); <WOW; trying(>WOW, 5, 10); }\n";
     const auto lexer = nadir_lexer_new(source, strlen(source));
     const auto lexer_result = nadir_lexer_collect(lexer);
     if (lexer_result.kind != NADIR_LEXER_ERROR_KIND_NONE) {
@@ -93,6 +97,13 @@ int main(void) {
             printf("%s = %llu\n", key, *value);
         }
     }
+
+    for (nadir_u64_t index = 0; index < compiler->output->length; ++index) {
+        const auto byte = *(nadir_u8_t *) nadir_list_get(compiler->output, index);
+        printf("%02x ", byte);
+    }
+
+    printf("\n");
 
     nadir_compiler_free(compiler);
     nadir_parser_free(parser);

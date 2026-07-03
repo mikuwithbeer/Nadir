@@ -8,10 +8,12 @@
  */
 typedef enum : nadir_u8_t {
     NADIR_COMPTIME_KIND_NONE,
+    NADIR_COMPTIME_KIND_AT,
     NADIR_COMPTIME_KIND_ADD,
     NADIR_COMPTIME_KIND_SUB,
     NADIR_COMPTIME_KIND_MUL,
     NADIR_COMPTIME_KIND_DIV,
+    NADIR_COMPTIME_KIND_MOD,
 } nadir_comptime_kind_t;
 
 /**
@@ -31,6 +33,7 @@ typedef struct {
  * @brief Runs the comptime operation and writes the result.
  */
 [[nodiscard]] bool nadir_comptime_run(const nadir_comptime_t *comptime,
+                                      const nadir_list_t *context,
                                       nadir_i128_t *result);
 
 #endif //NADIR_COMPTIME_H

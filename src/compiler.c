@@ -11,16 +11,22 @@
 nadir_compiler_error_t nadir_compiler_prepare_constant(nadir_compiler_t *compiler,
                                                        const nadir_ast_declaration_constant_t *declaration);
 
-nadir_compiler_error_t nadir_compiler_prepare_procedure(nadir_compiler_t *compiler,
+nadir_compiler_error_t nadir_compiler_prepare_procedure(const nadir_compiler_t *compiler,
                                                         const nadir_ast_declaration_procedure_t *declaration);
 
 nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
                                                      const nadir_ast_declaration_binary_t *declaration);
 
+nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
+                                                    const nadir_ast_expression_t *call,
+                                                    const nadir_compiler_procedure_t *procedure);
+
 nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
+                                               const nadir_list_t *context,
                                                const nadir_ast_expression_t *expression);
 
 nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compiler,
+                                                        const nadir_list_t *context,
                                                         const nadir_ast_expression_t *expression);
 
 // [--------------------------------------------------------------] //
@@ -70,7 +76,9 @@ nadir_compiler_t *nadir_compiler_new(nadir_ast_t *ast) {
     compiler->procedures = procedures;
 
     compiler->output = output;
+
     compiler->expected = 0;
+    compiler->location = 0;
 
     compiler->stack = nadir_stack_new(); // Initialize the stack
     return compiler;
@@ -85,7 +93,6 @@ nadir_compiler_error_t nadir_compiler_prepare(nadir_compiler_t *compiler) {
     }
 
     // Iterate through the declarations in the abstract syntax tree and prepare constants and procedures.
-    nadir_u64_t location = 0;
     for (nadir_u64_t index = 0; index < compiler->ast->declarations->length; ++index) {
         const auto declaration = (nadir_ast_declaration_t *) nadir_list_get(compiler->ast->declarations, index);
         switch (declaration->kind) {
@@ -96,7 +103,7 @@ nadir_compiler_error_t nadir_compiler_prepare(nadir_compiler_t *compiler) {
                 error = nadir_compiler_prepare_procedure(compiler, &declaration->data.procedure);
                 break;
             case NADIR_AST_DECLARATION_KIND_BINARY:
-                location = index;
+                compiler->location = index;
                 break;
         }
 
@@ -106,14 +113,42 @@ nadir_compiler_error_t nadir_compiler_prepare(nadir_compiler_t *compiler) {
     }
 
     // Prepare the binary declaration after all constants and procedures have been prepared.
-    const auto binary = (nadir_ast_declaration_t *) nadir_list_get(compiler->ast->declarations, location);
-    error = nadir_compiler_prepare_binary(compiler, &binary->data.binary);
+    const auto binary = (nadir_ast_declaration_t *) nadir_list_get(compiler->ast->declarations, compiler->location);
+    if (binary == nullptr) {
+        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_BINARY, nullptr);
+    }
 
-    return error;
+    return nadir_compiler_prepare_binary(compiler, &binary->data.binary);
 }
 
 nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler) {
     auto error = (nadir_compiler_error_t){};
+
+    // Directly access the binary declaration using the stored location index.
+    const auto binary = (nadir_ast_declaration_t *) nadir_list_get(compiler->ast->declarations, compiler->location);
+
+    // Run procedure calls in the binary statements.
+    for (nadir_u64_t index = 0; index < binary->data.binary.statements->length; ++index) {
+        // Check if the statement is a procedure call.
+        const auto statement = (nadir_ast_expression_t *) nadir_list_get(binary->data.binary.statements, index);
+        if (statement->kind != NADIR_AST_EXPRESSION_KIND_PROCEDURE_CALL) {
+            continue;
+        }
+
+        // Fetch the procedure from the procedure table.
+        const auto procedure_name = statement->token->value;
+        const auto procedure = (nadir_compiler_procedure_t *) nadir_table_fetch(compiler->procedures, procedure_name);
+        if (procedure == nullptr) {
+            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_PROCEDURE, statement->token);
+        }
+
+        // Run the procedure with the provided arguments.
+        error = nadir_compiler_run_procedure(compiler, statement, procedure);
+        if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+            return error;
+        }
+    }
+
     return error;
 }
 
@@ -145,7 +180,7 @@ nadir_compiler_error_t nadir_compiler_prepare_constant(nadir_compiler_t *compile
         const auto second = const_entry->name->value;
 
         // Evaluate the constant entry's value.
-        error = nadir_compiler_evaluate(compiler, &const_entry->value);
+        error = nadir_compiler_evaluate(compiler, nullptr, &const_entry->value);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
             return error;
         }
@@ -174,7 +209,7 @@ nadir_compiler_error_t nadir_compiler_prepare_constant(nadir_compiler_t *compile
     return error;
 }
 
-nadir_compiler_error_t nadir_compiler_prepare_procedure(nadir_compiler_t *compiler,
+nadir_compiler_error_t nadir_compiler_prepare_procedure(const nadir_compiler_t *compiler,
                                                         const nadir_ast_declaration_procedure_t *declaration) {
     const auto procedure = (nadir_compiler_procedure_t){
         .token = declaration->name,
@@ -192,9 +227,10 @@ nadir_compiler_error_t nadir_compiler_prepare_procedure(nadir_compiler_t *compil
 
 nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
                                                      const nadir_ast_declaration_binary_t *declaration) {
+    // Prepare addresses and calculate the expected output size.
     for (nadir_u64_t index = 0; index < declaration->statements->length; ++index) {
+        // Check if the statement is a store address operation.
         const auto statement = (nadir_ast_expression_t *) nadir_list_get(declaration->statements, index);
-
         if (statement->kind == NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS) {
             const auto address_name = statement->token->value;
             if (!nadir_table_insert(compiler->addresses, address_name, &compiler->expected)) {
@@ -204,6 +240,7 @@ nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
             continue;
         }
 
+        // Otherwise statement is a procedure call, guaranteed from parsing stage.
         const auto procedure_name = statement->token->value;
         const auto procedure = (nadir_compiler_procedure_t *) nadir_table_fetch(compiler->procedures, procedure_name);
         if (procedure == nullptr) {
@@ -216,7 +253,161 @@ nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
     return (nadir_compiler_error_t){};
 }
 
+
+nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
+                                                    const nadir_ast_expression_t *call,
+                                                    const nadir_compiler_procedure_t *procedure) {
+    auto error = (nadir_compiler_error_t){};
+
+    // Check if the number of arguments in the call matches the number of parameters in the procedure.
+    if (procedure->parameters->length != call->data.call.arguments->length) {
+        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_ARGUMENT_MISMATCH, call->token);
+    }
+
+    // Should be freed if an error occurs before the argument list is used.
+    const auto context = nadir_list_new(sizeof(nadir_i128_t));
+    if (context == nullptr) {
+        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, call->token);
+    }
+
+    // Evaluate each argument in the call and check if it matches the expected parameter type.
+    for (nadir_u64_t index = 0; index < procedure->parameters->length; ++index) {
+        // Evaluate the argument expression.
+        const auto argument = (nadir_ast_expression_t *) nadir_list_get(call->data.call.arguments, index);
+        error = nadir_compiler_evaluate(compiler, nullptr, argument);
+        if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+            nadir_list_free(context);
+            return error;
+        }
+
+        // Pop the evaluated argument value from the stack.
+        nadir_i128_t value;
+        if (!nadir_stack_pop(&compiler->stack, &value)) {
+            nadir_list_free(context);
+            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_STACK_FAILED, call->token);
+        }
+
+        // Check if the argument value matches the expected parameter type.
+        const auto type = (nadir_token_kind_t *) nadir_list_get(procedure->parameters, index);
+        switch (*type) {
+            case NADIR_TOKEN_KIND_TYPE_U8: {
+                const auto value_u8 = (nadir_u8_t) value;
+                if (value != value_u8) {
+                    nadir_list_free(context);
+                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH, call->token);
+                }
+
+                break;
+            }
+            case NADIR_TOKEN_KIND_TYPE_U16: {
+                const auto value_u16 = (nadir_u16_t) value;
+                if (value != value_u16) {
+                    nadir_list_free(context);
+                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH, call->token);
+                }
+
+                break;
+            }
+            case NADIR_TOKEN_KIND_TYPE_U32: {
+                const auto value_u32 = (nadir_u32_t) value;
+                if (value != value_u32) {
+                    nadir_list_free(context);
+                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH, call->token);
+                }
+
+                break;
+            }
+            case NADIR_TOKEN_KIND_TYPE_U64: {
+                const auto value_u64 = (nadir_u64_t) value;
+                if (value != value_u64) {
+                    nadir_list_free(context);
+                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH, call->token);
+                }
+
+                break;
+            }
+            case NADIR_TOKEN_KIND_TYPE_I8: {
+                const auto value_i8 = (nadir_i8_t) value;
+                if (value != value_i8) {
+                    nadir_list_free(context);
+                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH, call->token);
+                }
+
+                break;
+            }
+            case NADIR_TOKEN_KIND_TYPE_I16: {
+                const auto value_i16 = (nadir_i16_t) value;
+                if (value != value_i16) {
+                    nadir_list_free(context);
+                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH, call->token);
+                }
+
+                break;
+            }
+            case NADIR_TOKEN_KIND_TYPE_I32: {
+                const auto value_i32 = (nadir_i32_t) value;
+                if (value != value_i32) {
+                    nadir_list_free(context);
+                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH, call->token);
+                }
+
+                break;
+            }
+            case NADIR_TOKEN_KIND_TYPE_I64: {
+                const auto value_i64 = (nadir_i64_t) value;
+                if (value != value_i64) {
+                    nadir_list_free(context);
+                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH, call->token);
+                }
+
+                break;
+            }
+            default:
+                // Unreachable.
+                break;
+        }
+
+        if (!nadir_list_append(context, &value)) {
+            nadir_list_free(context);
+            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, call->token);
+        }
+    }
+
+    // Evaluate each statement in the procedure and push the resulting values to the output list.
+    for (nadir_u64_t index = 0; index < procedure->statements->length; ++index) {
+        // Evaluate the statement in the context of the procedure's arguments.
+        const auto statement = (nadir_ast_expression_t *) nadir_list_get(procedure->statements, index);
+        error = nadir_compiler_evaluate(compiler, context, statement);
+        if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+            nadir_list_free(context);
+            return error;
+        }
+
+        // Pop the evaluated value from the stack.
+        nadir_i128_t value;
+        if (!nadir_stack_pop(&compiler->stack, &value)) {
+            nadir_list_free(context);
+            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_STACK_FAILED, call->token);
+        }
+
+        // Check if the value can be represented as a byte.
+        nadir_u8_t output_byte = (nadir_u8_t) value;
+        if (output_byte != value) {
+            nadir_list_free(context);
+            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH, call->token);
+        }
+
+        if (!nadir_list_append(compiler->output, &value)) {
+            nadir_list_free(context);
+            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, call->token);
+        }
+    }
+
+    return error;
+}
+
 nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
+                                               const nadir_list_t *context,
                                                const nadir_ast_expression_t *expression) {
     auto error = (nadir_compiler_error_t){};
 
@@ -252,13 +443,24 @@ nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
 
             break;
         case NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL:
-            error = nadir_compiler_evaluate_comptime(compiler, expression);
-            break;
-        case NADIR_AST_EXPRESSION_KIND_PROCEDURE_CALL:
-            break;
-        case NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS:
+            error = nadir_compiler_evaluate_comptime(compiler, context, expression);
             break;
         case NADIR_AST_EXPRESSION_KIND_LOAD_ADDRESS:
+            // Fetch the address from the address table.
+            const auto address_name = expression->token->value;
+            const auto address = (nadir_u64_t *) nadir_table_fetch(compiler->addresses, address_name);
+            if (address == nullptr) {
+                error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_ADDRESS, expression->token);
+                break;
+            }
+
+            if (!nadir_stack_push(&compiler->stack, *address)) {
+                error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_STACK_FAILED, expression->token);
+            }
+
+            break;
+        default:
+            // Unreachable.
             break;
     }
 
@@ -266,6 +468,7 @@ nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
 }
 
 nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compiler,
+                                                        const nadir_list_t *context,
                                                         const nadir_ast_expression_t *expression) {
     auto error = (nadir_compiler_error_t){};
 
@@ -280,7 +483,7 @@ nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compil
         const auto argument = (nadir_ast_expression_t *) nadir_list_get(expression->data.call.arguments, index);
 
         // Evaluate the argument expression.
-        error = nadir_compiler_evaluate(compiler, argument);
+        error = nadir_compiler_evaluate(compiler, context, argument);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
             nadir_list_free(arguments);
             return error;
@@ -313,7 +516,7 @@ nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compil
 
     // Evaluate the compile-time procedure with the given arguments.
     nadir_i128_t result;
-    if (!nadir_comptime_run(&comptime, &result)) {
+    if (!nadir_comptime_run(&comptime, context, &result)) {
         nadir_list_free(arguments);
         return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_COMPTIME_FAILED, expression->token);
     }

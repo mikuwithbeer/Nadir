@@ -20,6 +20,11 @@ typedef enum [[nodiscard]] : nadir_u8_t {
     NADIR_COMPILER_ERROR_KIND_UNDEFINED_CONSTANT,
     NADIR_COMPILER_ERROR_KIND_UNDEFINED_COMPTIME,
     NADIR_COMPILER_ERROR_KIND_UNDEFINED_PROCEDURE,
+    NADIR_COMPILER_ERROR_KIND_UNDEFINED_ADDRESS,
+    NADIR_COMPILER_ERROR_KIND_UNDEFINED_BINARY,
+    NADIR_COMPILER_ERROR_KIND_ARGUMENT_MISMATCH,
+    NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH,
+    NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH,
 } nadir_compiler_error_kind_t;
 
 /**
@@ -60,7 +65,9 @@ typedef struct {
     nadir_table_t *procedures;
 
     nadir_list_t *output;
+
     nadir_u64_t expected;
+    nadir_u64_t location;
 
     nadir_stack_t stack;
 } nadir_compiler_t;

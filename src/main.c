@@ -24,7 +24,9 @@ int main(void) {
             "    @at(2);"
             "}\n"
             "\n"
-            "binary { jmp(1, @mod(@add(Register.A, 1337), Register.B)); <WOW; trying(>WOW, 5, 10); }\n";
+            "binary { jmp(1, @mod(@add(Register.A, 1337), Other.Second)); <WOW; trying(>WOW, 5, 10); }\n"
+            "constant Other { First = @mod(10, 3); Second = @add(Other.First, 10); }";
+
     const auto lexer = nadir_lexer_new(source, strlen(source));
     const auto lexer_result = nadir_lexer_collect(lexer);
     if (lexer_result.kind != NADIR_LEXER_ERROR_KIND_NONE) {
@@ -94,7 +96,7 @@ int main(void) {
             const auto key = compiler->addresses->entries[index].key;
             const auto value = (nadir_u64_t *) compiler->addresses->entries[index].value;
 
-            printf("%s = %llu\n", key, *value);
+            printf("<%s = %llu\n", key, *value);
         }
     }
 

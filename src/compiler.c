@@ -200,9 +200,17 @@ nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
             if (!nadir_table_insert(compiler->addresses, address_name, &compiler->expected)) {
                 return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_TABLE_FAILED, statement->token);
             }
-        } else {
-            ++compiler->expected;
+
+            continue;
         }
+
+        const auto procedure_name = statement->token->value;
+        const auto procedure = (nadir_compiler_procedure_t *) nadir_table_fetch(compiler->procedures, procedure_name);
+        if (procedure == nullptr) {
+            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_PROCEDURE, statement->token);
+        }
+
+        compiler->expected += procedure->statements->length;
     }
 
     return (nadir_compiler_error_t){};

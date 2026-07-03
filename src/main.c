@@ -20,7 +20,7 @@ int main(void) {
             "    @bit_and(@bit_shr(@at(0), 8), 255);\n"
             "}\n"
             "\n"
-            "binary { <LOL; jmp(); }\n";
+            "binary { <LOL; jmp(); <LMAO; jmp(); <XD; }\n";
     const auto lexer = nadir_lexer_new(source, strlen(source));
     const auto lexer_result = nadir_lexer_collect(lexer);
     if (lexer_result.kind != NADIR_LEXER_ERROR_KIND_NONE) {
@@ -42,11 +42,25 @@ int main(void) {
     }
 
     const auto compiler = nadir_compiler_new(parser->ast);
-    const auto compiler_result = nadir_compiler_run(compiler);
+    auto compiler_result = nadir_compiler_prepare(compiler);
+    if (compiler_result.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+        printf("Prepare Error: %d, Token: %s, Line: %llu, Column: %llu\n", compiler_result.kind,
+               compiler_result.token->value,
+               compiler_result.token->line, compiler_result.token->column);
+        nadir_compiler_free(compiler);
+        nadir_parser_free(parser);
+        nadir_lexer_free(lexer);
+        return 1;
+    }
+
+    compiler_result = nadir_compiler_run(compiler);
     if (compiler_result.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
         printf("Compile Error: %d, Token: %s, Line: %llu, Column: %llu\n", compiler_result.kind,
                compiler_result.token->value,
                compiler_result.token->line, compiler_result.token->column);
+        nadir_compiler_free(compiler);
+        nadir_parser_free(parser);
+        nadir_lexer_free(lexer);
         return 1;
     }
 
@@ -68,6 +82,15 @@ int main(void) {
             const auto value = (nadir_compiler_procedure_t *) compiler->procedures->entries[index].value;
 
             printf("%s/%llu: %llu statements\n", key, value->parameters->length, value->statements->length);
+        }
+    }
+
+    for (nadir_u64_t index = 0; index < compiler->addresses->capacity; ++index) {
+        if (compiler->addresses->entries[index].is_used) {
+            const auto key = compiler->addresses->entries[index].key;
+            const auto value = (nadir_u64_t *) compiler->addresses->entries[index].value;
+
+            printf("%s = %llu\n", key, *value);
         }
     }
 

@@ -10,7 +10,7 @@ cmake_install.cmake
 Makefile
 *.cmake
 
-# C/C++ compiled objects
+# Compiled objects
 *.o
 *.obj
 *.a
@@ -19,6 +19,7 @@ Makefile
 *.dll
 *.lib
 *.bin
+*.out
 
 # IDEs
 .idea/

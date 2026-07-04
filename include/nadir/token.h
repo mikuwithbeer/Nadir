@@ -106,24 +106,24 @@ static inline bool nadir_token_value_whitespace(const char character) {
 }
 
 /**
- * @brief Checks if a character is an uppercase alphabetic character with underscore (A-Z, _).
+ * @brief Checks if a character is an uppercase alphabetic character (A-Z).
  */
-static inline bool nadir_token_value_upper_underscore(const char character) {
-    return (character >= 'A' && character <= 'Z') || character == '_';
+static inline bool nadir_token_value_uppercase(const char character) {
+    return character >= 'A' && character <= 'Z';
 }
 
 /**
- * @brief Checks if a character is a lowercase alphabetic character with underscore (a-z, _).
+ * @brief Checks if a character is a lowercase alphabetic character (a-z).
  */
-static inline bool nadir_token_value_lower_underscore(const char character) {
-    return (character >= 'a' && character <= 'z') || character == '_';
+static inline bool nadir_token_value_lowercase(const char character) {
+    return character >= 'a' && character <= 'z';
 }
 
 /**
  * @brief Checks if a character is an alphabetic character (a-z, A-Z).
  */
-static inline bool nadir_token_value_alpha(const char character) {
-    return (character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z');
+static inline bool nadir_token_value_underscore(const char character) {
+    return character == '_';
 }
 
 /**
@@ -151,7 +151,7 @@ static inline bool nadir_token_value_single(const char character) {
 /**
  * @brief Checks if a token kind is a type token.
  */
-static inline bool nadir_token_is_type(const nadir_token_kind_t kind) {
+static inline bool nadir_token_value_type(const nadir_token_kind_t kind) {
     return kind >= NADIR_TOKEN_KIND_TYPE_U8 && kind <= NADIR_TOKEN_KIND_TYPE_I64;
 }
 

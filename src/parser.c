@@ -395,7 +395,7 @@ static nadir_parser_error_t nadir_parser_run_procedure_parameters(nadir_parser_t
 
             // Check if the token is a valid parameter type.
             const auto kind = next_token->kind;
-            if (nadir_token_is_type(kind)) {
+            if (nadir_token_value_type(kind)) {
                 if (!nadir_list_append(parameters, &kind)) {
                     return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, next_token);
                 }
@@ -569,7 +569,7 @@ static nadir_parser_error_t nadir_parser_run_expression(nadir_parser_t *parser,
     }
 
     // Parse type literals.
-    if (nadir_token_is_type(token->kind)) {
+    if (nadir_token_value_type(token->kind)) {
         token = nadir_parser_advance(parser);
         if (token == nullptr) {
             return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);

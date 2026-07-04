@@ -49,6 +49,16 @@ bool nadir_cli_parse(nadir_cli_t *cli,
                      char **argv);
 
 /**
+ * @brief Prints the help message to the standard output.
+ */
+void nadir_cli_help(void);
+
+/**
+ * @brief Prints the version information to the standard output.
+ */
+void nadir_cli_version(void);
+
+/**
  * @brief Loads the given input buffer.
  */
 bool nadir_cli_read(nadir_cli_t *cli);

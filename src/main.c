@@ -15,6 +15,18 @@ int main(const int argc,
         return 1;
     }
 
+    if (cli.help) {
+        nadir_cli_help();
+        nadir_cli_close(&cli);
+        return 0;
+    }
+
+    if (cli.version) {
+        nadir_cli_version();
+        nadir_cli_close(&cli);
+        return 0;
+    }
+
     if (cli.input_file == nullptr) {
         puts("No input file specified!");
 

@@ -67,6 +67,24 @@ bool nadir_cli_parse(nadir_cli_t *cli,
     return true;
 }
 
+void nadir_cli_help(void) {
+    puts("Usage: Nadir [OPTIONS]\n"
+        "\n"
+        "Options:\n"
+        "  -h, --help       Print this help message and exit\n"
+        "  -v, --version    Print the version number and exit\n"
+        "  -i, --input      Specify the input file to compile\n"
+        "  -o, --output     Specify the output file to write to\n"
+        "\n"
+        "Examples:\n"
+        "  Nadir --version\n"
+        "  Nadir -i src/main.asm -o main.bin");
+}
+
+void nadir_cli_version(void) {
+    printf("Nadir Assembler v%s\n", NADIR_VERSION);
+}
+
 bool nadir_cli_read(nadir_cli_t *cli) {
     FILE *input_file = fopen(cli->input_file, "rb");
     if (input_file == nullptr) {

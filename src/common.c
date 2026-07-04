@@ -21,8 +21,8 @@
 
 bool nadir_i128_decode(const char *input,
                        nadir_i128_t *value) {
-    auto result = (typeof(*value)) 0;
-    auto negative = false;
+    nadir_i128_t result = 0;
+    bool negative = false;
 
     // Check for sign.
     if (*input == '-') {
@@ -279,7 +279,7 @@ static nadir_table_entry_t *nadir_table_grow(nadir_table_t *table) {
 
         // Rehash the old entry into the new table.
         if (old_entry->is_used) {
-            auto *new_slot = nadir_table_find(new_entries, new_capacity, old_entry->key);
+            const auto new_slot = nadir_table_find(new_entries, new_capacity, old_entry->key);
             *new_slot = *old_entry;
         }
     }

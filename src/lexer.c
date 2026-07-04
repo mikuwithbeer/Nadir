@@ -211,6 +211,8 @@ static nadir_lexer_error_t nadir_lexer_collect_default(nadir_lexer_t *lexer,
         return error;
     }
 
+    lexer->token.value[lexer->token.value_length++] = character; // Add the character
+
     if (!nadir_list_append(lexer->tokens, &lexer->token)) {
         error.kind = NADIR_LEXER_ERROR_KIND_OUT_OF_MEMORY;
     }

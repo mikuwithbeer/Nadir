@@ -11,7 +11,7 @@
  * @brief Lexer states for the assembler.
  */
 typedef enum : nadir_u8_t {
-    NADIR_LEXER_STATE_DEFAULT = 0,
+    NADIR_LEXER_STATE_DEFAULT,
     NADIR_LEXER_STATE_COMMENT,
     NADIR_LEXER_STATE_NUMBER,
     NADIR_LEXER_STATE_IDENT,
@@ -23,7 +23,7 @@ typedef enum : nadir_u8_t {
  * @brief Error kinds for the lexer.
  */
 typedef enum [[nodiscard]] : nadir_u8_t {
-    NADIR_LEXER_ERROR_KIND_NONE = 0,
+    NADIR_LEXER_ERROR_KIND_NONE,
     NADIR_LEXER_ERROR_KIND_BUFFER_OVERFLOW,
     NADIR_LEXER_ERROR_KIND_OUT_OF_MEMORY,
     NADIR_LEXER_ERROR_KIND_UNKNOWN_CHARACTER,
@@ -31,7 +31,6 @@ typedef enum [[nodiscard]] : nadir_u8_t {
     NADIR_LEXER_ERROR_KIND_INVALID_NUMBER,
     NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER,
     NADIR_LEXER_ERROR_KIND_UNEXPECTED_STATE,
-    NADIR_LEXER_ERROR_KIND_ALREADY_FOUND_BINARY,
 } nadir_lexer_error_kind_t;
 
 /**

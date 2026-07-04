@@ -54,6 +54,7 @@ target_sources(Core PRIVATE
     src/common.c
     src/compiler.c
     src/comptime.c
+    src/error.c
     src/lexer.c
     src/parser.c
     src/token.c

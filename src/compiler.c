@@ -338,7 +338,7 @@ nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
         }
 
         if (type_mismatch) {
-            error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH, call->token);
+            error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH, procedure_argument->token);
             goto cleanup;
         }
 
@@ -368,7 +368,7 @@ nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
         // Validate that the statement value fits within a byte.
         nadir_u8_t statement_byte = (nadir_u8_t) statement_value;
         if (statement_byte != statement_value) {
-            error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH, call->token);
+            error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH, statement->token);
             goto cleanup;
         }
 
@@ -409,7 +409,8 @@ nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
             // Look up the constant value.
             const nadir_compiler_constant_t *constant = nadir_table_fetch(compiler->constants, member_key);
             if (constant == nullptr) {
-                return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_CONSTANT, expression->token);
+                return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_CONSTANT,
+                                                expression->data.member.field);
             }
 
             error = nadir_compiler_stack_push(compiler, constant->value, expression->token);

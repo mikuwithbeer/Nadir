@@ -1,3 +1,7 @@
+constant Register {
+  Secret = @div(510, 2);
+}
+
 binary {
   move(Register.A, 10);
   move(Register.B, 20);
@@ -8,21 +12,16 @@ binary {
 }
 
 constant Register {
-  Secret = 254;
-}
-
-procedure noop() {
-  0;
-  Register.Secret;
-}
-
-constant Register {
   A = 1;
   B = @add(Register.A, 1);
   C = @add(Register.B, 1);
   D = @add(Register.C, 1);
   E = @add(Register.D, 1);
   F = @add(Register.E, 1);
+}
+
+procedure noop() {
+  0; Register.Secret;
 }
 
 procedure move(u8, u8) {

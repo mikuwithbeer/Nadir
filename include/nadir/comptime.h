@@ -3,6 +3,10 @@
 
 #include "nadir/common.h"
 
+// [--------------------------------------------------------------] //
+// > Data Structures                                              < //
+// [--------------------------------------------------------------] //
+
 /**
  * @brief Comptime kinds for the assembler.
  */
@@ -36,6 +40,10 @@ typedef struct {
     nadir_comptime_kind_t kind;
     nadir_list_t *arguments;
 } nadir_comptime_t;
+
+// [--------------------------------------------------------------] //
+// > Function Declarations                                        < //
+// [--------------------------------------------------------------] //
 
 /**
  * @brief Returns the comptime kind for the given name.

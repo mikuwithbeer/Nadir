@@ -1,9 +1,8 @@
 #include "nadir/cli.h"
-#include "nadir/lexer.h"
-#include "nadir/parser.h"
-#include "nadir/compiler.h"
+#include "nadir/error.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 static nadir_cli_t cli = {};
 static nadir_lexer_t *lexer = nullptr;
@@ -78,8 +77,9 @@ int main(const int argc,
 static nadir_state_t process_cli(const int argc,
                                  char **argv) {
     cli = nadir_cli_new();
+
     if (!nadir_cli_parse(&cli, argc, argv)) {
-        fprintf(stderr, "error: failed to parse command-line arguments.\n");
+        fprintf(stderr, "error: failed to parse command-line arguments\n");
         return NADIR_STATE_ERROR;
     }
 
@@ -94,7 +94,7 @@ static nadir_state_t process_cli(const int argc,
     }
 
     if (cli.input_file == nullptr) {
-        fprintf(stderr, "error: no input file specified.\n");
+        fprintf(stderr, "error: no input file specified\n");
         return NADIR_STATE_ERROR;
     }
 
@@ -108,9 +108,22 @@ static nadir_state_t process_cli(const int argc,
 
 static nadir_state_t process_lexer(void) {
     lexer = nadir_lexer_new(cli.input, cli.input_length);
-    const auto error = nadir_lexer_collect(lexer);
-    if (error.kind != NADIR_LEXER_ERROR_KIND_NONE) {
-        fprintf(stderr, "error: lexer error at line %llu, column %llu.\n", error.line, error.column);
+
+    const auto lexer_error = nadir_lexer_collect(lexer);
+    if (lexer_error.kind != NADIR_LEXER_ERROR_KIND_NONE) {
+        const auto error = (nadir_error_t){
+            .kind = NADIR_ERROR_KIND_LEXER,
+            .lexer = lexer_error,
+        };
+
+        const auto message = nadir_error_encode(&error);
+        if (message != nullptr) {
+            fprintf(stderr, "%s:%s\n", cli.input_file, message);
+            free(message);
+        } else {
+            fprintf(stderr, "error: lexer\n");
+        }
+
         return NADIR_STATE_ERROR;
     }
 
@@ -119,9 +132,22 @@ static nadir_state_t process_lexer(void) {
 
 static nadir_state_t process_parser(void) {
     parser = nadir_parser_new(lexer->tokens);
-    const auto error = nadir_parser_run(parser);
-    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
-        fprintf(stderr, "error: parser error.\n");
+
+    const auto parser_error = nadir_parser_run(parser);
+    if (parser_error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+        const auto error = (nadir_error_t){
+            .kind = NADIR_ERROR_KIND_PARSER,
+            .parser = parser_error,
+        };
+
+        const auto message = nadir_error_encode(&error);
+        if (message != nullptr) {
+            fprintf(stderr, "%s:%s\n", cli.input_file, message);
+            free(message);
+        } else {
+            fprintf(stderr, "error: parser\n");
+        }
+
         return NADIR_STATE_ERROR;
     }
 
@@ -130,15 +156,29 @@ static nadir_state_t process_parser(void) {
 
 static nadir_state_t process_compiler(void) {
     compiler = nadir_compiler_new(parser->ast);
-    auto error = nadir_compiler_prepare(compiler);
-    if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-        fprintf(stderr, "error: compiler phase 1 error.\n");
-        return NADIR_STATE_ERROR;
+
+    auto compiler_error = nadir_compiler_prepare(compiler);
+    if (compiler_error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+        goto print;
     }
 
-    error = nadir_compiler_run(compiler);
-    if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-        fprintf(stderr, "error: compiler phase 2 error.\n");
+    compiler_error = nadir_compiler_run(compiler);
+
+print:
+    if (compiler_error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+        const auto error = (nadir_error_t){
+            .kind = NADIR_ERROR_KIND_COMPILER,
+            .compiler = compiler_error,
+        };
+
+        const auto message = nadir_error_encode(&error);
+        if (message != nullptr) {
+            fprintf(stderr, "%s:%s\n", cli.input_file, message);
+            free(message);
+        } else {
+            fprintf(stderr, "error: compiler\n");
+        }
+
         return NADIR_STATE_ERROR;
     }
 
@@ -151,7 +191,7 @@ static nadir_state_t process_success(void) {
         return NADIR_STATE_ERROR;
     }
 
-    printf("written %llu bytes to: %s\n", cli.output_length, cli.output_file);
+    printf("assembler %s to %s (%llu bytes)\n", cli.input_file, cli.output_file, compiler->output->length);
     return NADIR_STATE_EXIT;
 }
 

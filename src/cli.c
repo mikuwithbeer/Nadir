@@ -160,6 +160,10 @@ bool nadir_cli_write(nadir_cli_t *cli,
 }
 
 void nadir_cli_close(nadir_cli_t *cli) {
+    if (cli == nullptr) {
+        return;
+    }
+
     if (cli->input != nullptr) {
         free(cli->input);
         cli->input = nullptr;

@@ -2,6 +2,10 @@
 
 #include <string.h>
 
+// [--------------------------------------------------------------] //
+// > Function Implementations                                     < //
+// [--------------------------------------------------------------] //
+
 nadir_comptime_kind_t nadir_comptime_kind(const char *name) {
     if (strncmp(name, "at", 3) == 0) {
         return NADIR_COMPTIME_KIND_AT;

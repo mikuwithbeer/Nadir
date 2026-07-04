@@ -22,7 +22,7 @@ int main(void) {
             "    31; @at(0);\n"
             "    @mul(@at(1), 2);\n"
             "    @at(2);\n"
-            "    @cast(-100, u8);\n"
+            "    @cast(@abs(-100), u8);\n"
             "}\n"
             "binary { jmp(16, @mod(@add(Register.A, 1337), Other.Second)); <WOW; trying(>WOW, 5, 10); }\n"
             "constant Other { First = @mod(10, 3); Second = @add(Other.First, u32); }";

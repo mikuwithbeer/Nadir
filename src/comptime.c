@@ -11,6 +11,18 @@ nadir_comptime_kind_t nadir_comptime_kind(const char *name) {
         return NADIR_COMPTIME_KIND_CAST;
     }
 
+    if (strncmp(name, "abs", 4) == 0) {
+        return NADIR_COMPTIME_KIND_ABS;
+    }
+
+    if (strncmp(name, "max", 4) == 0) {
+        return NADIR_COMPTIME_KIND_MAX;
+    }
+
+    if (strncmp(name, "min", 4) == 0) {
+        return NADIR_COMPTIME_KIND_MIN;
+    }
+
     if (strncmp(name, "add", 4) == 0) {
         return NADIR_COMPTIME_KIND_ADD;
     }
@@ -123,6 +135,53 @@ bool nadir_comptime_run(const nadir_comptime_t *comptime,
                 case NADIR_TYPE_I64:
                     *result = (nadir_i64_t) *value;
                     break;
+            }
+
+            break;
+        }
+        case NADIR_COMPTIME_KIND_ABS: {
+            if (comptime->arguments->length != 1) {
+                return false;
+            }
+
+            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
+
+            if (*value < 0) {
+                *result = -*value;
+            } else {
+                *result = *value;
+            }
+
+            break;
+        }
+        case NADIR_COMPTIME_KIND_MAX: {
+            if (comptime->arguments->length != 2) {
+                return false;
+            }
+
+            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
+
+            if (*left > *right) {
+                *result = *left;
+            } else {
+                *result = *right;
+            }
+
+            break;
+        }
+        case NADIR_COMPTIME_KIND_MIN: {
+            if (comptime->arguments->length != 2) {
+                return false;
+            }
+
+            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
+
+            if (*left < *right) {
+                *result = *left;
+            } else {
+                *result = *right;
             }
 
             break;

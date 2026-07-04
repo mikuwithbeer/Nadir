@@ -285,7 +285,8 @@ nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
     // Should be freed after the procedure call is complete or an error occurs.
     const auto context = nadir_list_new(sizeof(nadir_i128_t));
     if (context == nullptr) {
-        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, call->token);
+        error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, call->token);
+        goto cleanup;
     }
 
     // Process each argument and validate its type against.
@@ -295,16 +296,14 @@ nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
         // Evaluate the argument expression to get its value.
         error = nadir_compiler_evaluate(compiler, nullptr, procedure_argument);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            nadir_list_free(context);
-            return error;
+            goto cleanup;
         }
 
         // Pop the argument value from the stack.
         nadir_i128_t argument_value;
         error = nadir_compiler_stack_pop(compiler, &argument_value, procedure_argument->token);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            nadir_list_free(context);
-            return error;
+            goto cleanup;
         }
 
         // Validate the argument type against the expected parameter type.
@@ -339,13 +338,13 @@ nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
         }
 
         if (type_mismatch) {
-            nadir_list_free(context);
-            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH, call->token);
+            error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH, call->token);
+            goto cleanup;
         }
 
         if (!nadir_list_append(context, &argument_value)) {
-            nadir_list_free(context);
-            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, call->token);
+            error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, call->token);
+            goto cleanup;
         }
     }
 
@@ -356,32 +355,34 @@ nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
         // Evaluate the statement expression in the context of the procedure call.
         error = nadir_compiler_evaluate(compiler, context, statement);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            nadir_list_free(context);
-            return error;
+            goto cleanup;
         }
 
         // Pop the statement value from the stack.
         nadir_i128_t statement_value;
         error = nadir_compiler_stack_pop(compiler, &statement_value, statement->token);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            nadir_list_free(context);
-            return error;
+            goto cleanup;
         }
 
         // Validate that the statement value fits within a byte.
         nadir_u8_t statement_byte = (nadir_u8_t) statement_value;
         if (statement_byte != statement_value) {
-            nadir_list_free(context);
-            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH, call->token);
+            error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH, call->token);
+            goto cleanup;
         }
 
         if (!nadir_list_append(compiler->output, &statement_byte)) {
-            nadir_list_free(context);
-            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, call->token);
+            error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, call->token);
+            goto cleanup;
         }
     }
 
-    nadir_list_free(context);
+cleanup:
+    if (context) {
+        nadir_list_free(context);
+    }
+
     return error;
 }
 
@@ -452,29 +453,27 @@ nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compil
         // Evaluate the argument expression with the context.
         error = nadir_compiler_evaluate(compiler, context, argument);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            nadir_list_free(arguments);
-            return error;
+            goto cleanup;
         }
 
         // Pop the argument value from the stack.
         nadir_i128_t argument_value;
         error = nadir_compiler_stack_pop(compiler, &argument_value, argument->token);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            nadir_list_free(arguments);
-            return error;
+            goto cleanup;
         }
 
         if (!nadir_list_append(arguments, &argument_value)) {
-            nadir_list_free(arguments);
-            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
+            error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
+            goto cleanup;
         }
     }
 
     // Determine the compile-time kind.
     const auto kind = nadir_comptime_kind(expression->token->value);
     if (kind == NADIR_COMPTIME_KIND_NONE) {
-        nadir_list_free(arguments);
-        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_COMPTIME, expression->token);
+        error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_COMPTIME, expression->token);
+        goto cleanup;
     }
 
     const auto comptime = (nadir_comptime_t){
@@ -485,12 +484,16 @@ nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compil
     // Evaluate the compile-time call with the provided context and arguments.
     nadir_i128_t comptime_result;
     if (!nadir_comptime_run(&comptime, context, &comptime_result)) {
-        nadir_list_free(arguments);
-        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_COMPTIME_FAILED, expression->token);
+        error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_COMPTIME_FAILED, expression->token);
+        goto cleanup;
     }
 
     error = nadir_compiler_stack_push(compiler, comptime_result, expression->token);
-    nadir_list_free(arguments);
+
+cleanup:
+    if (arguments) {
+        nadir_list_free(arguments);
+    }
 
     return error;
 }

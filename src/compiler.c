@@ -396,7 +396,9 @@ nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
             error = nadir_compiler_stack_push(compiler, expression->token->specific.number, expression->token);
             break;
         case NADIR_AST_EXPRESSION_KIND_TYPE:
-            error = nadir_compiler_stack_push(compiler, expression->token->kind, expression->token);
+            // Convert the token kind to the value.
+            const nadir_type_t type_value = expression->token->kind - NADIR_TOKEN_KIND_TYPE_U8;
+            error = nadir_compiler_stack_push(compiler, type_value, expression->token);
             break;
         case NADIR_AST_EXPRESSION_KIND_MEMBER: {
             // Format the member key to look up the constant value.

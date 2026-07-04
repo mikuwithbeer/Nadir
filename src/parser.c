@@ -6,14 +6,6 @@
 // > Forward Declarations                                         < //
 // [--------------------------------------------------------------] //
 
-[[nodiscard]] static nadir_token_t *nadir_parser_peek(const nadir_parser_t *parser);
-
-[[nodiscard]] static nadir_token_t *nadir_parser_advance(nadir_parser_t *parser);
-
-static nadir_parser_error_t nadir_parser_consume(nadir_parser_t *parser,
-                                                 nadir_token_kind_t kind,
-                                                 nadir_token_t **output);
-
 static nadir_parser_error_t nadir_parser_run_constant(nadir_parser_t *parser);
 
 static nadir_parser_error_t nadir_parser_run_constant_entry(nadir_parser_t *parser,
@@ -36,6 +28,53 @@ static nadir_parser_error_t nadir_parser_run_expression(nadir_parser_t *parser,
 static nadir_parser_error_t nadir_parser_run_call(nadir_parser_t *parser,
                                                   nadir_token_t *token,
                                                   nadir_ast_expression_t *expression);
+
+// [--------------------------------------------------------------] //
+// > Inline Functions                                             < //
+// [--------------------------------------------------------------] //
+
+static inline nadir_token_t *nadir_parser_peek(const nadir_parser_t *parser) {
+    if (parser->token_index >= parser->tokens->length) {
+        return nullptr;
+    }
+
+    return nadir_list_get(parser->tokens, parser->token_index);
+}
+
+static inline nadir_token_t *nadir_parser_advance(nadir_parser_t *parser) {
+    const auto token = nadir_parser_peek(parser);
+    if (token == nullptr) {
+        return nullptr;
+    }
+
+    ++parser->token_index;
+    return token;
+}
+
+static inline nadir_parser_error_t nadir_parser_consume(nadir_parser_t *parser,
+                                                        const nadir_token_kind_t kind,
+                                                        nadir_token_t **output) {
+    auto error = (nadir_parser_error_t){};
+
+    // Peek and check if the next token matches the expected kind.
+    auto token = nadir_parser_peek(parser);
+    if (token && token->kind == kind) {
+        token = nadir_parser_advance(parser);
+
+        // If the output pointer is not null, assign the token to it.
+        if (output != nullptr) {
+            *output = token;
+        }
+    } else {
+        if (kind == NADIR_TOKEN_KIND_SEMICOLON) {
+            error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_MISSING_SEMICOLON, token);
+        } else {
+            error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_TOKEN, token);
+        }
+    }
+
+    return error;
+}
 
 // [--------------------------------------------------------------] //
 // > Function Implementations                                     < //
@@ -104,49 +143,6 @@ void nadir_parser_free(nadir_parser_t *parser) {
 // [--------------------------------------------------------------] //
 // > Internal Functions                                           < //
 // [--------------------------------------------------------------] //
-
-static nadir_token_t *nadir_parser_peek(const nadir_parser_t *parser) {
-    if (parser->token_index >= parser->tokens->length) {
-        return nullptr;
-    }
-
-    return nadir_list_get(parser->tokens, parser->token_index);
-}
-
-static nadir_token_t *nadir_parser_advance(nadir_parser_t *parser) {
-    const auto token = nadir_parser_peek(parser);
-    if (token == nullptr) {
-        return nullptr;
-    }
-
-    ++parser->token_index;
-    return token;
-}
-
-static nadir_parser_error_t nadir_parser_consume(nadir_parser_t *parser,
-                                                 const nadir_token_kind_t kind,
-                                                 nadir_token_t **output) {
-    auto error = (nadir_parser_error_t){};
-
-    // Peek and check if the next token matches the expected kind.
-    auto token = nadir_parser_peek(parser);
-    if (token && token->kind == kind) {
-        token = nadir_parser_advance(parser);
-
-        // If the output pointer is not null, assign the token to it.
-        if (output != nullptr) {
-            *output = token;
-        }
-    } else {
-        if (kind == NADIR_TOKEN_KIND_SEMICOLON) {
-            error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_MISSING_SEMICOLON, token);
-        } else {
-            error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_TOKEN, token);
-        }
-    }
-
-    return error;
-}
 
 static nadir_parser_error_t nadir_parser_run_constant(nadir_parser_t *parser) {
     // Consume the constant declaration name.
@@ -384,7 +380,7 @@ static nadir_parser_error_t nadir_parser_run_procedure_parameters(nadir_parser_t
 }
 
 static nadir_parser_error_t nadir_parser_run_binary(nadir_parser_t *parser) {
-    const auto token = (nadir_token_t *) nadir_list_get(parser->tokens, parser->token_index - 1);
+    nadir_token_t *token = nadir_list_get(parser->tokens, parser->token_index - 1);
 
     // Consume the left brace.
     auto error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_LEFT_BRACE, nullptr);

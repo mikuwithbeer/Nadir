@@ -12,20 +12,20 @@ int main(void) {
             "    B = @mul(Register.A, 10);\n"
             "    C = @mul(Register.B, 10);\n"
             "}\n"
-            "\n"
             "procedure jmp(u8, u8) {\n"
             "    10;\n"
-            "    @at(1);"
-            "    @at(0);"
+            "    @bit_or(4, @bit_or(2, 1));\n"
+            "    @at(1);\n"
+            "    @bit_shl(@at(0), 1);\n"
             "}\n"
             "procedure trying(u64, u8, u8) {\n"
             "    31; @at(0);\n"
-            "    @mul(@at(1), 2);"
-            "    @at(2);"
+            "    @mul(@at(1), 2);\n"
+            "    @at(2);\n"
+            "    @cast(-100, u8);\n"
             "}\n"
-            "\n"
-            "binary { jmp(1, @mod(@add(Register.A, 1337), Other.Second)); <WOW; trying(>WOW, 5, 10); }\n"
-            "constant Other { First = @mod(10, 3); Second = @add(Other.First, 10); }";
+            "binary { jmp(16, @mod(@add(Register.A, 1337), Other.Second)); <WOW; trying(>WOW, 5, 10); }\n"
+            "constant Other { First = @mod(10, 3); Second = @add(Other.First, u32); }";
 
     const auto lexer = nadir_lexer_new(source, strlen(source));
     const auto lexer_result = nadir_lexer_collect(lexer);
@@ -35,7 +35,6 @@ int main(void) {
         nadir_lexer_free(lexer);
         return 1;
     }
-
 
     const auto parser = nadir_parser_new(lexer->tokens);
     const auto parser_result = nadir_parser_run(parser);

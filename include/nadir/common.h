@@ -38,6 +38,20 @@ constexpr auto NADIR_STACK_MAXIMUM = 1 << 10;
 // [--------------------------------------------------------------] //
 
 /**
+ * @brief Type kinds for the assembler and components.
+ */
+typedef enum : nadir_u8_t {
+    NADIR_TYPE_U8,
+    NADIR_TYPE_U16,
+    NADIR_TYPE_U32,
+    NADIR_TYPE_U64,
+    NADIR_TYPE_I8,
+    NADIR_TYPE_I16,
+    NADIR_TYPE_I32,
+    NADIR_TYPE_I64,
+} nadir_type_t;
+
+/**
  * @brief Generic list structure for the assembler and components.
  */
 typedef struct {

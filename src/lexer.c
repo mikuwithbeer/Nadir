@@ -137,14 +137,13 @@ static nadir_lexer_error_t nadir_lexer_collect_default(nadir_lexer_t *lexer,
         return error;
     }
 
-    // Initialize the temporary token.
-    lexer->token = nadir_token_new(NADIR_TOKEN_KIND_EOF, lexer->line, lexer->column);
-
     // Check for comment.
     if (character == NADIR_TOKEN_VALUE_COMMENT) {
         lexer->state = NADIR_LEXER_STATE_COMMENT;
         return error;
     }
+
+    lexer->token = nadir_token_new(NADIR_TOKEN_KIND_EOF, lexer->line, lexer->column);
 
     // Check for base 10 number.
     if (nadir_token_value_digit(character) || character == '-' || character == '+') {

@@ -7,6 +7,10 @@ nadir_comptime_kind_t nadir_comptime_kind(const char *name) {
         return NADIR_COMPTIME_KIND_AT;
     }
 
+    if (strncmp(name, "cast", 5) == 0) {
+        return NADIR_COMPTIME_KIND_CAST;
+    }
+
     if (strncmp(name, "add", 4) == 0) {
         return NADIR_COMPTIME_KIND_ADD;
     }
@@ -27,6 +31,30 @@ nadir_comptime_kind_t nadir_comptime_kind(const char *name) {
         return NADIR_COMPTIME_KIND_MOD;
     }
 
+    if (strncmp(name, "bit_and", 8) == 0) {
+        return NADIR_COMPTIME_KIND_BIT_AND;
+    }
+
+    if (strncmp(name, "bit_or", 7) == 0) {
+        return NADIR_COMPTIME_KIND_BIT_OR;
+    }
+
+    if (strncmp(name, "bit_xor", 8) == 0) {
+        return NADIR_COMPTIME_KIND_BIT_XOR;
+    }
+
+    if (strncmp(name, "bit_not", 8) == 0) {
+        return NADIR_COMPTIME_KIND_BIT_NOT;
+    }
+
+    if (strncmp(name, "bit_shl", 8) == 0) {
+        return NADIR_COMPTIME_KIND_BIT_SHL;
+    }
+
+    if (strncmp(name, "bit_shr", 8) == 0) {
+        return NADIR_COMPTIME_KIND_BIT_SHR;
+    }
+
     return NADIR_COMPTIME_KIND_NONE;
 }
 
@@ -45,19 +73,58 @@ bool nadir_comptime_run(const nadir_comptime_t *comptime,
                 return false;
             }
 
-            const auto value = (nadir_i128_t *) nadir_list_get(comptime->arguments, 0);
-            const auto position = (nadir_u64_t) *value;
+            const nadir_i128_t *argument = (nadir_i128_t *) nadir_list_get(comptime->arguments, 0);
 
-            if (position != *value) {
+            // Argument should be a location in the context list.
+            const auto as_location = (nadir_u64_t) *argument;
+            if (as_location != *argument) {
                 return false;
             }
 
-            const auto response = (nadir_i128_t *) nadir_list_get(context, position);
-            if (response == nullptr) {
+            const nadir_i128_t *context_value = nadir_list_get(context, as_location);
+            if (context_value == nullptr) {
                 return false;
             }
 
-            *result = *response;
+            *result = *context_value;
+            break;
+        }
+        case NADIR_COMPTIME_KIND_CAST: {
+            if (comptime->arguments->length != 2) {
+                return false;
+            }
+
+            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *type = nadir_list_get(comptime->arguments, 1);
+
+            // Convert number to the specified type.
+            switch ((nadir_type_t) *type) {
+                case NADIR_TYPE_U8:
+                    *result = (nadir_u8_t) *value;
+                    break;
+                case NADIR_TYPE_U16:
+                    *result = (nadir_u16_t) *value;
+                    break;
+                case NADIR_TYPE_U32:
+                    *result = (nadir_u32_t) *value;
+                    break;
+                case NADIR_TYPE_U64:
+                    *result = (nadir_u64_t) *value;
+                    break;
+                case NADIR_TYPE_I8:
+                    *result = (nadir_i8_t) *value;
+                    break;
+                case NADIR_TYPE_I16:
+                    *result = (nadir_i16_t) *value;
+                    break;
+                case NADIR_TYPE_I32:
+                    *result = (nadir_i32_t) *value;
+                    break;
+                case NADIR_TYPE_I64:
+                    *result = (nadir_i64_t) *value;
+                    break;
+            }
+
             break;
         }
         case NADIR_COMPTIME_KIND_ADD: {
@@ -65,8 +132,8 @@ bool nadir_comptime_run(const nadir_comptime_t *comptime,
                 return false;
             }
 
-            const auto left = (nadir_i128_t *) nadir_list_get(comptime->arguments, 0);
-            const auto right = (nadir_i128_t *) nadir_list_get(comptime->arguments, 1);
+            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
 
             *result = *left + *right;
             break;
@@ -76,8 +143,8 @@ bool nadir_comptime_run(const nadir_comptime_t *comptime,
                 return false;
             }
 
-            const auto left = (nadir_i128_t *) nadir_list_get(comptime->arguments, 0);
-            const auto right = (nadir_i128_t *) nadir_list_get(comptime->arguments, 1);
+            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
 
             *result = *left - *right;
             break;
@@ -87,8 +154,8 @@ bool nadir_comptime_run(const nadir_comptime_t *comptime,
                 return false;
             }
 
-            const auto left = (nadir_i128_t *) nadir_list_get(comptime->arguments, 0);
-            const auto right = (nadir_i128_t *) nadir_list_get(comptime->arguments, 1);
+            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
 
             *result = *left * *right;
             break;
@@ -98,8 +165,12 @@ bool nadir_comptime_run(const nadir_comptime_t *comptime,
                 return false;
             }
 
-            const auto left = (nadir_i128_t *) nadir_list_get(comptime->arguments, 0);
-            const auto right = (nadir_i128_t *) nadir_list_get(comptime->arguments, 1);
+            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
+
+            if (*right == 0) {
+                return false;
+            }
 
             *result = *left / *right;
             break;
@@ -109,10 +180,87 @@ bool nadir_comptime_run(const nadir_comptime_t *comptime,
                 return false;
             }
 
-            const auto left = (nadir_i128_t *) nadir_list_get(comptime->arguments, 0);
-            const auto right = (nadir_i128_t *) nadir_list_get(comptime->arguments, 1);
+            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
+
+            if (*right == 0) {
+                return false;
+            }
 
             *result = *left % *right;
+            break;
+        }
+        case NADIR_COMPTIME_KIND_BIT_AND: {
+            if (comptime->arguments->length != 2) {
+                return false;
+            }
+
+            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
+
+            *result = *left & *right;
+            break;
+        }
+        case NADIR_COMPTIME_KIND_BIT_OR: {
+            if (comptime->arguments->length != 2) {
+                return false;
+            }
+
+            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
+
+            *result = *left | *right;
+            break;
+        }
+        case NADIR_COMPTIME_KIND_BIT_XOR: {
+            if (comptime->arguments->length != 2) {
+                return false;
+            }
+
+            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
+
+            *result = *left ^ *right;
+            break;
+        }
+        case NADIR_COMPTIME_KIND_BIT_NOT: {
+            if (comptime->arguments->length != 1) {
+                return false;
+            }
+
+            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
+
+            *result = ~*value;
+            break;
+        }
+        case NADIR_COMPTIME_KIND_BIT_SHL: {
+            if (comptime->arguments->length != 2) {
+                return false;
+            }
+
+            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
+
+            if (*right < 0 || *right >= 128) {
+                return false;
+            }
+
+            *result = *left << *right;
+            break;
+        }
+        case NADIR_COMPTIME_KIND_BIT_SHR: {
+            if (comptime->arguments->length != 2) {
+                return false;
+            }
+
+            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
+
+            if (*right < 0 || *right >= 128) {
+                return false;
+            }
+
+            *result = *left >> *right;
             break;
         }
     }

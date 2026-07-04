@@ -95,10 +95,16 @@ typedef struct {
 // [--------------------------------------------------------------] //
 
 /**
- * @brief Decodes a string into a 128-bit signed integer.
+ * @brief Decodes a base-10 string into a 128-bit signed integer.
  */
-[[nodiscard]] bool nadir_i128_decode(const char *input,
-                                     nadir_i128_t *value);
+[[nodiscard]] bool nadir_i128_decode_base10(const char *input,
+                                            nadir_i128_t *value);
+
+/**
+ * @brief Decodes a base-16 string into a 128-bit signed integer.
+ */
+[[nodiscard]] bool nadir_i128_decode_base16(const char *input,
+                                            nadir_i128_t *value);
 
 /**
  * @brief Creates a new list with the given data size.

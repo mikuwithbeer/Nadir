@@ -134,6 +134,15 @@ static inline bool nadir_token_value_digit(const char character) {
 }
 
 /**
+ * @brief Checks if a character is a hexadecimal digit (0-9, A-F, a-f).
+ */
+static inline bool nadir_token_value_hexadecimal(const char character) {
+    return (character >= '0' && character <= '9') ||
+           (character >= 'A' && character <= 'F') ||
+           (character >= 'a' && character <= 'f');
+}
+
+/**
  * @brief Checks if a character is a single-character token.
  */
 static inline bool nadir_token_value_single(const char character) {

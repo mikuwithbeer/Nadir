@@ -3,12 +3,12 @@
 # ==========================================
 
 constant Chip8 {
-  ProgramStart = 512;
+  ProgramStart = $200;
 }
 
 constant Register {
-  V0 = 0; # X Coordinate
-  V1 = 1; # Y Coordinate
+  V0 = $0; # X Coordinate
+  V1 = $1; # Y Coordinate
 }
 
 # ==========================================
@@ -49,11 +49,11 @@ binary {
   do_jump_to_label(>LOOP);
 
   # --- Font Data ---
-  <LETTER_N; do_emit_bytes(144, 208, 176, 144, 144); # *..*.... | **.*.... | *.*..... | *..*.... | *..*....
-  <LETTER_A; do_emit_bytes( 96, 144, 224, 144, 144); # .**..... | *..*.... | ***..... | *..*.... | *..*....
-  <LETTER_D; do_emit_bytes(224, 144, 144, 144, 224); # ***..... | *..*.... | *..*.... | *..*.... | ***.....
-  <LETTER_I; do_emit_bytes(224,  64,  64,  64, 224); # ***..... | .*...... | .*...... | .*...... | ***.....
-  <LETTER_R; do_emit_bytes(224, 144, 224, 160, 144); # ***..... | *..*.... | ***..... | *.*..... | *..*....
+  <LETTER_N; do_emit_bytes($90, $D0, $B0, $90, $90); # *..*.... | **.*.... | *.*..... | *..*.... | *..*....
+  <LETTER_A; do_emit_bytes($60, $90, $E0, $90, $90); # .**..... | *..*.... | ***..... | *..*.... | *..*....
+  <LETTER_D; do_emit_bytes($E0, $90, $90, $90, $E0); # ***..... | *..*.... | *..*.... | *..*.... | ***.....
+  <LETTER_I; do_emit_bytes($E0, $40, $40, $40, $E0); # ***..... | .*...... | .*...... | .*...... | ***.....
+  <LETTER_R; do_emit_bytes($E0, $90, $E0, $A0, $90); # ***..... | *..*.... | ***..... | *.*..... | *..*....
 }
 
 # ==========================================
@@ -65,13 +65,13 @@ procedure do_emit_bytes(u8, u8, u8, u8, u8) {
 }
 
 procedure do_jump_to_label(u16) {
-  @bit_or(16, @bit_and(@bit_shr(@add(Chip8.ProgramStart, @at(0)), 8), 15));
-  @bit_and(@add(Chip8.ProgramStart, @at(0)), 255);
+  @bit_or($10, @bit_and(@bit_shr(@add(Chip8.ProgramStart, @at(0)), 8), $0F));
+  @bit_and(@add(Chip8.ProgramStart, @at(0)), $FF);
 }
 
 procedure do_load_index_label(u16) {
-  @bit_or(160, @bit_and(@bit_shr(@add(Chip8.ProgramStart, @at(0)), 8), 15));
-  @bit_and(@add(Chip8.ProgramStart, @at(0)), 255);
+  @bit_or($A0, @bit_and(@bit_shr(@add(Chip8.ProgramStart, @at(0)), 8), $0F));
+  @bit_and(@add(Chip8.ProgramStart, @at(0)), $FF);
 }
 
 # ==========================================
@@ -79,16 +79,15 @@ procedure do_load_index_label(u16) {
 # ==========================================
 
 procedure op_clear_screen() {
-  0;
-  224;
+  $00; $E0;
 }
 
 procedure op_load_register_byte(u8, u8) {
-  @bit_or(96, @bit_and(@at(0), 15));
+  @bit_or($60, @bit_and(@at(0), $0F));
   @at(1);
 }
 
 procedure op_draw_sprite(u8, u8, u8) {
-  @bit_or(208, @bit_and(@at(0), 15));
-  @bit_or(@bit_shl(@bit_and(@at(1), 15), 4), @bit_and(@at(2), 15));
+  @bit_or($D0, @bit_and(@at(0), $0F));
+  @bit_or(@bit_shl(@bit_and(@at(1), $0F), 4), @bit_and(@at(2), $0F));
 }

@@ -19,12 +19,11 @@
 // > Function Implementations                                     < //
 // [--------------------------------------------------------------] //
 
-bool nadir_i128_decode(const char *input,
-                       nadir_i128_t *value) {
+bool nadir_i128_decode_base10(const char *input,
+                              nadir_i128_t *value) {
     nadir_i128_t result = 0;
-    bool negative = false;
 
-    // Check for sign.
+    bool negative = false;
     if (*input == '-') {
         negative = true;
         ++input;
@@ -32,9 +31,15 @@ bool nadir_i128_decode(const char *input,
         ++input;
     }
 
-    // Loop through each character in the string.
-    while (*input >= '0' && *input <= '9') {
-        const auto digit = *input - '0';
+    while (true) {
+        int digit;
+        if (*input >= '0' && *input <= '9') {
+            digit = *input - '0';
+        } else if (*input == '\0') {
+            break;
+        } else {
+            return false;
+        }
 
         if (negative) {
             // Check for underflow.
@@ -55,9 +60,53 @@ bool nadir_i128_decode(const char *input,
         ++input;
     }
 
-    // Check if we reached the end of the string.
-    if (*input != '\0') {
-        return false;
+    *value = result;
+    return true;
+}
+
+bool nadir_i128_decode_base16(const char *input,
+                              nadir_i128_t *value) {
+    nadir_i128_t result = 0;
+
+    bool negative = false;
+    if (*input == '-') {
+        negative = true;
+        ++input;
+    } else if (*input == '+') {
+        ++input;
+    }
+
+    while (true) {
+        int digit;
+        if (*input >= '0' && *input <= '9') {
+            digit = *input - '0';
+        } else if (*input >= 'A' && *input <= 'F') {
+            digit = *input - 'A' + 10;
+        } else if (*input >= 'a' && *input <= 'f') {
+            digit = *input - 'a' + 10;
+        } else if (*input == '\0') {
+            break;
+        } else {
+            return false;
+        }
+
+        if (negative) {
+            // Check for underflow.
+            if (result < (NADIR_I128_MIN + digit) / 16) {
+                return false;
+            }
+
+            result = result * 16 - digit;
+        } else {
+            // Check for overflow.
+            if (result > (NADIR_I128_MAX - digit) / 16) {
+                return false;
+            }
+
+            result = result * 16 + digit;
+        }
+
+        ++input;
     }
 
     *value = result;

@@ -342,37 +342,37 @@ nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
         }
 
         // Validate the argument type against the expected parameter type.
-        bool type_mismatch = false;
+        bool is_valid_type = false;
         switch (*(nadir_token_kind_t *) nadir_list_get(procedure->parameters, index)) {
             case NADIR_TOKEN_KIND_TYPE_U8:
-                type_mismatch = argument_value != (nadir_u8_t) argument_value;
+                is_valid_type = argument_value >= NADIR_U8_MINIMUM && argument_value <= NADIR_U8_MAXIMUM;
                 break;
             case NADIR_TOKEN_KIND_TYPE_U16:
-                type_mismatch = argument_value != (nadir_u16_t) argument_value;
+                is_valid_type = argument_value >= NADIR_U16_MINIMUM && argument_value <= NADIR_U16_MAXIMUM;
                 break;
             case NADIR_TOKEN_KIND_TYPE_U32:
-                type_mismatch = argument_value != (nadir_u32_t) argument_value;
+                is_valid_type = argument_value >= NADIR_U32_MINIMUM && argument_value <= NADIR_U32_MAXIMUM;
                 break;
             case NADIR_TOKEN_KIND_TYPE_U64:
-                type_mismatch = argument_value != (nadir_u64_t) argument_value;
+                is_valid_type = argument_value >= NADIR_U64_MINIMUM && argument_value <= NADIR_U64_MAXIMUM;
                 break;
             case NADIR_TOKEN_KIND_TYPE_I8:
-                type_mismatch = argument_value != (nadir_i8_t) argument_value;
+                is_valid_type = argument_value >= NADIR_I8_MINIMUM && argument_value <= NADIR_I8_MAXIMUM;
                 break;
             case NADIR_TOKEN_KIND_TYPE_I16:
-                type_mismatch = argument_value != (nadir_i16_t) argument_value;
+                is_valid_type = argument_value >= NADIR_I16_MINIMUM && argument_value <= NADIR_I16_MAXIMUM;
                 break;
             case NADIR_TOKEN_KIND_TYPE_I32:
-                type_mismatch = argument_value != (nadir_i32_t) argument_value;
+                is_valid_type = argument_value >= NADIR_I32_MINIMUM && argument_value <= NADIR_I32_MAXIMUM;
                 break;
             case NADIR_TOKEN_KIND_TYPE_I64:
-                type_mismatch = argument_value != (nadir_i64_t) argument_value;
+                is_valid_type = argument_value >= NADIR_I64_MINIMUM && argument_value <= NADIR_I64_MAXIMUM;
                 break;
             default:
                 break; // Unreachable
         }
 
-        if (type_mismatch) {
+        if (!is_valid_type) {
             error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH, procedure_argument->token);
             goto cleanup;
         }

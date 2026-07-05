@@ -381,29 +381,18 @@ static nadir_lexer_error_t nadir_lexer_collect_ident(nadir_lexer_t *lexer,
         lexer->state = NADIR_LEXER_STATE_DEFAULT;
 
         // Check for keywords and types.
-        if (strncmp(lexer->token.value, "constant", 9) == 0) {
-            lexer->token.kind = NADIR_TOKEN_KIND_CONSTANT;
-        } else if (strncmp(lexer->token.value, "procedure", 10) == 0) {
-            lexer->token.kind = NADIR_TOKEN_KIND_PROCEDURE;
-        } else if (strncmp(lexer->token.value, "binary", 7) == 0) {
-            lexer->token.kind = NADIR_TOKEN_KIND_BINARY;
-        } else if (strncmp(lexer->token.value, "u8", 3) == 0) {
-            lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U8;
-        } else if (strncmp(lexer->token.value, "u16", 4) == 0) {
-            lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U16;
-        } else if (strncmp(lexer->token.value, "u32", 4) == 0) {
-            lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U32;
-        } else if (strncmp(lexer->token.value, "u64", 4) == 0) {
-            lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U64;
-        } else if (strncmp(lexer->token.value, "i8", 3) == 0) {
-            lexer->token.kind = NADIR_TOKEN_KIND_TYPE_I8;
-        } else if (strncmp(lexer->token.value, "i16", 4) == 0) {
-            lexer->token.kind = NADIR_TOKEN_KIND_TYPE_I16;
-        } else if (strncmp(lexer->token.value, "i32", 4) == 0) {
-            lexer->token.kind = NADIR_TOKEN_KIND_TYPE_I32;
-        } else if (strncmp(lexer->token.value, "i64", 4) == 0) {
-            lexer->token.kind = NADIR_TOKEN_KIND_TYPE_I64;
-        }
+        if (strncmp(lexer->token.value, "constant", 9) == 0) lexer->token.kind = NADIR_TOKEN_KIND_CONSTANT;
+        else if (strncmp(lexer->token.value, "procedure", 10) == 0) lexer->token.kind = NADIR_TOKEN_KIND_PROCEDURE;
+        else if (strncmp(lexer->token.value, "binary", 7) == 0) lexer->token.kind = NADIR_TOKEN_KIND_BINARY;
+        else if (strncmp(lexer->token.value, "u8", 3) == 0) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U8;
+        else if (strncmp(lexer->token.value, "u16", 4) == 0) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U16;
+        else if (strncmp(lexer->token.value, "u32", 4) == 0) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U32;
+        else if (strncmp(lexer->token.value, "u64", 4) == 0) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U64;
+        else if (strncmp(lexer->token.value, "i8", 3) == 0) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_I8;
+        else if (strncmp(lexer->token.value, "i16", 4) == 0) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_I16;
+        else if (strncmp(lexer->token.value, "i32", 4) == 0) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_I32;
+        else if (strncmp(lexer->token.value, "i64", 4) == 0) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_I64;
+        else lexer->token.kind = NADIR_TOKEN_KIND_IDENT;
 
         if (!nadir_list_append(lexer->tokens, &lexer->token)) {
             error.kind = NADIR_LEXER_ERROR_KIND_OUT_OF_MEMORY;

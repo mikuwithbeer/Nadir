@@ -1,3 +1,8 @@
+/**
+ * @file cli.c
+ * @brief The CLI implementation.
+ */
+
 #include "nadir/cli.h"
 
 #include <getopt.h>
@@ -8,6 +13,7 @@
 // > Data Structures                                              < //
 // [--------------------------------------------------------------] //
 
+// Command-line options for the assembler.
 static const struct option cli_options[5] = {
     {"help", no_argument, nullptr, 'h'},
     {"version", no_argument, nullptr, 'v'},
@@ -78,7 +84,7 @@ void nadir_cli_help(void) {
         "\n"
         "Examples:\n"
         "  Nadir --version\n"
-        "  Nadir -i src/main.asm -o main.bin");
+        "  Nadir -i main.asm -o main.bin");
 }
 
 void nadir_cli_version(void) {
@@ -101,7 +107,7 @@ bool nadir_cli_read(nadir_cli_t *cli) {
         return false;
     }
 
-    char *input_buffer = calloc((nadir_u64_t) input_size + 1, sizeof(char));
+    char *input_buffer = calloc((nadir_u64_t) input_size + 1, sizeof(char)); // One byte for the null terminator
     if (input_buffer == nullptr) {
         fclose(input_file);
         return false;
@@ -115,8 +121,6 @@ bool nadir_cli_read(nadir_cli_t *cli) {
         free(input_buffer);
         return false;
     }
-
-    input_buffer[input_length] = '\0'; // Null-terminate the input buffer
 
     cli->input = input_buffer;
     cli->input_length = input_length;

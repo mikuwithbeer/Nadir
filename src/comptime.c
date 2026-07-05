@@ -1,3 +1,8 @@
+/**
+ * @file comptime.c
+ * @brief The comptime implementation.
+ */
+
 #include "nadir/comptime.h"
 
 #include <string.h>
@@ -79,7 +84,7 @@ bool nadir_comptime_run(const nadir_comptime_t *comptime,
                         nadir_i128_t *result) {
     switch (comptime->kind) {
         case NADIR_COMPTIME_KIND_NONE:
-            return false;
+            return false; // Unreachable
         case NADIR_COMPTIME_KIND_AT: {
             if (context == nullptr) {
                 return false;
@@ -89,7 +94,7 @@ bool nadir_comptime_run(const nadir_comptime_t *comptime,
                 return false;
             }
 
-            const nadir_i128_t *argument = (nadir_i128_t *) nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *argument = nadir_list_get(comptime->arguments, 0);
 
             // Argument should be a location in the context list.
             const auto as_location = (nadir_u64_t) *argument;
@@ -231,6 +236,7 @@ bool nadir_comptime_run(const nadir_comptime_t *comptime,
             const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
             const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
 
+            // Guard against division by zero.
             if (*right == 0) {
                 return false;
             }
@@ -246,6 +252,7 @@ bool nadir_comptime_run(const nadir_comptime_t *comptime,
             const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
             const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
 
+            // Guard against division by zero.
             if (*right == 0) {
                 return false;
             }
@@ -304,6 +311,7 @@ bool nadir_comptime_run(const nadir_comptime_t *comptime,
             const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
             const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
 
+            // Guard against shifting by an invalid amount.
             if (*right < 0 || *right >= 128) {
                 return false;
             }
@@ -319,6 +327,7 @@ bool nadir_comptime_run(const nadir_comptime_t *comptime,
             const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
             const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
 
+            // Guard against shifting by an invalid amount.
             if (*right < 0 || *right >= 128) {
                 return false;
             }

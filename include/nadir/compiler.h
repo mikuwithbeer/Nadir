@@ -1,6 +1,14 @@
 #ifndef NADIR_COMPILER_H
 #define NADIR_COMPILER_H
 
+/**
+ * @file compiler.h
+ * @brief The compiler interface.
+ *
+ * This file defines the compiler structure and related constants for
+ * the assembler.
+ */
+
 #include "nadir/ast.h"
 
 // [--------------------------------------------------------------] //
@@ -42,7 +50,6 @@ typedef struct [[nodiscard]] {
  */
 typedef struct {
     nadir_token_t *token;
-
     nadir_i128_t value;
 } nadir_compiler_constant_t;
 
@@ -51,27 +58,25 @@ typedef struct {
  */
 typedef struct {
     nadir_token_t *token;
-
-    nadir_list_t *parameters;
-    nadir_list_t *statements;
+    nadir_list_t *parameters; // List of `nadir_token_kind_t`
+    nadir_list_t *statements; // List of `nadir_ast_expression_t`
 } nadir_compiler_procedure_t;
 
 /**
- * @brief Compiler structure for the compiler.
+ * @brief Compiler structure for the assembler.
  */
 typedef struct {
     nadir_ast_t *ast;
 
-    nadir_table_t *constants;
-    nadir_table_t *addresses;
-    nadir_table_t *procedures;
+    nadir_table_t *addresses; // Table of `nadir_u64_t`
+    nadir_table_t *constants; // Table of `nadir_compiler_constant_t`
+    nadir_table_t *procedures; // Table of `nadir_compiler_procedure_t`
 
-    nadir_list_t *output;
+    nadir_stack_t *stack;
+    nadir_list_t *output; // List of `nadir_u8_t`
 
-    nadir_u64_t binary_location;
-    nadir_u64_t binary_origin;
-
-    nadir_stack_t stack;
+    nadir_u64_t binary_location; // Index of the binary declaration
+    nadir_u64_t binary_origin; // Memory address origin for calculation
 } nadir_compiler_t;
 
 // [--------------------------------------------------------------] //
@@ -79,7 +84,7 @@ typedef struct {
 // [--------------------------------------------------------------] //
 
 /**
- * @brief Creates a new analyzer error with the given parameters.
+ * @brief Creates a new compiler error with the given kind and token.
  */
 static inline nadir_compiler_error_t nadir_compiler_error_new(const nadir_compiler_error_kind_t kind,
                                                               nadir_token_t *token) {
@@ -90,17 +95,17 @@ static inline nadir_compiler_error_t nadir_compiler_error_new(const nadir_compil
 }
 
 /**
- * @brief Creates a new compiler structure with the given abstract syntax tree.
+ * @brief Creates a new compiler with the given abstract syntax tree.
  */
 [[nodiscard]] nadir_compiler_t *nadir_compiler_new(nadir_ast_t *ast);
 
 /**
- * @brief Prepares the compiler by evaluating constants and procedures in the abstract syntax tree.
+ * @brief Prepares the compiler by processing the abstract syntax tree and populating the necessary tables.
  */
 nadir_compiler_error_t nadir_compiler_prepare(nadir_compiler_t *compiler);
 
 /**
- * @brief Runs the compiler on the given abstract syntax tree.
+ * @brief Runs the compiler to generate the output binary based on the prepared tables and abstract syntax tree.
  */
 nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler);
 

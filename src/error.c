@@ -1,3 +1,8 @@
+/**
+ * @file error.c
+ * @brief The error implementation.
+ */
+
 #include "nadir/error.h"
 
 #include <stdio.h>
@@ -13,7 +18,7 @@ char *nadir_error_encode(const nadir_error_t *error) {
         return nullptr;
     }
 
-    char *pointer = buffer;
+    auto pointer = buffer;
     auto written = 0;
     auto remaining = NADIR_ERROR_STRING_MAXIMUM;
 
@@ -44,7 +49,7 @@ char *nadir_error_encode(const nadir_error_t *error) {
                     snprintf(pointer,
                              remaining,
                              "unrecognized character '%c'",
-                             error->lexer.specific.character);
+                             error->lexer.character);
                     break;
                 case NADIR_LEXER_ERROR_KIND_NUMBER_TOO_LONG:
                     snprintf(pointer, remaining, "numeric literal is too long");
@@ -56,7 +61,7 @@ char *nadir_error_encode(const nadir_error_t *error) {
                     snprintf(pointer,
                              remaining,
                              "unexpected character '%c'",
-                             error->lexer.specific.character);
+                             error->lexer.character);
                     break;
                 case NADIR_LEXER_ERROR_KIND_UNEXPECTED_STATE:
                     snprintf(pointer, remaining, "encountered an invalid state");

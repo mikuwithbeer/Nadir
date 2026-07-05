@@ -1,6 +1,14 @@
 #ifndef NADIR_ERROR_H
 #define NADIR_ERROR_H
 
+/**
+ * @file error.h
+ * @brief The error interface.
+ *
+ * This file defines the error structure and related constants for
+ * the assembler.
+ */
+
 #include "nadir/lexer.h"
 #include "nadir/parser.h"
 #include "nadir/compiler.h"
@@ -9,7 +17,7 @@
 // > Constants                                                    < //
 // [--------------------------------------------------------------] //
 
-constexpr auto NADIR_ERROR_STRING_MAXIMUM = 1 << 9;
+constexpr auto NADIR_ERROR_STRING_MAXIMUM = 1 << 9; // 512 characters
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //

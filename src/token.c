@@ -1,3 +1,8 @@
+/**
+ * @file token.c
+ * @brief The token implementation.
+ */
+
 #include "nadir/token.h"
 
 // [--------------------------------------------------------------] //

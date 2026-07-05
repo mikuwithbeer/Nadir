@@ -5,8 +5,21 @@
 
 ---
 
-Assembler from rock bottom to one of a kind.
-Check out the [reference grammar](docs/grammar.pest) for the syntax details of the assembler.
+Nadir is a simple yet powerful, strongly typed, customizable assembler designed for ease of use and flexibility.
+
+---
+
+## First Public Release
+
+- [X] Complete the core assembler implementation.
+- [X] Adequate error checking and reporting.
+- [ ] Implement comprehensive test suite.
+- [ ] Publish an architecture overview and language syntax guide.
+- [ ] Provide curated examples for showcasing the capabilities.
+- [ ] Make sure the project runs flawlessly on three major platforms:
+    - [ ] Windows
+    - [ ] Linux
+    - [X] macOS
 
 ---
 

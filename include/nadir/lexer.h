@@ -1,7 +1,22 @@
 #ifndef NADIR_LEXER_H
 #define NADIR_LEXER_H
 
+/**
+ * @file lexer.h
+ * @brief The lexer interface.
+ *
+ * The lexer is responsible for tokenizing the input source code into
+ * a list of tokens that can be processed by the parser.
+ */
+
 #include "nadir/token.h"
+
+// [--------------------------------------------------------------] //
+// > Constants                                                    < //
+// [--------------------------------------------------------------] //
+
+constexpr auto NADIR_LEXER_NUMBER_BASE10_MAXIMUM = 41; // 40 digits + sign
+constexpr auto NADIR_LEXER_NUMBER_BASE16_MAXIMUM = (1 << 5) + 1; // 32 digits + sign
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //
@@ -38,22 +53,19 @@ typedef enum [[nodiscard]] : nadir_u8_t {
  * @brief Error structure for the lexer.
  */
 typedef struct [[nodiscard]] {
-    nadir_lexer_error_kind_t kind;
-
     nadir_u64_t line;
     nadir_u64_t column;
 
-    union {
-        char character;
-    } specific;
+    nadir_lexer_error_kind_t kind;
+    char character;
 } nadir_lexer_error_t;
 
 /**
  * @brief Lexer structure for the assembler.
  */
 typedef struct {
-    nadir_list_t *tokens;
-    nadir_token_t token;
+    nadir_list_t *tokens; // List of `nadir_token_t`
+    nadir_token_t token; // Temporary token for construction
 
     const char *source;
     nadir_u64_t source_length;
@@ -61,7 +73,6 @@ typedef struct {
 
     nadir_u64_t line;
     nadir_u64_t column;
-
     nadir_lexer_state_t state;
 } nadir_lexer_t;
 
@@ -75,30 +86,30 @@ typedef struct {
 static inline nadir_lexer_error_t nadir_lexer_error_new(const nadir_lexer_error_kind_t kind,
                                                         const nadir_u64_t line,
                                                         const nadir_u64_t column) {
-    auto error = (nadir_lexer_error_t){};
+    return (nadir_lexer_error_t){
+        .line = line,
+        .column = column,
 
-    error.kind = kind;
-    error.line = line;
-    error.column = column;
-
-    return error;
+        .kind = kind,
+        .character = '\0',
+    };
 }
 
 /**
- * @brief Creates a new lexer with the given source code.
+ * @brief Creates a new lexer with the given source and length.
  *
- * @warning Allocates memory for the lexer, which must be freed.
+ * @warning Allocates memory for the lexer and its associated resources.
  */
 [[nodiscard]] nadir_lexer_t *nadir_lexer_new(const char *source,
                                              nadir_u64_t source_length);
 
 /**
- * @brief Runs the lexer on the source code and collects tokens.
+ * @brief Collects tokens from the source and returns any lexer errors encountered.
  */
 nadir_lexer_error_t nadir_lexer_collect(nadir_lexer_t *lexer);
 
 /**
- * @brief Frees the memory allocated for the lexer.
+ * @brief Frees the lexer and its associated resources.
  */
 void nadir_lexer_free(nadir_lexer_t *lexer);
 

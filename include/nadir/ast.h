@@ -1,6 +1,14 @@
 #ifndef NADIR_AST_H
 #define NADIR_AST_H
 
+/**
+ * @file ast.h
+ * @brief The abstract syntax tree interface.
+ *
+ * Tree representation of the abstract syntactic structure of source code.
+ * Each node of the tree denotes a construct occurring in the source code.
+ */
+
 #include "nadir/token.h"
 
 // [--------------------------------------------------------------] //
@@ -33,18 +41,20 @@ typedef enum : nadir_u8_t {
  * @brief Expression structure for the abstract syntax tree.
  */
 typedef struct {
-    nadir_token_t *token;
     nadir_ast_expression_kind_t kind;
+    nadir_token_t *token;
 
     union {
+        // Member field access.
         struct {
             nadir_token_t *field;
         } member;
 
+        // Procedure and comptime arguments.
         struct {
-            nadir_list_t *arguments;
+            nadir_list_t *arguments; // List of `nadir_ast_expression_t`
         } call;
-    } data;
+    };
 } nadir_ast_expression_t;
 
 /**
@@ -53,14 +63,14 @@ typedef struct {
 typedef struct {
     nadir_token_t *name;
     nadir_ast_expression_t value;
-} nadir_ast_constant_entry_t;
+} nadir_ast_declaration_constant_entry_t;
 
 /**
  * @brief Constant declaration structure for the abstract syntax tree.
  */
 typedef struct {
     nadir_token_t *name;
-    nadir_list_t *entries;
+    nadir_list_t *entries; // List of `nadir_ast_declaration_constant_entry_t`
 } nadir_ast_declaration_constant_t;
 
 /**
@@ -68,9 +78,8 @@ typedef struct {
  */
 typedef struct {
     nadir_token_t *name;
-
-    nadir_list_t *parameters;
-    nadir_list_t *statements;
+    nadir_list_t *parameters; // List of `nadir_token_kind_t`
+    nadir_list_t *statements; // List of `nadir_ast_expression_t`
 } nadir_ast_declaration_procedure_t;
 
 /**
@@ -78,28 +87,28 @@ typedef struct {
  */
 typedef struct {
     nadir_u64_t origin;
-    nadir_list_t *statements;
+    nadir_list_t *statements; // List of `nadir_ast_expression_t`
 } nadir_ast_declaration_binary_t;
 
 /**
  * @brief Declaration structure for the abstract syntax tree.
  */
 typedef struct {
-    nadir_token_t *token;
     nadir_ast_declaration_kind_t kind;
+    nadir_token_t *token;
 
     union {
         nadir_ast_declaration_constant_t constant;
         nadir_ast_declaration_procedure_t procedure;
         nadir_ast_declaration_binary_t binary;
-    } data;
+    };
 } nadir_ast_declaration_t;
 
 /**
  * @brief Abstract syntax tree structure for the assembler.
  */
 typedef struct {
-    nadir_list_t *declarations;
+    nadir_list_t *declarations; // List of `nadir_ast_declaration_t`
 } nadir_ast_t;
 
 // [--------------------------------------------------------------] //
@@ -108,11 +117,13 @@ typedef struct {
 
 /**
  * @brief Creates a new abstract syntax tree.
+ *
+ * @warning Allocates memory for the abstract syntax tree, which must be freed.
  */
 [[nodiscard]] nadir_ast_t *nadir_ast_new(void);
 
 /**
- * @brief Frees the memory allocated for the abstract syntax tree.
+ * @brief Frees the abstract syntax tree and its associated resources.
  */
 void nadir_ast_free(nadir_ast_t *ast);
 

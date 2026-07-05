@@ -1,16 +1,25 @@
 #ifndef NADIR_TOKEN_H
 #define NADIR_TOKEN_H
 
+/**
+ * @file token.h
+ * @brief The token interface.
+ *
+ * This file defines the token structure and related constants for
+ * the assembler.
+ */
+
 #include "nadir/common.h"
 
 // [--------------------------------------------------------------] //
 // > Constants                                                    < //
 // [--------------------------------------------------------------] //
 
-constexpr auto NADIR_TOKEN_VALUE_MAXIMUM = (1 << 6) + 1;
+constexpr auto NADIR_TOKEN_VALUE_MAXIMUM = (1 << 6) + 1; // 64 characters + 1 for null terminator
 
 constexpr auto NADIR_TOKEN_VALUE_COMMENT = '#';
 constexpr auto NADIR_TOKEN_VALUE_COMPTIME = '@';
+constexpr auto NADIR_TOKEN_VALUE_HEXADECIMAL = '$';
 constexpr auto NADIR_TOKEN_VALUE_STORE_ADDRESS = '<';
 constexpr auto NADIR_TOKEN_VALUE_LOAD_ADDRESS = '>';
 constexpr auto NADIR_TOKEN_VALUE_LEFT_BRACE = '{';
@@ -27,7 +36,7 @@ constexpr auto NADIR_TOKEN_VALUE_SEMICOLON = ';';
 // [--------------------------------------------------------------] //
 
 /**
- * @brief Token types for the assembler.
+ * @brief Token kinds for the assembler.
  */
 typedef enum : nadir_u8_t {
     NADIR_TOKEN_KIND_NUMBER,
@@ -67,16 +76,13 @@ typedef enum : nadir_u8_t {
 typedef struct {
     nadir_token_kind_t kind;
 
-    nadir_u64_t line;
-    nadir_u64_t column;
-
     char value[NADIR_TOKEN_VALUE_MAXIMUM];
     nadir_u64_t value_length;
 
-    // Extra data for the token, depending on token type.
-    union {
-        nadir_i128_t number;
-    } specific;
+    nadir_i128_t number; // For number tokens, this field holds the numeric value
+
+    nadir_u64_t line;
+    nadir_u64_t column;
 } nadir_token_t;
 
 // [--------------------------------------------------------------] //
@@ -99,7 +105,7 @@ typedef struct {
                                       char character);
 
 /**
- * @brief Checks if a character is a whitespace character.
+ * @brief Checks if a character is a whitespace character (' ', '\\n', '\\t', '\\r').
  */
 static inline bool nadir_token_value_whitespace(const char character) {
     return character == ' ' || character == '\n' || character == '\t' || character == '\r';
@@ -120,7 +126,7 @@ static inline bool nadir_token_value_lowercase(const char character) {
 }
 
 /**
- * @brief Checks if a character is an alphabetic character (a-z, A-Z).
+ * @brief Checks if a character is an underscore ('_').
  */
 static inline bool nadir_token_value_underscore(const char character) {
     return character == '_';
@@ -134,12 +140,19 @@ static inline bool nadir_token_value_digit(const char character) {
 }
 
 /**
- * @brief Checks if a character is a hexadecimal digit (0-9, A-F, a-f).
+ * @brief Checks if a character is a hexadecimal (0-9, A-F, a-f).
  */
 static inline bool nadir_token_value_hexadecimal(const char character) {
     return (character >= '0' && character <= '9') ||
            (character >= 'A' && character <= 'F') ||
            (character >= 'a' && character <= 'f');
+}
+
+/**
+ * @brief Checks if a character is a sign character ('+', '-').
+ */
+static inline bool nadir_token_value_sign(const char character) {
+    return character == '+' || character == '-';
 }
 
 /**
@@ -158,7 +171,7 @@ static inline bool nadir_token_value_single(const char character) {
 }
 
 /**
- * @brief Checks if a token kind is a type token.
+ * @brief Checks if a token kind is a type token ('u8', 'u16', 'u32', 'u64', 'i8', 'i16', 'i32', 'i64').
  */
 static inline bool nadir_token_value_type(const nadir_token_kind_t kind) {
     return kind >= NADIR_TOKEN_KIND_TYPE_U8 && kind <= NADIR_TOKEN_KIND_TYPE_I64;

@@ -1,13 +1,18 @@
 #ifndef NADIR_CLI_H
 #define NADIR_CLI_H
 
+/**
+ * @file cli.h
+ * @brief The CLI interface.
+ */
+
 #include "nadir/common.h"
 
 // [--------------------------------------------------------------] //
 // > Constants                                                    < //
 // [--------------------------------------------------------------] //
 
-constexpr char NADIR_CLI_DEFAULT_OUTPUT[] = "out.bin";
+constexpr char NADIR_CLI_DEFAULT_OUTPUT[] = "out.bin"; // Default output file
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //
@@ -35,14 +40,14 @@ typedef struct {
 // [--------------------------------------------------------------] //
 
 /**
- * @brief Creates a new command-line interface structure with default values.
+ * @brief Creates a new command-line interface structure.
  *
  * @warning Allocates memory for the input and output buffers, which must be freed.
  */
 nadir_cli_t nadir_cli_new(void);
 
 /**
- * @brief Parses the command-line arguments.
+ * @brief Parses the command-line arguments and populates the structure.
  */
 bool nadir_cli_parse(nadir_cli_t *cli,
                      int argc,
@@ -70,7 +75,7 @@ bool nadir_cli_write(nadir_cli_t *cli,
                      const nadir_list_t *output);
 
 /**
- * @brief Frees the memory allocated for the command-line interface structure.
+ * @brief Frees the memory allocated for the structure.
  */
 void nadir_cli_close(nadir_cli_t *cli);
 

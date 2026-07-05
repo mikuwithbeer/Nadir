@@ -1,34 +1,42 @@
 #ifndef NADIR_COMMON_H
 #define NADIR_COMMON_H
 
+/**
+ * @file common.h
+ * @brief The common interface.
+ *
+ * This file defines common types, constants, and data structures used
+ * throughout the assembler and its components.
+ */
+
 #include <stdint.h>
 
-typedef uint8_t nadir_u8_t;
-typedef uint16_t nadir_u16_t;
-typedef uint32_t nadir_u32_t;
-typedef uint64_t nadir_u64_t;
-typedef unsigned _BitInt(128) nadir_u128_t;
+typedef uint8_t nadir_u8_t; // 8-bit unsigned integer
+typedef uint16_t nadir_u16_t; // 16-bit unsigned integer
+typedef uint32_t nadir_u32_t; // 32-bit unsigned integer
+typedef uint64_t nadir_u64_t; // 64-bit unsigned integer
+typedef unsigned _BitInt(128) nadir_u128_t; // 128-bit unsigned integer
 
-typedef int8_t nadir_i8_t;
-typedef int16_t nadir_i16_t;
-typedef int32_t nadir_i32_t;
-typedef int64_t nadir_i64_t;
-typedef _BitInt(128) nadir_i128_t;
+typedef int8_t nadir_i8_t; // 8-bit signed integer
+typedef int16_t nadir_i16_t; // 16-bit signed integer
+typedef int32_t nadir_i32_t; // 32-bit signed integer
+typedef int64_t nadir_i64_t; // 64-bit signed integer
+typedef _BitInt(128) nadir_i128_t; // 128-bit signed integer
 
 // [--------------------------------------------------------------] //
 // > Constants                                                    < //
 // [--------------------------------------------------------------] //
 
-constexpr nadir_u8_t NADIR_U8_MAX = 0xFF;
-constexpr nadir_u16_t NADIR_U16_MAX = 0xFFFF;
-constexpr nadir_u32_t NADIR_U32_MAX = 0xFFFFFFFF;
-constexpr nadir_u64_t NADIR_U64_MAX = 0xFFFFFFFFFFFFFFFF;
-constexpr nadir_u128_t NADIR_U128_MAX = ~(nadir_u128_t) 0;
+constexpr nadir_u8_t NADIR_U8_MAXIMUM = 0xFF; // 2^8 - 1
+constexpr nadir_u16_t NADIR_U16_MAXIMUM = 0xFFFF; // 2^16 - 1
+constexpr nadir_u32_t NADIR_U32_MAXIMUM = 0xFFFFFFFF; // 2^32 - 1
+constexpr nadir_u64_t NADIR_U64_MAXIMUM = 0xFFFFFFFFFFFFFFFF; // 2^64 - 1
+constexpr nadir_u128_t NADIR_U128_MAXIMUM = ~(nadir_u128_t) 0; // 2^128 - 1
 
-constexpr nadir_i128_t NADIR_I128_MAX = NADIR_U128_MAX >> 1;
-constexpr nadir_i128_t NADIR_I128_MIN = -NADIR_I128_MAX - 1;
+constexpr nadir_i128_t NADIR_I128_MAXIMUM = NADIR_U128_MAXIMUM >> 1; // 2^127 - 1
+constexpr nadir_i128_t NADIR_I128_MINIMUM = -NADIR_I128_MAXIMUM - 1; // -2^127
 
-constexpr auto NADIR_STRING_MAXIMUM = 0xFF + 1;
+constexpr auto NADIR_STRING_MAXIMUM = 0xFF + 1; // 255 + 1 for null terminator
 constexpr auto NADIR_LIST_DEFAULT_CAPACITY = 1 << 6;
 constexpr auto NADIR_TABLE_DEFAULT_CAPACITY = NADIR_LIST_DEFAULT_CAPACITY;
 constexpr auto NADIR_STACK_MAXIMUM = 1 << 10;
@@ -59,15 +67,16 @@ typedef struct {
 
     nadir_u64_t length;
     nadir_u64_t capacity;
-    nadir_u64_t size;
+    nadir_u64_t size; // Size of each item in the list
 } nadir_list_t;
 
 /**
- * @brief Table entry structure for the table structure.
+ * @brief Generic table entry structure for the assembler and components.
  */
 typedef struct {
     char key[NADIR_STRING_MAXIMUM];
     void *value;
+
     bool is_used;
 } nadir_table_entry_t;
 
@@ -79,7 +88,7 @@ typedef struct {
 
     nadir_u64_t length;
     nadir_u64_t capacity;
-    nadir_u64_t size;
+    nadir_u64_t size; // Size of each value in the table
 } nadir_table_t;
 
 /**
@@ -107,7 +116,7 @@ typedef struct {
                                             nadir_i128_t *value);
 
 /**
- * @brief Creates a new list with the given data size.
+ * @brief Creates a new list with the given item size.
  *
  * @warning Allocates memory for the list, which must be freed.
  */
@@ -133,7 +142,7 @@ typedef struct {
 void nadir_list_free(nadir_list_t *list);
 
 /**
- * @brief Creates a new table with the given data size.
+ * @brief Creates a new table with the given value size.
  *
  * @warning Allocates memory for the table, which must be freed.
  */
@@ -141,6 +150,8 @@ void nadir_list_free(nadir_list_t *list);
 
 /**
  * @brief Inserts a key-value pair into the table.
+ *
+ * @return false if the key already exists or reallocation fails, true otherwise.
  */
 [[nodiscard]] bool nadir_table_insert(nadir_table_t *table,
                                       const char *key,
@@ -153,14 +164,16 @@ void nadir_list_free(nadir_list_t *list);
                                       const char *key);
 
 /**
- * @brief Frees the table and its items.
+ * @brief Frees the table and its values.
  */
 void nadir_table_free(nadir_table_t *table);
 
 /**
  * @brief Creates a new stack.
+ *
+ * @warning Allocates memory for the stack, which must be freed.
  */
-[[nodiscard]] nadir_stack_t nadir_stack_new(void);
+[[nodiscard]] nadir_stack_t *nadir_stack_new(void);
 
 /**
  * @brief Pushes a value onto the stack.
@@ -170,8 +183,15 @@ void nadir_table_free(nadir_table_t *table);
 
 /**
  * @brief Pops a value from the stack.
+ *
+ * @return false if the stack is empty, true otherwise.
  */
 [[nodiscard]] bool nadir_stack_pop(nadir_stack_t *stack,
                                    nadir_i128_t *value);
+
+/**
+ * @brief Frees the stack.
+ */
+void nadir_stack_free(nadir_stack_t *stack);
 
 #endif //NADIR_COMMON_H

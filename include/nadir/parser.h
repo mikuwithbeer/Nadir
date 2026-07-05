@@ -1,13 +1,21 @@
 #ifndef NADIR_PARSER_H
 #define NADIR_PARSER_H
 
+/**
+ * @file parser.h
+ * @brief The parser interface.
+ *
+ * The parser is responsible for parsing the list of tokens produced
+ * by the lexer into an abstract syntax tree.
+ */
+
 #include "nadir/ast.h"
 
 // [--------------------------------------------------------------] //
 // > Constants                                                    < //
 // [--------------------------------------------------------------] //
 
-constexpr auto NADIR_PARSER_ARGUMENTS_MAXIMUM = 1 << 4;
+constexpr auto NADIR_PARSER_ARGUMENTS_MAXIMUM = 1 << 4; // 16 arguments per procedure
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //
@@ -44,10 +52,10 @@ typedef struct [[nodiscard]] {
 typedef struct {
     nadir_ast_t *ast;
 
-    nadir_list_t *tokens;
+    nadir_list_t *tokens; // List of `nadir_token_t`
     nadir_u64_t token_index;
 
-    bool seen_binary;
+    bool seen_binary; // Flag to avoid multiple binary declarations
 } nadir_parser_t;
 
 // [--------------------------------------------------------------] //
@@ -66,19 +74,19 @@ static inline nadir_parser_error_t nadir_parser_error_new(const nadir_parser_err
 }
 
 /**
- * @brief Creates a new parser with the given tokens.
+ * @brief Creates a new parser with the given list of tokens.
  *
  * @warning Allocates memory for the parser and its associated resources.
  */
 nadir_parser_t *nadir_parser_new(nadir_list_t *tokens);
 
 /**
- * @brief Runs the parser on the given tokens.
+ * @brief Generates an abstract syntax tree from the list of tokens.
  */
 nadir_parser_error_t nadir_parser_run(nadir_parser_t *parser);
 
 /**
- * @brief Frees the parser and its associated resources.
+ * @brief Frees the memory allocated for the parser and its associated resources.
  */
 void nadir_parser_free(nadir_parser_t *parser);
 

@@ -1,3 +1,8 @@
+/**
+ * @file common.c
+ * @brief The common implementation.
+ */
+
 #include "nadir/common.h"
 
 #include <stdlib.h>
@@ -23,6 +28,7 @@ bool nadir_i128_decode_base10(const char *input,
                               nadir_i128_t *value) {
     nadir_i128_t result = 0;
 
+    // Handle optional sign.
     bool negative = false;
     if (*input == '-') {
         negative = true;
@@ -31,26 +37,27 @@ bool nadir_i128_decode_base10(const char *input,
         ++input;
     }
 
+    // Parse each digit and accumulate the result.
     while (true) {
         int digit;
         if (*input >= '0' && *input <= '9') {
             digit = *input - '0';
         } else if (*input == '\0') {
-            break;
+            break; // End of string
         } else {
-            return false;
+            return false; // Invalid character encountered
         }
 
         if (negative) {
             // Check for underflow.
-            if (result < (NADIR_I128_MIN + digit) / 10) {
+            if (result < (NADIR_I128_MINIMUM + digit) / 10) {
                 return false;
             }
 
             result = result * 10 - digit;
         } else {
             // Check for overflow.
-            if (result > (NADIR_I128_MAX - digit) / 10) {
+            if (result > (NADIR_I128_MAXIMUM - digit) / 10) {
                 return false;
             }
 
@@ -68,6 +75,7 @@ bool nadir_i128_decode_base16(const char *input,
                               nadir_i128_t *value) {
     nadir_i128_t result = 0;
 
+    // Handle optional sign.
     bool negative = false;
     if (*input == '-') {
         negative = true;
@@ -76,6 +84,7 @@ bool nadir_i128_decode_base16(const char *input,
         ++input;
     }
 
+    // Parse each digit and accumulate the result.
     while (true) {
         int digit;
         if (*input >= '0' && *input <= '9') {
@@ -85,21 +94,21 @@ bool nadir_i128_decode_base16(const char *input,
         } else if (*input >= 'a' && *input <= 'f') {
             digit = *input - 'a' + 10;
         } else if (*input == '\0') {
-            break;
+            break; // End of string
         } else {
-            return false;
+            return false; // Invalid character encountered
         }
 
         if (negative) {
             // Check for underflow.
-            if (result < (NADIR_I128_MIN + digit) / 16) {
+            if (result < (NADIR_I128_MINIMUM + digit) / 16) {
                 return false;
             }
 
             result = result * 16 - digit;
         } else {
             // Check for overflow.
-            if (result > (NADIR_I128_MAX - digit) / 16) {
+            if (result > (NADIR_I128_MAXIMUM - digit) / 16) {
                 return false;
             }
 
@@ -136,7 +145,7 @@ nadir_list_t *nadir_list_new(const nadir_u64_t size) {
 bool nadir_list_append(nadir_list_t *list,
                        const void *item) {
     if (list->length >= list->capacity) {
-        const auto new_capacity = list->capacity << 1;
+        const auto new_capacity = list->capacity << 1; // Double the capacity
         const auto new_items = realloc(list->items, new_capacity * list->size);
         if (new_items == nullptr) {
             return false;
@@ -166,7 +175,11 @@ void nadir_list_free(nadir_list_t *list) {
         return;
     }
 
-    free(list->items);
+    if (list->items != nullptr) {
+        free(list->items);
+        list->items = nullptr;
+    }
+
     free(list);
 }
 
@@ -243,18 +256,28 @@ void nadir_table_free(nadir_table_t *table) {
         return;
     }
 
-    for (nadir_u64_t index = 0; index < table->capacity; index++) {
-        if (table->entries[index].is_used) {
-            free(table->entries[index].value); // Free the allocated value for each used entry
+    if (table->entries != nullptr) {
+        // Free the allocated values for each used entry in the table.
+        for (nadir_u64_t index = 0; index < table->capacity; index++) {
+            if (table->entries[index].is_used) {
+                free(table->entries[index].value);
+            }
         }
+
+        free(table->entries);
+        table->entries = nullptr;
     }
 
-    free(table->entries);
     free(table);
 }
 
-nadir_stack_t nadir_stack_new(void) {
-    return (nadir_stack_t){};
+nadir_stack_t *nadir_stack_new(void) {
+    const auto stack = calloc(1, sizeof(nadir_stack_t));
+    if (stack == nullptr) {
+        return nullptr;
+    }
+
+    return stack;
 }
 
 bool nadir_stack_push(nadir_stack_t *stack,
@@ -280,6 +303,14 @@ bool nadir_stack_pop(nadir_stack_t *stack,
     }
 
     return true;
+}
+
+void nadir_stack_free(nadir_stack_t *stack) {
+    if (stack == nullptr) {
+        return;
+    }
+
+    free(stack);
 }
 
 // [--------------------------------------------------------------] //
@@ -317,24 +348,23 @@ static nadir_table_entry_t *nadir_table_find(nadir_table_entry_t *entries,
 }
 
 static nadir_table_entry_t *nadir_table_grow(nadir_table_t *table) {
-    const auto new_capacity = table->capacity << 1;
+    const auto new_capacity = table->capacity << 1; // Double the capacity
     nadir_table_entry_t *new_entries = calloc(new_capacity, sizeof(nadir_table_entry_t));
     if (!new_entries) {
         return nullptr;
     }
 
+    table->capacity = new_capacity;
     for (size_t index = 0; index < table->capacity; index++) {
         const auto old_entry = &table->entries[index];
 
         // Rehash the old entry into the new table.
         if (old_entry->is_used) {
-            const auto new_slot = nadir_table_find(new_entries, new_capacity, old_entry->key);
+            const auto new_slot = nadir_table_find(new_entries, table->capacity, old_entry->key);
             *new_slot = *old_entry;
         }
     }
 
-    free(table->entries);
-
-    table->capacity = new_capacity;
+    free(table->entries); // Free the old entries array
     return new_entries;
 }

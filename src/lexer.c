@@ -1,3 +1,8 @@
+/**
+ * @file lexer.c
+ * @brief The lexer implementation.
+ */
+
 #include "nadir/lexer.h"
 
 #include <stdlib.h>
@@ -54,6 +59,7 @@ nadir_lexer_t *nadir_lexer_new(const char *source,
     }
 
     lexer->tokens = token_list;
+    lexer->token = (nadir_token_t){};
 
     lexer->source = source;
     lexer->source_length = source_length;
@@ -73,6 +79,7 @@ nadir_lexer_error_t nadir_lexer_collect(nadir_lexer_t *lexer) {
         const char character = lexer->source[lexer->source_index];
         bool recollect = false;
 
+        // Process the character based on the current lexer state.
         switch (lexer->state) {
             case NADIR_LEXER_STATE_DEFAULT:
                 error = nadir_lexer_collect_default(lexer, character, &recollect);
@@ -107,6 +114,7 @@ nadir_lexer_error_t nadir_lexer_collect(nadir_lexer_t *lexer) {
             continue;
         }
 
+        // Update the line and column numbers based on the character.
         if (character == '\n') {
             ++lexer->line;
             lexer->column = 1;
@@ -126,7 +134,11 @@ void nadir_lexer_free(nadir_lexer_t *lexer) {
         return;
     }
 
-    nadir_list_free(lexer->tokens);
+    if (lexer->tokens != nullptr) {
+        nadir_list_free(lexer->tokens);
+        lexer->tokens = nullptr;
+    }
+
     free(lexer);
 }
 
@@ -154,8 +166,7 @@ static nadir_lexer_error_t nadir_lexer_collect_default(nadir_lexer_t *lexer,
 
     // Check for base 10 number.
     if (nadir_token_value_digit(character) ||
-        character == '-' ||
-        character == '+') {
+        nadir_token_value_sign(character)) {
         lexer->token.kind = NADIR_TOKEN_KIND_NUMBER;
         lexer->state = NADIR_LEXER_STATE_NUMBER_BASE10;
 
@@ -164,7 +175,7 @@ static nadir_lexer_error_t nadir_lexer_collect_default(nadir_lexer_t *lexer,
     }
 
     // Check for base 16 number.
-    if (character == '$') {
+    if (character == NADIR_TOKEN_VALUE_HEXADECIMAL) {
         lexer->token.kind = NADIR_TOKEN_KIND_NUMBER;
         lexer->state = NADIR_LEXER_STATE_NUMBER_BASE16;
 
@@ -172,7 +183,9 @@ static nadir_lexer_error_t nadir_lexer_collect_default(nadir_lexer_t *lexer,
     }
 
     // Check for identifier.
-    if (nadir_token_value_uppercase(character) || nadir_token_value_lowercase(character)) {
+    if (nadir_token_value_uppercase(character) ||
+        nadir_token_value_lowercase(character) ||
+        nadir_token_value_underscore(character)) {
         lexer->token.kind = NADIR_TOKEN_KIND_IDENT;
         lexer->state = NADIR_LEXER_STATE_IDENT;
 
@@ -223,7 +236,7 @@ static nadir_lexer_error_t nadir_lexer_collect_default(nadir_lexer_t *lexer,
         lexer->token.kind = NADIR_TOKEN_KIND_SEMICOLON;
     } else {
         error.kind = NADIR_LEXER_ERROR_KIND_UNKNOWN_CHARACTER;
-        error.specific.character = character;
+        error.character = character;
 
         return error;
     }
@@ -254,23 +267,22 @@ static nadir_lexer_error_t nadir_lexer_collect_number_base10(nadir_lexer_t *lexe
 
     // Check for whitespace or single-character tokens to end the number.
     if (nadir_token_value_whitespace(character) || nadir_token_value_single(character)) {
-        if (lexer->token.value_length == 1 && (lexer->token.value[0] == '+' || lexer->token.value[0] == '-')) {
+        // Check if the number is not empty or just a sign.
+        if (lexer->token.value_length == 1 && nadir_token_value_sign(lexer->token.value[0])) {
             error.kind = NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER;
-            error.specific.character = character;
+            error.character = character;
 
             return error;
         }
 
         lexer->state = NADIR_LEXER_STATE_DEFAULT;
 
-        // Check if the number is too long (more than 40 decimal + sign).
-        if (lexer->token.value_length > 41) {
+        if (lexer->token.value_length > NADIR_LEXER_NUMBER_BASE10_MAXIMUM) {
             error.kind = NADIR_LEXER_ERROR_KIND_NUMBER_TOO_LONG;
             return error;
         }
 
-        // Convert the number string to a 128-bit signed integer.
-        if (!nadir_i128_decode_base10(lexer->token.value, &lexer->token.specific.number)) {
+        if (!nadir_i128_decode_base10(lexer->token.value, &lexer->token.number)) {
             error.kind = NADIR_LEXER_ERROR_KIND_INVALID_NUMBER;
             return error;
         }
@@ -289,10 +301,9 @@ static nadir_lexer_error_t nadir_lexer_collect_number_base10(nadir_lexer_t *lexe
     }
 
     // Check for valid characters.
-    if (!nadir_token_value_digit(character) &&
-        (lexer->token.value_length != 0 || (character != '-' && character != '+'))) {
+    if (!nadir_token_value_digit(character) && (lexer->token.value_length != 0 || nadir_token_value_sign(character))) {
         error.kind = NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER;
-        error.specific.character = character;
+        error.character = character;
 
         return error;
     }
@@ -309,25 +320,25 @@ static nadir_lexer_error_t nadir_lexer_collect_number_base16(nadir_lexer_t *lexe
                                                              bool *recollect) {
     auto error = nadir_lexer_error_new(NADIR_LEXER_ERROR_KIND_NONE, lexer->line, lexer->column);
 
-    // Check for whitespace or single-character tokens to end the number.
+    // Check for whitespace or single-character tokens to end the hexadecimal number.
     if (nadir_token_value_whitespace(character) || nadir_token_value_single(character)) {
-        if (lexer->token.value_length == 1 && lexer->token.value[0] == '$') {
+        // Check if the number is not empty or just a sign.
+        if (lexer->token.value_length == 0 ||
+            (lexer->token.value_length == 1 && nadir_token_value_sign(lexer->token.value[0]))) {
             error.kind = NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER;
-            error.specific.character = character;
+            error.character = character;
 
             return error;
         }
 
         lexer->state = NADIR_LEXER_STATE_DEFAULT;
 
-        // Check if the number is too long (more than 32 hexadecimal + sign).
-        if (lexer->token.value_length > 33) {
+        if (lexer->token.value_length > NADIR_LEXER_NUMBER_BASE16_MAXIMUM) {
             error.kind = NADIR_LEXER_ERROR_KIND_NUMBER_TOO_LONG;
             return error;
         }
 
-        // Convert the number string to a 128-bit signed integer.
-        if (!nadir_i128_decode_base16(lexer->token.value, &lexer->token.specific.number)) {
+        if (!nadir_i128_decode_base16(lexer->token.value, &lexer->token.number)) {
             error.kind = NADIR_LEXER_ERROR_KIND_INVALID_NUMBER;
             return error;
         }
@@ -346,10 +357,9 @@ static nadir_lexer_error_t nadir_lexer_collect_number_base16(nadir_lexer_t *lexe
     }
 
     // Check for valid characters.
-    if (!nadir_token_value_hexadecimal(character) &&
-        (lexer->token.value_length != 0 || (character != '-' && character != '+'))) {
+    if (!nadir_token_value_hexadecimal(character) && (lexer->token.value_length || nadir_token_value_sign(character))) {
         error.kind = NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER;
-        error.specific.character = character;
+        error.character = character;
 
         return error;
     }
@@ -410,7 +420,7 @@ static nadir_lexer_error_t nadir_lexer_collect_ident(nadir_lexer_t *lexer,
         !nadir_token_value_digit(character)
     ) {
         error.kind = NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER;
-        error.specific.character = character;
+        error.character = character;
 
         return error;
     }
@@ -430,9 +440,10 @@ static nadir_lexer_error_t nadir_lexer_collect_comptime(nadir_lexer_t *lexer,
 
     // Check for whitespace or single-character tokens to end the builtin.
     if (nadir_token_value_whitespace(character) || nadir_token_value_single(character)) {
+        // Check if the builtin is not empty.
         if (lexer->token.value_length == 0) {
             error.kind = NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER;
-            error.specific.character = character;
+            error.character = character;
 
             return error;
         }
@@ -450,7 +461,7 @@ static nadir_lexer_error_t nadir_lexer_collect_comptime(nadir_lexer_t *lexer,
     // Check for valid characters.
     if (!nadir_token_value_lowercase(character) && !nadir_token_value_underscore(character)) {
         error.kind = NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER;
-        error.specific.character = character;
+        error.character = character;
 
         return error;
     }
@@ -469,9 +480,10 @@ static nadir_lexer_error_t nadir_lexer_collect_address(nadir_lexer_t *lexer,
 
     // Check for whitespace or single-character tokens to end the address.
     if (nadir_token_value_whitespace(character) || nadir_token_value_single(character)) {
+        // Check if the address is not empty.
         if (lexer->token.value_length == 0) {
             error.kind = NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER;
-            error.specific.character = character;
+            error.character = character;
 
             return error;
         }
@@ -489,7 +501,7 @@ static nadir_lexer_error_t nadir_lexer_collect_address(nadir_lexer_t *lexer,
     // Check for valid characters.
     if (!nadir_token_value_uppercase(character) && !nadir_token_value_underscore(character)) {
         error.kind = NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER;
-        error.specific.character = character;
+        error.character = character;
 
         return error;
     }
@@ -504,14 +516,15 @@ static nadir_lexer_error_t nadir_lexer_collect_address(nadir_lexer_t *lexer,
 static nadir_lexer_error_t nadir_lexer_collect_eof(nadir_lexer_t *lexer) {
     auto error = nadir_lexer_error_new(NADIR_LEXER_ERROR_KIND_NONE, lexer->line, lexer->column);
 
-    // If the lexer is in a state other than default, it means that there is an unfinished token.
+    // Grammatically, the lexer should be in the default state when it reaches EOF.
     if (lexer->state != NADIR_LEXER_STATE_DEFAULT) {
         error.kind = NADIR_LEXER_ERROR_KIND_UNEXPECTED_STATE;
         return error;
     }
 
-    // Append the EOF token.
+    // Create an EOF token.
     lexer->token = nadir_token_new(NADIR_TOKEN_KIND_EOF, lexer->line, lexer->column);
+
     if (!nadir_list_append(lexer->tokens, &lexer->token)) {
         error.kind = NADIR_LEXER_ERROR_KIND_OUT_OF_MEMORY;
     }

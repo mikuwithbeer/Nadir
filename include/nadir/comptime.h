@@ -1,6 +1,14 @@
 #ifndef NADIR_COMPTIME_H
 #define NADIR_COMPTIME_H
 
+/**
+ * @file comptime.h
+ * @brief The comptime interface.
+ *
+ * The comptime interface provides functionality for evaluating
+ * compile-time expressions in the assembler.
+ */
+
 #include "nadir/common.h"
 
 // [--------------------------------------------------------------] //
@@ -38,7 +46,7 @@ typedef enum : nadir_u8_t {
  */
 typedef struct {
     nadir_comptime_kind_t kind;
-    nadir_list_t *arguments;
+    nadir_list_t *arguments; // List of `nadir_i128_t`
 } nadir_comptime_t;
 
 // [--------------------------------------------------------------] //
@@ -46,12 +54,12 @@ typedef struct {
 // [--------------------------------------------------------------] //
 
 /**
- * @brief Returns the comptime kind for the given name.
+ * @brief Determines the comptime kind based on the given name.
  */
 [[nodiscard]] nadir_comptime_kind_t nadir_comptime_kind(const char *name);
 
 /**
- * @brief Runs the comptime operation and writes the result.
+ * @brief Evaluates the given comptime expression with the provided context.
  */
 [[nodiscard]] bool nadir_comptime_run(const nadir_comptime_t *comptime,
                                       const nadir_list_t *context,

@@ -3,7 +3,6 @@
  * @brief The compiler implementation.
  */
 
-#include "nadir/compiler.h"
 #include "nadir/comptime.h"
 
 #include <stdio.h>
@@ -38,7 +37,7 @@ nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compil
 // > Inline Functions                                             < //
 // [--------------------------------------------------------------] //
 
-static inline nadir_compiler_error_t nadir_compiler_stack_push(nadir_compiler_t *compiler,
+static inline nadir_compiler_error_t nadir_compiler_stack_push(const nadir_compiler_t *compiler,
                                                                const nadir_i128_t value,
                                                                nadir_token_t *token) {
     if (!nadir_stack_push(compiler->stack, value)) {
@@ -48,7 +47,7 @@ static inline nadir_compiler_error_t nadir_compiler_stack_push(nadir_compiler_t 
     return (nadir_compiler_error_t){};
 }
 
-static inline nadir_compiler_error_t nadir_compiler_stack_pop(nadir_compiler_t *compiler,
+static inline nadir_compiler_error_t nadir_compiler_stack_pop(const nadir_compiler_t *compiler,
                                                               nadir_i128_t *value,
                                                               nadir_token_t *token) {
     if (!nadir_stack_pop(compiler->stack, value)) {
@@ -523,8 +522,10 @@ nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compil
 
     // Evaluate the compile-time call with the provided context and arguments.
     nadir_i128_t comptime_result;
-    if (!nadir_comptime_run(&comptime, context, &comptime_result)) {
-        error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_COMPTIME_FAILED, expression->token);
+    error = nadir_comptime_run(&comptime, context, &comptime_result);
+    if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+        // Propagate the error with the expression's token.
+        error.token = expression->token;
         goto cleanup;
     }
 

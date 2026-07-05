@@ -147,9 +147,6 @@ char *nadir_error_encode(const nadir_error_t *error) {
                 case NADIR_COMPILER_ERROR_KIND_STACK_FAILED:
                     snprintf(pointer, remaining, "internal stack operation failed");
                     break;
-                case NADIR_COMPILER_ERROR_KIND_COMPTIME_FAILED:
-                    snprintf(pointer, remaining, "comptime evaluation failed for '%s'", error->compiler.token->value);
-                    break;
                 case NADIR_COMPILER_ERROR_KIND_MULTIPLE_CONSTANT:
                     snprintf(pointer,
                              remaining,
@@ -191,6 +188,43 @@ char *nadir_error_encode(const nadir_error_t *error) {
                     break;
                 case NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH:
                     snprintf(pointer, remaining, "value out of byte range for '%s'", error->compiler.token->value);
+                    break;
+
+                case NADIR_COMPILER_ERROR_KIND_COMPTIME_NULL_CONTEXT:
+                    snprintf(pointer,
+                             remaining,
+                             "cannot evaluate the '@%s' without an execution context",
+                             error->compiler.token->value);
+                    break;
+                case NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH:
+                    snprintf(pointer,
+                             remaining,
+                             "incorrect number of arguments passed to the '@%s'",
+                             error->compiler.token->value);
+                    break;
+                case NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_OUT_OF_BOUND:
+                    snprintf(pointer,
+                             remaining,
+                             "the argument inside the '@%s' evaluates to an out-of-bounds value",
+                             error->compiler.token->value);
+                    break;
+                case NADIR_COMPILER_ERROR_KIND_COMPTIME_INVALID_ARGUMENT:
+                    snprintf(pointer,
+                             remaining,
+                             "invalid argument value passed to the '@%s'",
+                             error->compiler.token->value);
+                    break;
+                case NADIR_COMPILER_ERROR_KIND_COMPTIME_DIVISION_BY_ZERO:
+                    snprintf(pointer,
+                             remaining,
+                             "attempted division by zero during evaluation of the '@%s'",
+                             error->compiler.token->value);
+                    break;
+                case NADIR_COMPILER_ERROR_KIND_COMPTIME_SHIFT_OUT_OF_BOUND:
+                    snprintf(pointer,
+                             remaining,
+                             "shift operation in the '@%s' exceeds the 0-127 bit range",
+                             error->compiler.token->value);
                     break;
             }
 

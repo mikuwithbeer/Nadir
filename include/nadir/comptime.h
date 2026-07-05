@@ -9,7 +9,7 @@
  * compile-time expressions in the assembler.
  */
 
-#include "nadir/common.h"
+#include "nadir/compiler.h"
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //
@@ -62,8 +62,8 @@ typedef struct {
 /**
  * @brief Evaluates the given comptime expression with the provided context.
  */
-[[nodiscard]] bool nadir_comptime_run(const nadir_comptime_t *comptime,
-                                      const nadir_list_t *context,
-                                      nadir_i128_t *result);
+[[nodiscard]] nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
+                                                        const nadir_list_t *context,
+                                                        nadir_i128_t *result);
 
 #endif //NADIR_COMPTIME_H

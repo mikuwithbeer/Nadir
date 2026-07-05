@@ -9,7 +9,7 @@ COMMENT    = _{ "#" ~ (!"\n" ~ ANY)* }
 // > Primitives and Tokens                                        < //
 // [--------------------------------------------------------------] //
 
-comptime_identifier = @{ (ASCII_ALPHA_LOWER | ASCII_DIGIT | "_"){1, 64} }
+comptime_identifier = @{ ASCII_ALPHA_LOWER{1, 64} }
 numeric_literal     = @{ ("$" ~ ("+" | "-")? ~ ASCII_HEX_DIGIT{1, 32}) | (("+" | "-")? ~ ASCII_DIGIT{1, 40}) }
 store_address       = @{ "<" ~ (ASCII_ALPHA_UPPER | "_"){1, 64} }
 load_address        = @{ ">" ~ (ASCII_ALPHA_UPPER | "_"){1, 64} }

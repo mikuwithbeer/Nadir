@@ -108,24 +108,24 @@ procedure clear_display() {
 
 # 1NNN: Jump to address NNN
 procedure jump(u16) {
-  @bit_or($10, @bit_and(@bit_shr(@arg(0), 8), $0F));
-  @bit_and(@arg(0), $FF);
+  @or($10, @and(@shr(@arg(0), 8), $0F));
+  @and(@arg(0), $FF);
 }
 
 # 6XNN: Set register VX to value NN
 procedure set_register(u8, u8) {
-  @bit_or($60, @bit_and(@arg(0), $0F));
+  @or($60, @and(@arg(0), $0F));
   @arg(1);
 }
 
 # ANNN: Set index register I to address NNN
 procedure set_index(u16) {
-  @bit_or($A0, @bit_and(@bit_shr(@arg(0), 8), $0F));
-  @bit_and(@arg(0), $FF);
+  @or($A0, @and(@shr(@arg(0), 8), $0F));
+  @and(@arg(0), $FF);
 }
 
 # DXYN: Draw sprite at VX, VY with height N
 procedure draw(u8, u8, u8) {
-  @bit_or($D0, @bit_and(@arg(0), $0F));
-  @bit_or(@bit_shl(@bit_and(@arg(1), $0F), 4), @bit_and(@arg(2), $0F));
+  @or($D0, @and(@arg(0), $0F));
+  @or(@shl(@and(@arg(1), $0F), 4), @and(@arg(2), $0F));
 }

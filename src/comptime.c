@@ -30,10 +30,22 @@ nadir_comptime_kind_t nadir_comptime_kind(const char *name) {
     if (strncmp(name, "or", 3) == 0) return NADIR_COMPTIME_KIND_OR;
     if (strncmp(name, "and", 4) == 0) return NADIR_COMPTIME_KIND_AND;
     if (strncmp(name, "xor", 4) == 0) return NADIR_COMPTIME_KIND_XOR;
-    if (strncmp(name, "not", 4) == 0) return NADIR_COMPTIME_KIND_NOT;
     if (strncmp(name, "shl", 4) == 0) return NADIR_COMPTIME_KIND_SHL;
     if (strncmp(name, "shr", 4) == 0) return NADIR_COMPTIME_KIND_SHR;
+    if (strncmp(name, "not", 4) == 0) return NADIR_COMPTIME_KIND_NOT;
     if (strncmp(name, "bswap", 6) == 0) return NADIR_COMPTIME_KIND_BSWAP;
+
+    if (strncmp(name, "if", 3) == 0) return NADIR_COMPTIME_KIND_IF;
+    if (strncmp(name, "eq", 3) == 0) return NADIR_COMPTIME_KIND_EQ;
+    if (strncmp(name, "lt", 3) == 0) return NADIR_COMPTIME_KIND_LT;
+    if (strncmp(name, "gt", 3) == 0) return NADIR_COMPTIME_KIND_GT;
+    if (strncmp(name, "le", 3) == 0) return NADIR_COMPTIME_KIND_LE;
+    if (strncmp(name, "ge", 3) == 0) return NADIR_COMPTIME_KIND_GE;
+    if (strncmp(name, "neq", 4) == 0) return NADIR_COMPTIME_KIND_NEQ;
+
+    if (strncmp(name, "lor", 4) == 0) return NADIR_COMPTIME_KIND_LOR;
+    if (strncmp(name, "land", 5) == 0) return NADIR_COMPTIME_KIND_LAND;
+    if (strncmp(name, "lnot", 5) == 0) return NADIR_COMPTIME_KIND_LNOT;
 
     return NADIR_COMPTIME_KIND_NONE;
 }
@@ -45,7 +57,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
 
     switch (comptime->kind) {
         case NADIR_COMPTIME_KIND_NONE:
-            return error; // Unreachable
+            break; // Unreachable
         case NADIR_COMPTIME_KIND_ARG: {
             if (context == nullptr) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_NULL_CONTEXT;
@@ -124,6 +136,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             }
 
             const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
+
             const nadir_i128_t *minimum = nadir_list_get(comptime->arguments, 1);
             const nadir_i128_t *maximum = nadir_list_get(comptime->arguments, 2);
 
@@ -201,59 +214,23 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
         }
 
         case NADIR_COMPTIME_KIND_ADD: {
-            if (comptime->arguments->length != 2) {
+            if (comptime->arguments->length < 2) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
 
-            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
-            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
-
-            *result = *left + *right;
-            break;
-        }
-        case NADIR_COMPTIME_KIND_SUB: {
-            if (comptime->arguments->length != 2) {
-                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
-                return error;
+            nadir_i128_t value = 0;
+            for (nadir_u64_t index = 0; index < comptime->arguments->length; ++index) {
+                const nadir_i128_t *argument = nadir_list_get(comptime->arguments, index);
+                value += *argument;
             }
 
-            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
-            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
-
-            *result = *left - *right;
+            *result = value;
             break;
         }
-        case NADIR_COMPTIME_KIND_MUL: {
-            if (comptime->arguments->length != 2) {
-                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
-                return error;
-            }
-
-            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
-            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
-
-            *result = *left * *right;
-            break;
-        }
-        case NADIR_COMPTIME_KIND_DIV: {
-            if (comptime->arguments->length != 2) {
-                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
-                return error;
-            }
-
-            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
-            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
-
-            // Guard against division by zero.
-            if (*right == 0) {
-                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_DIVISION_BY_ZERO;
-                return error;
-            }
-
-            *result = *left / *right;
-            break;
-        }
+        case NADIR_COMPTIME_KIND_SUB:
+        case NADIR_COMPTIME_KIND_MUL:
+        case NADIR_COMPTIME_KIND_DIV:
         case NADIR_COMPTIME_KIND_MOD: {
             if (comptime->arguments->length != 2) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
@@ -263,80 +240,42 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
             const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
 
-            // Guard against division by zero.
-            if (*right == 0) {
-                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_DIVISION_BY_ZERO;
-                return error;
+            switch (comptime->kind) {
+                case NADIR_COMPTIME_KIND_SUB:
+                    *result = *left - *right;
+                    break;
+                case NADIR_COMPTIME_KIND_MUL:
+                    *result = *left * *right;
+                    break;
+                case NADIR_COMPTIME_KIND_DIV:
+                    // Guard against division by zero.
+                    if (*right == 0) {
+                        error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_DIVISION_BY_ZERO;
+                        return error;
+                    }
+
+                    *result = *left / *right;
+                    break;
+                case NADIR_COMPTIME_KIND_MOD:
+                    // Guard against division by zero.
+                    if (*right == 0) {
+                        error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_DIVISION_BY_ZERO;
+                        return error;
+                    }
+
+                    *result = *left % *right;
+                    break;
+                default:
+                    break; // Unreachable
             }
 
-            *result = *left % *right;
             break;
         }
 
-        case NADIR_COMPTIME_KIND_OR: {
-            if (comptime->arguments->length != 2) {
-                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
-                return error;
-            }
-
-            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
-            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
-
-            *result = *left | *right;
-            break;
-        }
-        case NADIR_COMPTIME_KIND_XOR: {
-            if (comptime->arguments->length != 2) {
-                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
-                return error;
-            }
-
-            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
-            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
-
-            *result = *left ^ *right;
-            break;
-        }
-        case NADIR_COMPTIME_KIND_AND: {
-            if (comptime->arguments->length != 2) {
-                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
-                return error;
-            }
-
-            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
-            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
-
-            *result = *left & *right;
-            break;
-        }
-        case NADIR_COMPTIME_KIND_NOT: {
-            if (comptime->arguments->length != 1) {
-                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
-                return error;
-            }
-
-            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
-            *result = ~*value;
-            break;
-        }
-        case NADIR_COMPTIME_KIND_SHL: {
-            if (comptime->arguments->length != 2) {
-                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
-                return error;
-            }
-
-            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
-            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
-
-            // Guard against shifting by an invalid amount.
-            if (*right < 0 || *right > NADIR_I8_MAXIMUM) {
-                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_SHIFT_OUT_OF_BOUND;
-                return error;
-            }
-
-            *result = *left << *right;
-            break;
-        }
+        case NADIR_COMPTIME_KIND_OR:
+        case NADIR_COMPTIME_KIND_XOR:
+        case NADIR_COMPTIME_KIND_AND:
+        case NADIR_COMPTIME_KIND_SHL:
         case NADIR_COMPTIME_KIND_SHR: {
             if (comptime->arguments->length != 2) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
@@ -346,13 +285,49 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
             const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
 
-            // Guard against shifting by an invalid amount.
-            if (*right < 0 || *right > NADIR_I8_MAXIMUM) {
-                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_SHIFT_OUT_OF_BOUND;
+            switch (comptime->kind) {
+                case NADIR_COMPTIME_KIND_OR:
+                    *result = *left | *right;
+                    break;
+                case NADIR_COMPTIME_KIND_XOR:
+                    *result = *left ^ *right;
+                    break;
+                case NADIR_COMPTIME_KIND_AND:
+                    *result = *left & *right;
+                    break;
+                case NADIR_COMPTIME_KIND_SHL:
+                    // Guard against shifting by an invalid amount.
+                    if (*right < 0 || *right > NADIR_I8_MAXIMUM) {
+                        error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_SHIFT_OUT_OF_BOUND;
+                        return error;
+                    }
+
+                    *result = *left << *right;
+                    break;
+                case NADIR_COMPTIME_KIND_SHR:
+                    // Guard against shifting by an invalid amount.
+                    if (*right < 0 || *right > NADIR_I8_MAXIMUM) {
+                        error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_SHIFT_OUT_OF_BOUND;
+                        return error;
+                    }
+
+                    *result = *left >> *right;
+                    break;
+                default:
+                    break; // Unreachable
+            }
+
+            break;
+        }
+        case NADIR_COMPTIME_KIND_NOT: {
+            if (comptime->arguments->length != 1) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
 
-            *result = *left >> *right;
+            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
+
+            *result = ~*value;
             break;
         }
         case NADIR_COMPTIME_KIND_BSWAP: {
@@ -394,6 +369,96 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
                     return error;
             }
 
+            break;
+        }
+
+        case NADIR_COMPTIME_KIND_IF: {
+            if (comptime->arguments->length != 3) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+            }
+
+            const nadir_i128_t *condition = nadir_list_get(comptime->arguments, 0);
+
+            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
+            const nadir_i128_t *wrong = nadir_list_get(comptime->arguments, 2);
+
+            if (*condition) {
+                *result = *right;
+            } else {
+                *result = *wrong;
+            }
+
+            break;
+        }
+        case NADIR_COMPTIME_KIND_EQ:
+        case NADIR_COMPTIME_KIND_LT:
+        case NADIR_COMPTIME_KIND_GT:
+        case NADIR_COMPTIME_KIND_LE:
+        case NADIR_COMPTIME_KIND_GE:
+        case NADIR_COMPTIME_KIND_NEQ: {
+            if (comptime->arguments->length != 2) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+            }
+
+            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
+
+            switch (comptime->kind) {
+                case NADIR_COMPTIME_KIND_EQ:
+                    *result = *left == *right;
+                    break;
+                case NADIR_COMPTIME_KIND_LT:
+                    *result = *left < *right;
+                    break;
+                case NADIR_COMPTIME_KIND_GT:
+                    *result = *left > *right;
+                    break;
+                case NADIR_COMPTIME_KIND_LE:
+                    *result = *left <= *right;
+                    break;
+                case NADIR_COMPTIME_KIND_GE:
+                    *result = *left >= *right;
+                    break;
+                case NADIR_COMPTIME_KIND_NEQ:
+                    *result = *left != *right;
+                    break;
+                default:
+                    break; // Unreachable
+            }
+
+            break;
+        }
+
+        case NADIR_COMPTIME_KIND_LOR:
+        case NADIR_COMPTIME_KIND_LAND: {
+            if (comptime->arguments->length != 2) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+            }
+
+            const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
+
+            switch (comptime->kind) {
+                case NADIR_COMPTIME_KIND_LOR:
+                    *result = *left || *right;
+                    break;
+                case NADIR_COMPTIME_KIND_LAND:
+                    *result = *left && *right;
+                    break;
+                default:
+                    break; // Unreachable
+            }
+
+            break;
+        }
+        case NADIR_COMPTIME_KIND_LNOT: {
+            if (comptime->arguments->length != 1) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+            }
+
+            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
+
+            *result = !*value;
             break;
         }
     }

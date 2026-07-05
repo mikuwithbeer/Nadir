@@ -1,54 +1,55 @@
-// =====================================================================
-// Implicit Rules
-// =====================================================================
+// [--------------------------------------------------------------] //
+// > Implicit Rules                                               < //
+// [--------------------------------------------------------------] //
 
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
 COMMENT    = _{ "#" ~ (!"\n" ~ ANY)* }
 
-// =====================================================================
-// Primitives and Tokens
-// =====================================================================
+// [--------------------------------------------------------------] //
+// > Primitives and Tokens                                        < //
+// [--------------------------------------------------------------] //
 
-comptime      = @{ (ASCII_ALPHA_LOWER | "_"){1, 127} }
-number        = @{ ("+" | "-")? ~ ASCII_DIGIT{1, 40} }
-store_address = @{ "<" ~ (ASCII_ALPHA_UPPER | "_"){1, 127} }
-load_address  = @{ ">" ~ (ASCII_ALPHA_UPPER | "_"){1, 127} }
-type          = @{ "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" }
-identifier    = @{ (ASCII_ALPHA_LOWER | ASCII_ALPHA_UPPER) ~ (ASCII_ALPHANUMERIC | "_"){,126} }
-member        = @{ identifier ~ "." ~ identifier }
+comptime_identifier = @{ (ASCII_ALPHA_LOWER | "_"){1, 64} }
+numeric_literal     = @{ ("$" ~ ("+" | "-")? ~ ASCII_HEX_DIGIT{1, 32}) | (("+" | "-")? ~ ASCII_DIGIT{1, 40}) }
+store_address       = @{ "<" ~ (ASCII_ALPHA_UPPER | "_"){1, 64} }
+load_address        = @{ ">" ~ (ASCII_ALPHA_UPPER | "_"){1, 64} }
+data_type           = @{ "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" }
+identifier          = @{ (ASCII_ALPHA_LOWER | ASCII_ALPHA_UPPER | "_") ~ (ASCII_ALPHANUMERIC | "_"){,63} }
+member_access       = { identifier ~ "." ~ identifier }
 
-// =====================================================================
-// Call Syntax
-// =====================================================================
+// [--------------------------------------------------------------] //
+// > Call Expressions                                             < //
+// [--------------------------------------------------------------] //
 
-comptime_call          = { "@" ~ identifier ~ "(" ~ comptime_argument_list? ~ ")" }
-comptime_argument      = { comptime_call | member | type | number }
+comptime_call          = { "@" ~ comptime_identifier ~ "(" ~ comptime_argument_list? ~ ")" }
+comptime_argument      = { comptime_call | member_access | data_type | numeric_literal }
 comptime_argument_list = { comptime_argument ~ ("," ~ comptime_argument){,16} }
 
 procedure_call          = { identifier ~ "(" ~ procedure_argument_list? ~ ")" }
-procedure_argument      = { comptime_call | load_address | member | number }
+procedure_argument      = { comptime_call | load_address | member_access | numeric_literal }
 procedure_argument_list = { procedure_argument ~ ("," ~ procedure_argument){,16} }
 
-// =====================================================================
-// Declarations
-// =====================================================================
+// [--------------------------------------------------------------] //
+// > Block Declarations                                           < //
+// [--------------------------------------------------------------] //
 
-const_declaration = { "constant" ~ identifier ~ "{" ~ const_statement+ ~ "}" }
-const_statement   = { identifier ~ "=" ~ const_expression ~ ";" }
-const_expression  = { comptime_call | member | number }
+constant_declaration = { "constant" ~ identifier ~ "{" ~ constant_assignment+ ~ "}" }
+constant_assignment  = { identifier ~ "=" ~ constant_expression ~ ";" }
+constant_expression  = { comptime_call | member_access | numeric_literal }
 
 procedure_declaration    = { "procedure" ~ identifier ~ "(" ~ procedure_parameter_list? ~ ")" ~ "{" ~ procedure_statement+ ~ "}" }
-procedure_parameter_list = { type ~ ("," ~ type){,16} }
+procedure_parameter_list = { data_type ~ ("," ~ data_type){,16} }
 procedure_statement      = { procedure_expression ~ ";" }
-procedure_expression     = { comptime_call | member | number }
+procedure_expression     = { comptime_call | member_access | numeric_literal }
 
-binary_declaration = { "binary" ~ "{" ~ binary_statement* ~ "}" }
+binary_declaration = { "binary" ~ numeric_literal ~ "{" ~ binary_statement* ~ "}" }
 binary_statement   = { binary_expression ~ ";" }
 binary_expression  = { procedure_call | store_address }
 
-// =====================================================================
-// Assembler
-// =====================================================================
-optional_declaration = { const_declaration | procedure_declaration }
+// [--------------------------------------------------------------] //
+// > Grammar Entry Point                                          < //
+// [--------------------------------------------------------------] //
+
+optional_declaration = { constant_declaration | procedure_declaration }
 required_declaration = { binary_declaration }
 assembly_declaration = { SOI ~ optional_declaration* ~ required_declaration ~ optional_declaration* ~ EOI }

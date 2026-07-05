@@ -94,7 +94,7 @@ binary $200 {
 # |================================================|
 
 procedure _emit_bytes(u8, u8, u8, u8, u8) {
-  @at(0); @at(1); @at(2); @at(3); @at(4);
+  @arg(0); @arg(1); @arg(2); @arg(3); @arg(4);
 }
 
 # |================================================|
@@ -108,24 +108,24 @@ procedure clear_display() {
 
 # 1NNN: Jump to address NNN
 procedure jump(u16) {
-  @bit_or($10, @bit_and(@bit_shr(@at(0), 8), $0F));
-  @bit_and(@at(0), $FF);
+  @bit_or($10, @bit_and(@bit_shr(@arg(0), 8), $0F));
+  @bit_and(@arg(0), $FF);
 }
 
 # 6XNN: Set register VX to value NN
 procedure set_register(u8, u8) {
-  @bit_or($60, @bit_and(@at(0), $0F));
-  @at(1);
+  @bit_or($60, @bit_and(@arg(0), $0F));
+  @arg(1);
 }
 
 # ANNN: Set index register I to address NNN
 procedure set_index(u16) {
-  @bit_or($A0, @bit_and(@bit_shr(@at(0), 8), $0F));
-  @bit_and(@at(0), $FF);
+  @bit_or($A0, @bit_and(@bit_shr(@arg(0), 8), $0F));
+  @bit_and(@arg(0), $FF);
 }
 
 # DXYN: Draw sprite at VX, VY with height N
 procedure draw(u8, u8, u8) {
-  @bit_or($D0, @bit_and(@at(0), $0F));
-  @bit_or(@bit_shl(@bit_and(@at(1), $0F), 4), @bit_and(@at(2), $0F));
+  @bit_or($D0, @bit_and(@arg(0), $0F));
+  @bit_or(@bit_shl(@bit_and(@arg(1), $0F), 4), @bit_and(@arg(2), $0F));
 }

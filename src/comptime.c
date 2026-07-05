@@ -12,8 +12,8 @@
 // [--------------------------------------------------------------] //
 
 nadir_comptime_kind_t nadir_comptime_kind(const char *name) {
-    if (strncmp(name, "at", 3) == 0) {
-        return NADIR_COMPTIME_KIND_AT;
+    if (strncmp(name, "arg", 4) == 0) {
+        return NADIR_COMPTIME_KIND_ARG;
     }
 
     if (strncmp(name, "cast", 5) == 0) {
@@ -85,7 +85,7 @@ bool nadir_comptime_run(const nadir_comptime_t *comptime,
     switch (comptime->kind) {
         case NADIR_COMPTIME_KIND_NONE:
             return false; // Unreachable
-        case NADIR_COMPTIME_KIND_AT: {
+        case NADIR_COMPTIME_KIND_ARG: {
             if (context == nullptr) {
                 return false;
             }

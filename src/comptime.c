@@ -76,6 +76,18 @@ nadir_comptime_kind_t nadir_comptime_kind(const char *name) {
         return NADIR_COMPTIME_KIND_BIT_SHR;
     }
 
+    if (strncmp(name, "bit_swap_16", 12) == 0) {
+        return NADIR_COMPTIME_KIND_BIT_SWAP_16;
+    }
+
+    if (strncmp(name, "bit_swap_32", 12) == 0) {
+        return NADIR_COMPTIME_KIND_BIT_SWAP_32;
+    }
+
+    if (strncmp(name, "bit_swap_64", 12) == 0) {
+        return NADIR_COMPTIME_KIND_BIT_SWAP_64;
+    }
+
     return NADIR_COMPTIME_KIND_NONE;
 }
 
@@ -101,13 +113,13 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             const nadir_i128_t *argument = nadir_list_get(comptime->arguments, 0);
 
             // Argument should be a location in the context list.
-            const auto as_location = (nadir_u64_t) *argument;
-            if (as_location != *argument) {
+            const auto argument_location = (nadir_u64_t) *argument;
+            if (argument_location != *argument) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_OUT_OF_BOUND;
                 return error;
             }
 
-            const nadir_i128_t *context_value = nadir_list_get(context, as_location);
+            const nadir_i128_t *context_value = nadir_list_get(context, argument_location);
             if (context_value == nullptr) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_OUT_OF_BOUND;
                 return error;
@@ -323,7 +335,6 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             }
 
             const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
-
             *result = ~*value;
             break;
         }
@@ -337,7 +348,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
 
             // Guard against shifting by an invalid amount.
-            if (*right < 0 || *right >= 128) {
+            if (*right < 0 || *right > NADIR_I8_MAXIMUM) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_SHIFT_OUT_OF_BOUND;
                 return error;
             }
@@ -355,12 +366,63 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
 
             // Guard against shifting by an invalid amount.
-            if (*right < 0 || *right >= 128) {
+            if (*right < 0 || *right > NADIR_I8_MAXIMUM) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_SHIFT_OUT_OF_BOUND;
                 return error;
             }
 
             *result = *left >> *right;
+            break;
+        }
+        case NADIR_COMPTIME_KIND_BIT_SWAP_16: {
+            if (comptime->arguments->length != 1) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+                return error;
+            }
+
+            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
+            if (*value < NADIR_U16_MINIMUM || *value > NADIR_U16_MAXIMUM) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_OUT_OF_BOUND;
+                return error;
+            }
+
+            const auto value_u16 = (nadir_u16_t) *value;
+            *result = __builtin_bswap16(value_u16);
+
+            break;
+        }
+        case NADIR_COMPTIME_KIND_BIT_SWAP_32: {
+            if (comptime->arguments->length != 1) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+                return error;
+            }
+
+            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
+            if (*value < NADIR_U32_MINIMUM || *value > NADIR_U32_MAXIMUM) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_OUT_OF_BOUND;
+                return error;
+            }
+
+            const auto value_u32 = (nadir_u32_t) *value;
+            *result = __builtin_bswap32(value_u32);
+
+            break;
+        }
+        case NADIR_COMPTIME_KIND_BIT_SWAP_64: {
+            if (comptime->arguments->length != 1) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+                return error;
+            }
+
+            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
+            if (*value < NADIR_U64_MINIMUM || *value > NADIR_U64_MAXIMUM) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_OUT_OF_BOUND;
+                return error;
+            }
+
+            const auto value_u64 = (nadir_u64_t) *value;
+            *result = __builtin_bswap64(value_u64);
+
             break;
         }
     }

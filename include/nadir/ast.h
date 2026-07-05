@@ -77,6 +77,7 @@ typedef struct {
  * @brief Binary declaration structure for the abstract syntax tree.
  */
 typedef struct {
+    nadir_u64_t origin;
     nadir_list_t *statements;
 } nadir_ast_declaration_binary_t;
 

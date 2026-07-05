@@ -109,6 +109,9 @@ char *nadir_error_encode(const nadir_error_t *error) {
                 case NADIR_PARSER_ERROR_KIND_ALREADY_FOUND_BINARY:
                     snprintf(pointer, remaining, "binary definition already exists");
                     break;
+                case NADIR_PARSER_ERROR_KIND_INVALID_BINARY_ORIGIN:
+                    snprintf(pointer, remaining, "given origin is out of range");
+                    break;
             }
 
             break;

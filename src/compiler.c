@@ -101,10 +101,9 @@ nadir_compiler_t *nadir_compiler_new(nadir_ast_t *ast) {
     compiler->output = output;
 
     compiler->stack = nadir_stack_new();
-    compiler->expected = 0;
 
-    // Set to a sentinel value to track if a binary declaration actually exists.
-    compiler->location = (nadir_u64_t) -1;
+    compiler->binary_location = (nadir_u64_t) -1;
+    compiler->binary_origin = 0;
 
     return compiler;
 }
@@ -128,7 +127,7 @@ nadir_compiler_error_t nadir_compiler_prepare(nadir_compiler_t *compiler) {
                 error = nadir_compiler_prepare_procedure(compiler, &declaration->data.procedure);
                 break;
             case NADIR_AST_DECLARATION_KIND_BINARY:
-                compiler->location = index;
+                compiler->binary_location = index;
                 break;
         }
 
@@ -137,17 +136,17 @@ nadir_compiler_error_t nadir_compiler_prepare(nadir_compiler_t *compiler) {
         }
     }
 
-    if (compiler->location == (nadir_u64_t) -1) {
+    if (compiler->binary_location == (nadir_u64_t) -1) {
         return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_BINARY, nullptr);
     }
 
-    const nadir_ast_declaration_t *binary = nadir_list_get(compiler->ast->declarations, compiler->location);
+    const nadir_ast_declaration_t *binary = nadir_list_get(compiler->ast->declarations, compiler->binary_location);
     return nadir_compiler_prepare_binary(compiler, &binary->data.binary);
 }
 
 nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler) {
     auto error = (nadir_compiler_error_t){};
-    const nadir_ast_declaration_t *binary = nadir_list_get(compiler->ast->declarations, compiler->location);
+    const nadir_ast_declaration_t *binary = nadir_list_get(compiler->ast->declarations, compiler->binary_location);
 
     // Run each statement in the binary declaration.
     for (nadir_u64_t index = 0; index < binary->data.binary.statements->length; ++index) {
@@ -247,12 +246,14 @@ nadir_compiler_error_t nadir_compiler_prepare_procedure(const nadir_compiler_t *
 
 nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
                                                      const nadir_ast_declaration_binary_t *declaration) {
+    compiler->binary_origin = declaration->origin;
+
     // Prepare each statement in the binary declaration to calculate the expected output length.
     for (nadir_u64_t index = 0; index < declaration->statements->length; ++index) {
         // Handle address storage statements.
         const nadir_ast_expression_t *statement = nadir_list_get(declaration->statements, index);
         if (statement->kind == NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS) {
-            if (!nadir_table_insert(compiler->addresses, statement->token->value, &compiler->expected)) {
+            if (!nadir_table_insert(compiler->addresses, statement->token->value, &compiler->binary_origin)) {
                 return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_MULTIPLE_ADDRESS, statement->token);
             }
 
@@ -265,7 +266,7 @@ nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
             return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_PROCEDURE, statement->token);
         }
 
-        compiler->expected += procedure->statements->length;
+        compiler->binary_origin += procedure->statements->length;
     }
 
     return (nadir_compiler_error_t){};

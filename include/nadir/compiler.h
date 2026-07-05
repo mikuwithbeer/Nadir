@@ -68,8 +68,8 @@ typedef struct {
 
     nadir_list_t *output;
 
-    nadir_u64_t expected;
-    nadir_u64_t location;
+    nadir_u64_t binary_location;
+    nadir_u64_t binary_origin;
 
     nadir_stack_t stack;
 } nadir_compiler_t;

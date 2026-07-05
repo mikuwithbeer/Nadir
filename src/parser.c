@@ -419,8 +419,21 @@ static nadir_parser_error_t nadir_parser_run_procedure_parameters(nadir_parser_t
 
 static nadir_parser_error_t nadir_parser_run_binary(nadir_parser_t *parser,
                                                     nadir_token_t *token) {
+    // Consume the binary origin number.
+    nadir_token_t *origin_token;
+    auto error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_NUMBER, &origin_token);
+    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+        return error;
+    }
+
+    // Validate that the origin number is a valid 64-bit unsigned integer.
+    const auto origin_value = (nadir_u64_t) origin_token->specific.number;
+    if (origin_token->specific.number != origin_value) {
+        return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_INVALID_BINARY_ORIGIN, origin_token);
+    }
+
     // Consume the left brace.
-    auto error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_LEFT_BRACE, nullptr);
+    error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_LEFT_BRACE, nullptr);
     if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
         return error;
     }
@@ -440,7 +453,10 @@ static nadir_parser_error_t nadir_parser_run_binary(nadir_parser_t *parser,
     const auto declaration = (nadir_ast_declaration_t){
         .token = token,
         .kind = NADIR_AST_DECLARATION_KIND_BINARY,
-        .data.binary.statements = statements
+        .data.binary = {
+            .origin = origin_value,
+            .statements = statements,
+        }
     };
 
     if (!nadir_list_append(parser->ast->declarations, &declaration)) {
@@ -458,7 +474,7 @@ cleanup:
 }
 
 static nadir_parser_error_t nadir_parser_run_statements(nadir_parser_t *parser,
-                                                        nadir_ast_declaration_kind_t kind,
+                                                        const nadir_ast_declaration_kind_t kind,
                                                         nadir_list_t *statements) {
     auto next_token = nadir_parser_peek(parser);
 

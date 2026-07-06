@@ -10,6 +10,7 @@ jobs:
   build-and-test:
     name: Build and Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+
     strategy:
       fail-fast: false
       matrix:
@@ -18,23 +19,50 @@ jobs:
             cc: clang-22
             cxx: clang++-22
             llvm: /usr/lib/llvm-22
+            shell: bash
           - os: macos-latest
             cc: /opt/homebrew/opt/llvm@22/bin/clang
             cxx: /opt/homebrew/opt/llvm@22/bin/clang++
             llvm: /opt/homebrew/opt/llvm@22
+            shell: bash
+          - os: windows-latest
+            cc: clang
+            cxx: clang++
+            llvm: C:/msys64/clang64
+            shell: msys2 {0}
+
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
 
     steps:
       - uses: actions/checkout@v7
 
       - name: Setup LLVM
+        if: runner.os != 'Windows'
         uses: ZhongRuoyu/setup-llvm@e2e934730b624f441362ce6b5848444ace2ad688
         with:
           llvm-version: 22
 
       - name: Setup CMake
+        if: runner.os != 'Windows'
         uses: jwlawson/actions-setup-cmake@v2.2.0
         with:
           cmake-version: 4.x
+
+      - name: Setup MSYS2
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: CLANG64
+          update: true
+          install: >-
+            git
+            make
+          pacboy: >-
+            toolchain:p
+            cmake:p
+            ninja:p
 
       - name: Configure CMake
         run: |

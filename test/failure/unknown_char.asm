@@ -1,3 +1,0 @@
-constant Symbols {
-  Question = ?;
-}

@@ -5,6 +5,7 @@
 
 #include "nadir/error.h"
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -20,7 +21,7 @@ char *nadir_error_encode(const nadir_error_t *error) {
 
     auto pointer = buffer;
     auto written = 0;
-    auto remaining = NADIR_ERROR_STRING_MAXIMUM;
+    auto remaining = (nadir_u64_t) NADIR_ERROR_STRING_MAXIMUM;
 
     switch (error->kind) {
         case NADIR_ERROR_KIND_NONE:
@@ -29,11 +30,11 @@ char *nadir_error_encode(const nadir_error_t *error) {
         case NADIR_ERROR_KIND_LEXER:
             written = snprintf(pointer,
                                remaining,
-                               "%llu:%llu: error(lexer): ",
+                               "%" PRIu64 ":%" PRIu64 ": error(lexer): ",
                                error->lexer.line,
                                error->lexer.column);
 
-            remaining -= written;
+            remaining -= (nadir_u64_t) written;
             pointer += written;
 
             switch (error->lexer.kind) {
@@ -65,16 +66,16 @@ char *nadir_error_encode(const nadir_error_t *error) {
 
         case NADIR_ERROR_KIND_PARSER:
             if (error->parser.token == nullptr) {
-                written = snprintf(pointer, remaining, "error(parser): ");
+                written = snprintf(pointer, remaining, " error(parser): ");
             } else {
                 written = snprintf(pointer,
                                    remaining,
-                                   "%llu:%llu: error(parser): ",
+                                   "%" PRIu64 ":%" PRIu64 ": error(parser): ",
                                    error->parser.token->line,
                                    error->parser.token->column);
             }
 
-            remaining -= written;
+            remaining -= (nadir_u64_t) written;
             pointer += written;
 
             switch (error->parser.kind) {
@@ -118,16 +119,16 @@ char *nadir_error_encode(const nadir_error_t *error) {
 
         case NADIR_ERROR_KIND_COMPILER:
             if (error->compiler.token == nullptr) {
-                written = snprintf(pointer, remaining, "error(compiler): ");
+                written = snprintf(pointer, remaining, " error(compiler): ");
             } else {
                 written = snprintf(pointer,
                                    remaining,
-                                   "%llu:%llu: error(compiler): ",
+                                   "%" PRIu64 ":%" PRIu64 ": error(compiler): ",
                                    error->compiler.token->line,
                                    error->compiler.token->column);
             }
 
-            remaining -= written;
+            remaining -= (nadir_u64_t) written;
             pointer += written;
 
             switch (error->compiler.kind) {

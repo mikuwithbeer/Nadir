@@ -21,6 +21,7 @@ target_compile_options(
     -Wextra
     -Wpedantic
     # --- Type Safety ---
+    -Wsign-conversion
     -Wconversion
     -Wshadow
     # --- Function Declarations ---

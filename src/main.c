@@ -10,6 +10,7 @@
 #include "nadir/cli.h"
 #include "nadir/error.h"
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -197,7 +198,7 @@ static state_t process_success(void) {
         return STATE_ERROR;
     }
 
-    printf("wrote %llu bytes to: %s\n", compiler->output->length, cli.output_file);
+    printf("wrote %" PRIu64 " bytes to: %s\n", compiler->output->length, cli.output_file);
     return STATE_EXIT;
 }
 

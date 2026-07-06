@@ -72,7 +72,8 @@ typedef struct {
 /**
  * @brief Determines the comptime kind based on the given name.
  */
-[[nodiscard]] nadir_comptime_kind_t nadir_comptime_kind(const char *name);
+[[nodiscard]] nadir_comptime_kind_t nadir_comptime_kind(const char *name,
+                                                        nadir_u64_t length);
 
 /**
  * @brief Evaluates the given comptime expression with the provided context.

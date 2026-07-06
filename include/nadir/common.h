@@ -58,7 +58,7 @@ constexpr nadir_i128_t NADIR_I128_MAXIMUM = NADIR_U128_MAXIMUM >> 1; // 2^127 - 
 constexpr nadir_i128_t NADIR_I128_MINIMUM = -NADIR_I128_MAXIMUM - 1; // -2^127
 
 constexpr auto NADIR_STRING_MAXIMUM = 0xFF + 1; // 255 + 1 for null terminator
-constexpr auto NADIR_LIST_DEFAULT_CAPACITY = 1 << 6;
+constexpr auto NADIR_LIST_DEFAULT_CAPACITY = 1 << 4;
 constexpr auto NADIR_TABLE_DEFAULT_CAPACITY = NADIR_LIST_DEFAULT_CAPACITY;
 constexpr auto NADIR_STACK_MAXIMUM = 1 << 10;
 
@@ -84,7 +84,7 @@ typedef enum : nadir_u8_t {
  * @brief Generic list structure for the assembler and components.
  */
 typedef struct {
-    void **items;
+    void *items;
 
     nadir_u64_t length;
     nadir_u64_t capacity;
@@ -95,10 +95,11 @@ typedef struct {
  * @brief Generic table entry structure for the assembler and components.
  */
 typedef struct {
-    char key[NADIR_STRING_MAXIMUM];
-    void *value;
+    char *key;
+    nadir_u64_t key_length;
 
-    bool is_used;
+    void *value;
+    bool exists;
 } nadir_table_entry_t;
 
 /**
@@ -125,15 +126,25 @@ typedef struct {
 // [--------------------------------------------------------------] //
 
 /**
+ * @brief Compares two strings for equality.
+ */
+[[nodiscard]] bool nadir_string_compare(const char *left,
+                                        const char *right,
+                                        nadir_u64_t left_length,
+                                        nadir_u64_t right_length);
+
+/**
  * @brief Decodes a base-10 string into a 128-bit signed integer.
  */
 [[nodiscard]] bool nadir_i128_decode_base10(const char *input,
+                                            nadir_u64_t length,
                                             nadir_i128_t *value);
 
 /**
  * @brief Decodes a base-16 string into a 128-bit signed integer.
  */
 [[nodiscard]] bool nadir_i128_decode_base16(const char *input,
+                                            nadir_u64_t length,
                                             nadir_i128_t *value);
 
 /**
@@ -176,13 +187,15 @@ void nadir_list_free(nadir_list_t *list);
  */
 [[nodiscard]] bool nadir_table_insert(nadir_table_t *table,
                                       const char *key,
+                                      nadir_u64_t length,
                                       const void *value);
 
 /**
  * @brief Fetches a value from the table by key.
  */
 [[nodiscard]] void *nadir_table_fetch(const nadir_table_t *table,
-                                      const char *key);
+                                      const char *key,
+                                      nadir_u64_t length);
 
 /**
  * @brief Frees the table and its values.

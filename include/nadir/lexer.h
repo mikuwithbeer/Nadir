@@ -53,8 +53,8 @@ typedef enum [[nodiscard]] : nadir_u8_t {
  * @brief Error structure for the lexer.
  */
 typedef struct [[nodiscard]] {
-    nadir_u64_t line;
-    nadir_u64_t column;
+    nadir_u32_t line;
+    nadir_u32_t column;
 
     nadir_lexer_error_kind_t kind;
     char character;
@@ -64,6 +64,8 @@ typedef struct [[nodiscard]] {
  * @brief Lexer structure for the assembler.
  */
 typedef struct {
+    nadir_lexer_state_t state;
+
     nadir_list_t *tokens; // List of `nadir_token_t`
     nadir_token_t token; // Temporary token for construction
 
@@ -71,9 +73,8 @@ typedef struct {
     nadir_u64_t source_length;
     nadir_u64_t source_index;
 
-    nadir_u64_t line;
-    nadir_u64_t column;
-    nadir_lexer_state_t state;
+    nadir_u32_t line;
+    nadir_u32_t column;
 } nadir_lexer_t;
 
 // [--------------------------------------------------------------] //
@@ -84,8 +85,8 @@ typedef struct {
  * @brief Creates a new lexer error with the given parameters.
  */
 static inline nadir_lexer_error_t nadir_lexer_error_new(const nadir_lexer_error_kind_t kind,
-                                                        const nadir_u64_t line,
-                                                        const nadir_u64_t column) {
+                                                        const nadir_u32_t line,
+                                                        const nadir_u32_t column) {
     return (nadir_lexer_error_t){
         .line = line,
         .column = column,

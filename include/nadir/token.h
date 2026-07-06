@@ -74,15 +74,19 @@ typedef enum : nadir_u8_t {
  * @brief Token structure for the assembler.
  */
 typedef struct {
+    union {
+        nadir_i128_t number;
+
+        struct {
+            const char *value;
+            nadir_u64_t count;
+        } string;
+    };
+
+    nadir_u32_t line;
+    nadir_u32_t column;
+
     nadir_token_kind_t kind;
-
-    char value[NADIR_TOKEN_VALUE_MAXIMUM];
-    nadir_u64_t value_length;
-
-    nadir_i128_t number; // For number tokens, this field holds the numeric value
-
-    nadir_u64_t line;
-    nadir_u64_t column;
 } nadir_token_t;
 
 // [--------------------------------------------------------------] //
@@ -93,16 +97,22 @@ typedef struct {
  * @brief Creates a new token with the given parameters.
  */
 [[nodiscard]] nadir_token_t nadir_token_new(nadir_token_kind_t kind,
-                                            nadir_u64_t line,
-                                            nadir_u64_t column);
+                                            nadir_u32_t line,
+                                            nadir_u32_t column);
 
 /**
- * @brief Appends a character to the token's value.
- *
- * @return false if the buffer is full, true otherwise.
+ * @brief Initializes the token's value and count.
  */
-[[nodiscard]] bool nadir_token_append(nadir_token_t *token,
-                                      char character);
+void nadir_token_start(nadir_token_t *token,
+                       const char *source,
+                       nadir_u64_t index);
+
+/**
+ * @brief Increments the token's length.
+ *
+ * @return False if it reached the maximum limit, true otherwise.
+ */
+[[nodiscard]] bool nadir_token_increment(nadir_token_t *token);
 
 /**
  * @brief Checks if a character is a whitespace character (' ', '\\n', '\\t', '\\r').

@@ -5,8 +5,8 @@
 
 #include "nadir/comptime.h"
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // [--------------------------------------------------------------] //
 // > Forward Declarations                                         < //
@@ -199,7 +199,8 @@ nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler) {
             case NADIR_AST_EXPRESSION_KIND_PROCEDURE_CALL: {
                 const nadir_compiler_procedure_t *procedure = nadir_table_fetch(
                     compiler->procedures,
-                    statement->token->value);
+                    statement->token->string.value,
+                    statement->token->string.count);
 
                 if (procedure == nullptr) {
                     return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_PROCEDURE, statement->token);
@@ -265,10 +266,14 @@ nadir_compiler_error_t nadir_compiler_prepare_constant(nadir_compiler_t *compile
     auto error = (nadir_compiler_error_t){};
 
     // Prepare each constant entry in the constant declaration.
-    const auto member_first = declaration->name->value;
+    const auto member_first = declaration->name->string.value;
+    const auto member_first_length = declaration->name->string.count;
+
     for (nadir_u64_t index = 0; index < declaration->entries->length; ++index) {
         const nadir_ast_declaration_constant_entry_t *constant_entry = nadir_list_get(declaration->entries, index);
-        const auto member_second = constant_entry->name->value;
+
+        const auto member_second = constant_entry->name->string.value;
+        const auto member_second_length = constant_entry->name->string.count;
 
         // Evaluate the constant entry expression to get its value.
         error = nadir_compiler_evaluate(compiler, nullptr, &constant_entry->value);
@@ -285,14 +290,22 @@ nadir_compiler_error_t nadir_compiler_prepare_constant(nadir_compiler_t *compile
 
         // Create a unique key for the constant entry.
         char member_key[NADIR_STRING_MAXIMUM] = {};
-        sprintf(member_key, "%s.%s", member_first, member_second);
+        nadir_u64_t member_key_length = 0;
+
+        memcpy(member_key, member_first, member_first_length);
+        member_key_length += member_first_length;
+
+        member_key[member_key_length++] = '.';
+
+        memcpy(member_key + member_key_length, member_second, member_second_length);
+        member_key_length += member_second_length;
 
         const auto constant = (nadir_compiler_constant_t){
             .token = constant_entry->name,
             .value = constant_value,
         };
 
-        if (!nadir_table_insert(compiler->constants, member_key, &constant)) {
+        if (!nadir_table_insert(compiler->constants, member_key, member_key_length, &constant)) {
             return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_MULTIPLE_CONSTANT, constant_entry->name);
         }
     }
@@ -308,7 +321,10 @@ nadir_compiler_error_t nadir_compiler_prepare_procedure(const nadir_compiler_t *
         .statements = declaration->statements,
     };
 
-    if (!nadir_table_insert(compiler->procedures, declaration->name->value, &procedure)) {
+    if (!nadir_table_insert(compiler->procedures,
+                            declaration->name->string.value,
+                            declaration->name->string.count,
+                            &procedure)) {
         return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_MULTIPLE_PROCEDURE, declaration->name);
     }
 
@@ -333,7 +349,8 @@ nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
             case NADIR_AST_EXPRESSION_KIND_PROCEDURE_CALL: {
                 const nadir_compiler_procedure_t *procedure = nadir_table_fetch(
                     compiler->procedures,
-                    statement->token->value);
+                    statement->token->string.value,
+                    statement->token->string.count);
 
                 if (procedure == nullptr) {
                     return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_PROCEDURE, statement->token);
@@ -345,7 +362,10 @@ nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
             }
             case NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS: {
                 // Store the address with the current binary origin.
-                if (!nadir_table_insert(compiler->addresses, statement->token->value, &compiler->binary_origin)) {
+                if (!nadir_table_insert(compiler->addresses,
+                                        statement->token->string.value + 1,
+                                        statement->token->string.count - 1,
+                                        &compiler->binary_origin)) {
                     return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_MULTIPLE_ADDRESS, statement->token);
                 }
 
@@ -485,18 +505,36 @@ nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
             // Directly push the number value onto the stack.
             error = nadir_compiler_stack_push(compiler, expression->token->number, expression->token);
             break;
-        case NADIR_AST_EXPRESSION_KIND_TYPE:
+        case NADIR_AST_EXPRESSION_KIND_TYPE: {
             // Convert the token kind to the value.
             const nadir_type_t type_value = expression->token->kind - NADIR_TOKEN_KIND_TYPE_U8;
             error = nadir_compiler_stack_push(compiler, type_value, expression->token);
             break;
+        }
         case NADIR_AST_EXPRESSION_KIND_MEMBER: {
+            const auto member_first = expression->token->string.value;
+            const auto member_first_length = expression->token->string.count;
+
+            const auto member_second = expression->member.field->string.value;
+            const auto member_second_length = expression->member.field->string.count;
+
             // Format the member key to look up the constant value.
             char member_key[NADIR_STRING_MAXIMUM] = {};
-            sprintf(member_key, "%s.%s", expression->token->value, expression->member.field->value);
+            nadir_u64_t member_key_length = 0;
+
+            memcpy(member_key, member_first, member_first_length);
+            member_key_length += member_first_length;
+
+            member_key[member_key_length++] = '.';
+
+            memcpy(member_key + member_key_length, member_second, member_second_length);
+            member_key_length += member_second_length;
 
             // Look up the constant value in the compiler's constant table.
-            const nadir_compiler_constant_t *constant = nadir_table_fetch(compiler->constants, member_key);
+            const nadir_compiler_constant_t *constant = nadir_table_fetch(compiler->constants,
+                                                                          member_key,
+                                                                          member_key_length);
+
             if (constant == nullptr) {
                 return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_CONSTANT,
                                                 expression->member.field);
@@ -511,7 +549,10 @@ nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
             break;
         case NADIR_AST_EXPRESSION_KIND_LOAD_ADDRESS: {
             // Look up the address in the compiler's address table.
-            const nadir_u64_t *address = nadir_table_fetch(compiler->addresses, expression->token->value);
+            const nadir_u64_t *address = nadir_table_fetch(compiler->addresses,
+                                                           expression->token->string.value + 1,
+                                                           expression->token->string.count - 1);
+
             if (address == nullptr) {
                 return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_ADDRESS, expression->token);
             }
@@ -562,7 +603,7 @@ nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compil
     }
 
     // Determine the compile-time kind.
-    const auto kind = nadir_comptime_kind(expression->token->value);
+    const auto kind = nadir_comptime_kind(expression->token->string.value, expression->token->string.count);
     if (kind == NADIR_COMPTIME_KIND_NONE) {
         error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_COMPTIME, expression->token);
         goto cleanup;

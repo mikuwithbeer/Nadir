@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 4.0)
 
-project(Nadir
+project(
+    Nadir
     LANGUAGES C
     VERSION 0.1.0
 )
@@ -13,7 +14,8 @@ set(CMAKE_C_EXTENSIONS OFF)
 add_library(Options INTERFACE)
 add_library(Nadir::Options ALIAS Options)
 
-target_compile_options(Options INTERFACE
+target_compile_options(
+    Options INTERFACE
     # --- Warnings ---
     -Wall
     -Wextra
@@ -40,7 +42,8 @@ target_compile_options(Options INTERFACE
     -Wunused-macros
 )
 
-target_compile_definitions(Options INTERFACE
+target_compile_definitions(
+    Options INTERFACE
     $<$<CONFIG:Debug>:DEBUG>
 )
 
@@ -48,7 +51,8 @@ target_compile_definitions(Options INTERFACE
 add_library(Core STATIC)
 add_library(Nadir::Core ALIAS Core)
 
-target_sources(Core PRIVATE
+target_sources(
+    Core PRIVATE
     src/ast.c
     src/cli.c
     src/common.c
@@ -60,11 +64,13 @@ target_sources(Core PRIVATE
     src/token.c
 )
 
-target_include_directories(Core PUBLIC
+target_include_directories(
+    Core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-target_compile_definitions(Core PRIVATE
+target_compile_definitions(
+    Core PRIVATE
     NADIR_VERSION="${PROJECT_VERSION}"
 )
 

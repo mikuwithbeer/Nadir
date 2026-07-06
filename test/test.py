@@ -19,12 +19,10 @@ def main():
     print(f"Testing [mode:{test_mode}]: {source_file}")
 
     try:
-        process_result = subprocess.run([
-            assembler_path,
-            "-i", source_file,
-            "-o", output_file],
+        process_result = subprocess.run(
+            [assembler_path, "-i", source_file, "-o", output_file],
             capture_output=True,
-            text=True
+            text=True,
         )
     except Exception as exception:
         print(f"Failed to execute assembler: {exception}")
@@ -45,7 +43,10 @@ def main():
             print(f"Expected file not found: {expect_file}")
             sys.exit(1)
 
-        with open(output_file, "rb") as file_left, open(expect_file, "rb") as file_right:
+        with (
+            open(output_file, "rb") as file_left,
+            open(expect_file, "rb") as file_right,
+        ):
             left = file_left.read()
             right = file_right.read()
 

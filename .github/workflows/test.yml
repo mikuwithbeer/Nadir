@@ -1,4 +1,4 @@
-name: Build Nadir
+name: Build and Test Nadir
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-    name: Build on ${{ matrix.os }}
+  build-and-test:
+    name: Build and Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -46,3 +46,6 @@ jobs:
 
       - name: Build with CMake
         run: cmake --build build --config Release
+
+      - name: Test with CTest
+        run: ctest --test-dir build --output-on-failure --verbose

@@ -354,17 +354,18 @@ static nadir_table_entry_t *nadir_table_grow(nadir_table_t *table) {
         return nullptr;
     }
 
-    table->capacity = new_capacity;
     for (size_t index = 0; index < table->capacity; index++) {
         const auto old_entry = &table->entries[index];
 
         // Rehash the old entry into the new table.
         if (old_entry->is_used) {
-            const auto new_slot = nadir_table_find(new_entries, table->capacity, old_entry->key);
+            const auto new_slot = nadir_table_find(new_entries, new_capacity, old_entry->key);
             *new_slot = *old_entry;
         }
     }
 
     free(table->entries); // Free the old entries array
+
+    table->capacity = new_capacity;
     return new_entries;
 }

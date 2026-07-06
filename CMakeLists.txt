@@ -73,3 +73,7 @@ target_link_libraries(Core PRIVATE Nadir::Options)
 # --- Executable ---
 add_executable(Nadir src/main.c)
 target_link_libraries(Nadir PRIVATE Nadir::Core)
+
+# --- Testing ---
+enable_testing()
+add_subdirectory(test)

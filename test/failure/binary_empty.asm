@@ -1,1 +1,3 @@
-binary 0 {}
+binary 0 {
+  # 0;
+}

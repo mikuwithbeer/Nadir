@@ -48,4 +48,4 @@ jobs:
         run: cmake --build build --config Release
 
       - name: Test with CTest
-        run: ctest --test-dir build --output-on-failure --verbose
+        run: ctest --test-dir build --output-on-failure

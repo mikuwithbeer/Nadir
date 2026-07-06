@@ -301,7 +301,7 @@ static nadir_lexer_error_t nadir_lexer_collect_number_base10(nadir_lexer_t *lexe
     }
 
     // Check for valid characters.
-    if (!nadir_token_value_digit(character) && (lexer->token.value_length != 0 || nadir_token_value_sign(character))) {
+    if (!nadir_token_value_digit(character) && (lexer->token.value_length != 0 || !nadir_token_value_sign(character))) {
         error.kind = NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER;
         error.character = character;
 
@@ -357,7 +357,8 @@ static nadir_lexer_error_t nadir_lexer_collect_number_base16(nadir_lexer_t *lexe
     }
 
     // Check for valid characters.
-    if (!nadir_token_value_hexadecimal(character) && (lexer->token.value_length || nadir_token_value_sign(character))) {
+    if (!nadir_token_value_hexadecimal(character) &&
+        (lexer->token.value_length != 0 || !nadir_token_value_sign(character))) {
         error.kind = NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER;
         error.character = character;
 

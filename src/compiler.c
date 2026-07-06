@@ -166,19 +166,57 @@ nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler) {
     // Run each statement in the binary declaration to generate the output.
     for (nadir_u64_t index = 0; index < binary->binary.statements->length; ++index) {
         const nadir_ast_expression_t *statement = nadir_list_get(binary->binary.statements, index);
-        if (statement->kind != NADIR_AST_EXPRESSION_KIND_PROCEDURE_CALL) {
-            continue; // Addresses are handled in the preparation phase
-        }
 
-        // Guaranteed to be a procedure call due to the validation in the parser.
-        const nadir_compiler_procedure_t *procedure = nadir_table_fetch(compiler->procedures, statement->token->value);
-        if (procedure == nullptr) {
-            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_PROCEDURE, statement->token);
-        }
+        switch (statement->kind) {
+            case NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL:
+            case NADIR_AST_EXPRESSION_KIND_MEMBER:
+            case NADIR_AST_EXPRESSION_KIND_NUMBER: {
+                // Evaluate the statement expression to get its value.
+                error = nadir_compiler_evaluate(compiler, nullptr, statement);
+                if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+                    return error;
+                }
 
-        error = nadir_compiler_run_procedure(compiler, statement, procedure);
-        if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            return error;
+                // Pop the statement value from the stack.
+                nadir_i128_t statement_value;
+                error = nadir_compiler_stack_pop(compiler, &statement_value, statement->token);
+                if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+                    return error;
+                }
+
+                // Guard against a byte mismatch when writing the statement value to the output.
+                const auto statement_byte = (nadir_u8_t) statement_value;
+                if (statement_value != statement_byte) {
+                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH, statement->token);
+                }
+
+                if (!nadir_list_append(compiler->output, &statement_byte)) {
+                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, statement->token);
+                }
+
+                break;
+            }
+            case NADIR_AST_EXPRESSION_KIND_PROCEDURE_CALL: {
+                const nadir_compiler_procedure_t *procedure = nadir_table_fetch(
+                    compiler->procedures,
+                    statement->token->value);
+
+                if (procedure == nullptr) {
+                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_PROCEDURE, statement->token);
+                }
+
+                // Run the procedure call to generate the output for the procedure.
+                error = nadir_compiler_run_procedure(compiler, statement, procedure);
+                if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+                    return error;
+                }
+
+                break;
+            }
+            case NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS:
+                continue; // Already handled in the preparation phase
+            default:
+                break; // Unreachable
         }
     }
 
@@ -285,22 +323,37 @@ nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
     for (nadir_u64_t index = 0; index < declaration->statements->length; ++index) {
         const nadir_ast_expression_t *statement = nadir_list_get(declaration->statements, index);
 
-        // Handle address statements.
-        if (statement->kind == NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS) {
-            if (!nadir_table_insert(compiler->addresses, statement->token->value, &compiler->binary_origin)) {
-                return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_MULTIPLE_ADDRESS, statement->token);
+        switch (statement->kind) {
+            case NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL:
+            case NADIR_AST_EXPRESSION_KIND_MEMBER:
+            case NADIR_AST_EXPRESSION_KIND_NUMBER: {
+                ++compiler->binary_origin; // Expected to be a single byte in the output
+                break;
             }
+            case NADIR_AST_EXPRESSION_KIND_PROCEDURE_CALL: {
+                const nadir_compiler_procedure_t *procedure = nadir_table_fetch(
+                    compiler->procedures,
+                    statement->token->value);
 
-            continue;
+                if (procedure == nullptr) {
+                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_PROCEDURE, statement->token);
+                }
+
+                // Update the binary origin by adding the number of statements in the procedure.
+                compiler->binary_origin += procedure->statements->length;
+                break;
+            }
+            case NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS: {
+                // Store the address with the current binary origin.
+                if (!nadir_table_insert(compiler->addresses, statement->token->value, &compiler->binary_origin)) {
+                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_MULTIPLE_ADDRESS, statement->token);
+                }
+
+                break;
+            }
+            default:
+                break; // Unreachable
         }
-
-        // Guaranteed to be a procedure call due to the validation in the parser.
-        const nadir_compiler_procedure_t *procedure = nadir_table_fetch(compiler->procedures, statement->token->value);
-        if (procedure == nullptr) {
-            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_PROCEDURE, statement->token);
-        }
-
-        compiler->binary_origin += procedure->statements->length;
     }
 
     return (nadir_compiler_error_t){};

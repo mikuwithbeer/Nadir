@@ -96,7 +96,10 @@ static inline bool nadir_parser_is_procedure_statement(const nadir_ast_expressio
 
 static inline bool nadir_parser_is_binary_statement(const nadir_ast_expression_kind_t kind) {
     return kind == NADIR_AST_EXPRESSION_KIND_PROCEDURE_CALL ||
-           kind == NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS;
+           kind == NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS ||
+           kind == NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL ||
+           kind == NADIR_AST_EXPRESSION_KIND_MEMBER ||
+           kind == NADIR_AST_EXPRESSION_KIND_NUMBER;
 }
 
 static inline bool nadir_parser_is_procedure_argument(const nadir_ast_expression_kind_t kind) {

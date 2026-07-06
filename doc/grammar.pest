@@ -44,7 +44,7 @@ procedure_expression     = { comptime_call | member_access | numeric_literal }
 
 binary_declaration = { "binary" ~ numeric_literal ~ "{" ~ binary_statement* ~ "}" }
 binary_statement   = { binary_expression ~ ";" }
-binary_expression  = { procedure_call | store_address }
+binary_expression  = { procedure_call | store_address | comptime_call | member_access | numeric_literal }
 
 // [--------------------------------------------------------------] //
 // > Grammar Entry Point                                          < //

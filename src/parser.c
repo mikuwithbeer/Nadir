@@ -435,6 +435,7 @@ static nadir_parser_error_t nadir_parser_run_binary(nadir_parser_t *parser,
     nadir_token_t *origin_token;
     auto error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_NUMBER, &origin_token);
     if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+        error.kind = NADIR_PARSER_ERROR_KIND_MISSING_BINARY_ORIGIN;
         return error;
     }
 

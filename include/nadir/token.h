@@ -9,7 +9,7 @@
  * the assembler.
  */
 
-#include "nadir/common.h"
+#include "nadir/common/number.h"
 
 // [--------------------------------------------------------------] //
 // > Constants                                                    < //

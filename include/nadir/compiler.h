@@ -9,6 +9,8 @@
  * the assembler.
  */
 
+#include "nadir/common/stack.h"
+#include "nadir/common/table.h"
 #include "nadir/ast.h"
 
 // [--------------------------------------------------------------] //

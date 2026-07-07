@@ -6,7 +6,8 @@
  * @brief The CLI interface.
  */
 
-#include "nadir/common.h"
+#include "nadir/common/list.h"
+#include "nadir/common/number.h"
 
 // [--------------------------------------------------------------] //
 // > Constants                                                    < //

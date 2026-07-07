@@ -9,6 +9,7 @@
  * a list of tokens that can be processed by the parser.
  */
 
+#include "nadir/common/list.h"
 #include "nadir/token.h"
 
 // [--------------------------------------------------------------] //

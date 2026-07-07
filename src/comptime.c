@@ -5,12 +5,16 @@
 
 #include "nadir/comptime.h"
 
+#include <string.h>
+
 // [--------------------------------------------------------------] //
 // > Function Implementations                                     < //
 // [--------------------------------------------------------------] //
 
-nadir_comptime_kind_t nadir_comptime_kind(const char *name, const nadir_u64_t length) {
-#define NADIR_COMPTIME_MATCH(literal) nadir_string_compare(name, "@" literal, length, sizeof(literal))
+nadir_comptime_kind_t nadir_comptime_kind(const char *name,
+                                          const nadir_u64_t length) {
+#define NADIR_COMPTIME_MATCH(literal) \
+    (length == sizeof(literal) && memcmp(name, "@"literal, length) == 0)
 
     if (NADIR_COMPTIME_MATCH("arg")) return NADIR_COMPTIME_KIND_ARG;
     if (NADIR_COMPTIME_MATCH("cast")) return NADIR_COMPTIME_KIND_CAST;
@@ -100,28 +104,28 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
 
             // Convert number to the specified type.
             switch (*type) {
-                case NADIR_TYPE_U8:
+                case 0: // U8
                     *result = (nadir_u8_t) *value;
                     break;
-                case NADIR_TYPE_U16:
+                case 1: // U16
                     *result = (nadir_u16_t) *value;
                     break;
-                case NADIR_TYPE_U32:
+                case 2: // U32
                     *result = (nadir_u32_t) *value;
                     break;
-                case NADIR_TYPE_U64:
+                case 3: // U64
                     *result = (nadir_u64_t) *value;
                     break;
-                case NADIR_TYPE_I8:
+                case 4: // I8
                     *result = (nadir_i8_t) *value;
                     break;
-                case NADIR_TYPE_I16:
+                case 5: // I16
                     *result = (nadir_i16_t) *value;
                     break;
-                case NADIR_TYPE_I32:
+                case 6: // I32
                     *result = (nadir_i32_t) *value;
                     break;
-                case NADIR_TYPE_I64:
+                case 7: // I64
                     *result = (nadir_i64_t) *value;
                     break;
                 default:

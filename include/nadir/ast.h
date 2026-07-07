@@ -9,6 +9,7 @@
  * Each node of the tree denotes a construct occurring in the source code.
  */
 
+#include "nadir/common/list.h"
 #include "nadir/token.h"
 
 // [--------------------------------------------------------------] //

@@ -54,9 +54,12 @@ add_library(Nadir::Core ALIAS Core)
 
 target_sources(
     Core PRIVATE
+    src/common/list.c
+    src/common/number.c
+    src/common/stack.c
+    src/common/table.c
     src/ast.c
     src/cli.c
-    src/common.c
     src/compiler.c
     src/comptime.c
     src/error.c

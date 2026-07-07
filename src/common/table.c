@@ -1,9 +1,9 @@
 /**
- * @file common.c
- * @brief The common implementation.
+ * @file table.c
+ * @brief The table implementation.
  */
 
-#include "nadir/common.h"
+#include "nadir/common/table.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -26,177 +26,6 @@
 // > Function Implementations                                     < //
 // [--------------------------------------------------------------] //
 
-bool nadir_string_compare(const char *left,
-                          const char *right,
-                          const nadir_u64_t left_length,
-                          const nadir_u64_t right_length) {
-    return left_length == right_length && memcmp(left, right, left_length) == 0;
-}
-
-bool nadir_i128_decode_base10(const char *input,
-                              const nadir_u64_t length,
-                              nadir_i128_t *value) {
-    nadir_i128_t result = 0;
-    nadir_u64_t index = 0;
-
-    // Handle optional sign.
-    bool negative = false;
-    if (index < length && input[index] == '-') {
-        negative = true;
-        ++index;
-    } else if (index < length && input[index] == '+') {
-        ++index;
-    }
-
-    // Parse each digit and accumulate the result.
-    for (; index < length; ++index) {
-        int digit;
-
-        const char character = input[index];
-        if (character >= '0' && character <= '9') {
-            digit = character - '0';
-        } else if (character == '_') {
-            continue; // Ignore underscores
-        } else {
-            return false; // Invalid character
-        }
-
-        if (negative) {
-            // Check for underflow.
-            if (result < (NADIR_I128_MINIMUM + digit) / 10) {
-                return false;
-            }
-
-            result = result * 10 - digit;
-        } else {
-            // Check for overflow.
-            if (result > (NADIR_I128_MAXIMUM - digit) / 10) {
-                return false;
-            }
-
-            result = result * 10 + digit;
-        }
-    }
-
-    *value = result;
-    return
-            true;
-}
-
-bool nadir_i128_decode_base16(const char *input,
-                              const nadir_u64_t length,
-                              nadir_i128_t *value) {
-    nadir_i128_t result = 0;
-    nadir_u64_t index = 1; // Skip the prefix
-
-    // Handle optional sign.
-    bool negative = false;
-    if (index < length && input[index] == '-') {
-        negative = true;
-        ++index;
-    } else if (index < length && input[index] == '+') {
-        ++index;
-    }
-
-    // Parse each digit and accumulate the result.
-    for (; index < length; ++index) {
-        int digit;
-
-        const char character = input[index];
-        if (character >= '0' && character <= '9') {
-            digit = character - '0';
-        } else if (character >= 'A' && character <= 'F') {
-            digit = character - 'A' + 10;
-        } else if (character >= 'a' && character <= 'f') {
-            digit = character - 'a' + 10;
-        } else if (character == '_') {
-            continue; // Ignore underscores
-        } else {
-            return false; // Invalid character encountered
-        }
-
-        if (negative) {
-            // Check for underflow.
-            if (result < (NADIR_I128_MINIMUM + digit) / 16) {
-                return false;
-            }
-
-            result = result * 16 - digit;
-        } else {
-            // Check for overflow.
-            if (result > (NADIR_I128_MAXIMUM - digit) / 16) {
-                return false;
-            }
-
-            result = result * 16 + digit;
-        }
-    }
-
-    *value = result;
-    return true;
-}
-
-nadir_list_t *nadir_list_new(const nadir_u64_t size) {
-    nadir_list_t *list = malloc(sizeof(nadir_list_t));
-    if (list == nullptr) {
-        return nullptr;
-    }
-
-    list->length = 0;
-    list->capacity = NADIR_LIST_DEFAULT_CAPACITY;
-    list->size = size;
-
-    void *items = malloc(list->capacity * list->size);
-    if (items == nullptr) {
-        free(list);
-        return nullptr;
-    }
-
-    list->items = items;
-    return list;
-}
-
-bool nadir_list_append(nadir_list_t *list,
-                       const void *item) {
-    if (list->length >= list->capacity) {
-        const auto new_capacity = list->capacity << 1; // Double the capacity
-        const auto new_items = realloc(list->items, new_capacity * list->size);
-        if (new_items == nullptr) {
-            return false;
-        }
-
-        list->items = new_items;
-        list->capacity = new_capacity;
-    }
-
-    // Copy the item into the list and increment the length.
-    memcpy((nadir_u8_t *)list->items + (list->length++) * list->size, item, list->size);
-    return true;
-}
-
-void *nadir_list_get(const nadir_list_t *list,
-                     const nadir_u64_t index) {
-    if (index >= list->length) {
-        return nullptr;
-    }
-
-    // Return a pointer to the item at the given index.
-    return (nadir_u8_t *) list->items + index * list->size;
-}
-
-void nadir_list_free(nadir_list_t *list) {
-    if (list == nullptr) {
-        return;
-    }
-
-    if (list->items != nullptr) {
-        free(list->items);
-        list->items = nullptr;
-    }
-
-    free(list);
-}
-
 nadir_table_t *nadir_table_new(const nadir_u64_t size) {
     nadir_table_t *table = malloc(sizeof(nadir_table_t));
     if (table == nullptr) {
@@ -207,7 +36,6 @@ nadir_table_t *nadir_table_new(const nadir_u64_t size) {
     table->capacity = NADIR_TABLE_DEFAULT_CAPACITY;
     table->size = size;
 
-    // Allocate zero-initialized memory for the entries.
     nadir_table_entry_t *entries = calloc(table->capacity, sizeof(nadir_table_entry_t));
     if (entries == nullptr) {
         free(table);
@@ -296,48 +124,6 @@ void nadir_table_free(nadir_table_t *table) {
     }
 
     free(table);
-}
-
-nadir_stack_t *nadir_stack_new(void) {
-    const auto stack = calloc(1, sizeof(nadir_stack_t));
-    if (stack == nullptr) {
-        return nullptr;
-    }
-
-    return stack;
-}
-
-bool nadir_stack_push(nadir_stack_t *stack,
-                      const nadir_i128_t value) {
-    if (stack->length >= NADIR_STACK_MAXIMUM) {
-        return false;
-    }
-
-    stack->data[stack->length++] = value;
-    return true;
-}
-
-bool nadir_stack_pop(nadir_stack_t *stack,
-                     nadir_i128_t *value) {
-    if (stack->length == 0) {
-        return false;
-    }
-
-    if (value) {
-        *value = stack->data[--stack->length];
-    } else {
-        --stack->length;
-    }
-
-    return true;
-}
-
-void nadir_stack_free(nadir_stack_t *stack) {
-    if (stack == nullptr) {
-        return;
-    }
-
-    free(stack);
 }
 
 // [--------------------------------------------------------------] //

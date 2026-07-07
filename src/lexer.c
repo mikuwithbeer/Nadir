@@ -6,6 +6,7 @@
 #include "nadir/lexer.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 // [--------------------------------------------------------------] //
 // > Forward Declarations                                         < //
@@ -396,7 +397,8 @@ static nadir_lexer_error_t nadir_lexer_collect_ident(nadir_lexer_t *lexer,
     if (nadir_token_value_whitespace(character) || nadir_token_value_single(character)) {
         lexer->state = NADIR_LEXER_STATE_DEFAULT;
 
-#define NADIR_LEXER_IDENT_MATCH(literal) nadir_string_compare(lexer->token.string.value, literal, lexer->token.string.count, sizeof(literal) - 1)
+#define NADIR_LEXER_IDENT_MATCH(literal) \
+    (lexer->token.string.count == (sizeof(literal) - 1) && memcmp(lexer->token.string.value, literal, lexer->token.string.count) == 0)
 
         if (NADIR_LEXER_IDENT_MATCH("constant")) lexer->token.kind = NADIR_TOKEN_KIND_CONSTANT;
         else if (NADIR_LEXER_IDENT_MATCH("procedure")) lexer->token.kind = NADIR_TOKEN_KIND_PROCEDURE;

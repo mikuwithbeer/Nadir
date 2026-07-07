@@ -289,7 +289,7 @@ nadir_compiler_error_t nadir_compiler_prepare_constant(nadir_compiler_t *compile
         }
 
         // Create a unique key for the constant entry.
-        char member_key[NADIR_STRING_MAXIMUM] = {};
+        char member_key[NADIR_COMPILER_STRING_MAXIMUM] = {};
         nadir_u64_t member_key_length = 0;
 
         memcpy(member_key, member_first, member_first_length);
@@ -507,7 +507,7 @@ nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
             break;
         case NADIR_AST_EXPRESSION_KIND_TYPE: {
             // Convert the token kind to the value.
-            const nadir_type_t type_value = expression->token->kind - NADIR_TOKEN_KIND_TYPE_U8;
+            const auto type_value = expression->token->kind - NADIR_TOKEN_KIND_TYPE_U8;
             error = nadir_compiler_stack_push(compiler, type_value, expression->token);
             break;
         }
@@ -519,7 +519,7 @@ nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
             const auto member_second_length = expression->member.field->string.count;
 
             // Format the member key to look up the constant value.
-            char member_key[NADIR_STRING_MAXIMUM] = {};
+            char member_key[NADIR_COMPILER_STRING_MAXIMUM] = {};
             nadir_u64_t member_key_length = 0;
 
             memcpy(member_key, member_first, member_first_length);

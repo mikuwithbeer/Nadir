@@ -9,7 +9,14 @@
  * compile-time expressions in the assembler.
  */
 
+#include "nadir/common/list.h"
 #include "nadir/compiler.h"
+
+// [--------------------------------------------------------------] //
+// > Constants                                                    < //
+// [--------------------------------------------------------------] //
+
+constexpr auto NADIR_COMPILER_STRING_MAXIMUM = 0x82;
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //

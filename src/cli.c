@@ -7,7 +7,6 @@
 
 #include <getopt.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //
@@ -26,8 +25,10 @@ static const struct option cli_options[5] = {
 // > Function Implementations                                     < //
 // [--------------------------------------------------------------] //
 
-nadir_cli_t nadir_cli_new(void) {
+nadir_cli_t nadir_cli_new(nadir_arena_t *arena) {
     return (nadir_cli_t){
+        .arena = arena,
+
         .input_file = nullptr,
         .output_file = NADIR_CLI_DEFAULT_OUTPUT,
 
@@ -107,18 +108,18 @@ bool nadir_cli_read(nadir_cli_t *cli) {
         return false;
     }
 
-    char *input_buffer = calloc((nadir_u64_t) input_size + 1, sizeof(char)); // One byte for the null terminator
+    char *input_buffer = nadir_arena_allocate(cli->arena, (nadir_u64_t) input_size + 1);
     if (input_buffer == nullptr) {
         fclose(input_file);
         return false;
     }
 
     const auto input_length = fread(input_buffer, sizeof(char), (nadir_u64_t) input_size, input_file);
+    input_buffer[input_length] = '\0';
 
     // Validate whether the number of bytes read matches the expected size.
     if ((nadir_u64_t) input_size != input_length) {
         fclose(input_file);
-        free(input_buffer);
         return false;
     }
 
@@ -136,28 +137,16 @@ bool nadir_cli_write(nadir_cli_t *cli,
         return false;
     }
 
-    char *output_buffer = calloc(output->length, sizeof(char));
-    if (output_buffer == nullptr) {
+    const auto written = fwrite(output->items, output->size, output->length, output_file);
+
+    // Validate whether the number of items written matches the expected length.
+    if (output->length != written) {
         fclose(output_file);
         return false;
     }
 
-    // Copy the output list into the output buffer.
-    for (nadir_u64_t index = 0; index < output->length; ++index) {
-        output_buffer[index] = *(char *) nadir_list_get(output, index);
-    }
-
-    const auto output_length = fwrite(output_buffer, sizeof(char), output->length, output_file);
-
-    // Validate whether the number of bytes written matches the expected size.
-    if (output->length != output_length) {
-        fclose(output_file);
-        free(output_buffer);
-        return false;
-    }
-
-    cli->output = output_buffer;
-    cli->output_length = output->length;
+    cli->output = (char *) output->items;
+    cli->output_length = output->length * output->size; // Total bytes
 
     fclose(output_file);
     return true;
@@ -168,13 +157,11 @@ void nadir_cli_close(nadir_cli_t *cli) {
         return;
     }
 
-    if (cli->input != nullptr) {
-        free(cli->input);
-        cli->input = nullptr;
-    }
-
-    if (cli->output != nullptr) {
-        free(cli->output);
-        cli->output = nullptr;
-    }
+    // The arena handles resource management, so we just reset the structure.
+    cli->input_file = nullptr;
+    cli->output_file = nullptr;
+    cli->input = nullptr;
+    cli->output = nullptr;
+    cli->input_length = 0;
+    cli->output_length = 0;
 }

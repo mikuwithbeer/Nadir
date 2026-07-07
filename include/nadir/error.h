@@ -53,8 +53,9 @@ typedef struct {
 /**
  * @brief Encodes the given error into a human-readable string.
  *
- * @warning The caller must free the return value.
+ * @warning The returned string is allocated on the given arena and will be freed when the arena is freed.
  */
-char *nadir_error_encode(const nadir_error_t *error);
+char *nadir_error_encode(nadir_arena_t *arena,
+                         const nadir_error_t *error);
 
 #endif //NADIR_ERROR_H

@@ -109,6 +109,7 @@ typedef struct {
  * @brief Abstract syntax tree structure for the assembler.
  */
 typedef struct {
+    nadir_arena_t *arena;
     nadir_list_t *declarations; // List of `nadir_ast_declaration_t`
 } nadir_ast_t;
 
@@ -117,14 +118,14 @@ typedef struct {
 // [--------------------------------------------------------------] //
 
 /**
- * @brief Creates a new abstract syntax tree.
- *
- * @warning Allocates memory for the abstract syntax tree, which must be freed.
+ * @brief Creates a new abstract syntax tree with the given arena.
  */
-[[nodiscard]] nadir_ast_t *nadir_ast_new(void);
+[[nodiscard]] nadir_ast_t *nadir_ast_new(nadir_arena_t *arena);
 
 /**
- * @brief Frees the abstract syntax tree and its associated resources.
+ * @brief Frees the abstract syntax tree.
+ *
+ * @warning The abstract syntax tree is allocated on the arena and will be freed when the arena is freed.
  */
 void nadir_ast_free(nadir_ast_t *ast);
 

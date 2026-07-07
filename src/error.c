@@ -7,17 +7,21 @@
 
 #include <inttypes.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <string.h>
 
 // [--------------------------------------------------------------] //
 // > Function Implementations                                     < //
 // [--------------------------------------------------------------] //
 
-char *nadir_error_encode(const nadir_error_t *error) {
-    char *buffer = calloc(NADIR_ERROR_STRING_MAXIMUM, sizeof(char));
+char *nadir_error_encode(nadir_arena_t *arena,
+                         const nadir_error_t *error) {
+    char *buffer = nadir_arena_allocate(arena, NADIR_ERROR_STRING_MAXIMUM * sizeof(char));
     if (buffer == nullptr) {
         return nullptr;
     }
+
+    // Clear the buffer before writing.
+    memset(buffer, 0, NADIR_ERROR_STRING_MAXIMUM * sizeof(char));
 
     auto pointer = buffer;
     auto written = 0;

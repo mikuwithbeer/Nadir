@@ -51,6 +51,7 @@ typedef struct [[nodiscard]] {
  * @brief Parser structure for the assembler.
  */
 typedef struct {
+    nadir_arena_t *arena;
     nadir_ast_t *ast;
 
     nadir_list_t *tokens; // List of `nadir_token_t`
@@ -75,11 +76,10 @@ static inline nadir_parser_error_t nadir_parser_error_new(const nadir_parser_err
 }
 
 /**
- * @brief Creates a new parser with the given list of tokens.
- *
- * @warning Allocates memory for the parser and its associated resources.
+ * @brief Creates a new parser with the given arena and list of tokens.
  */
-nadir_parser_t *nadir_parser_new(nadir_list_t *tokens);
+nadir_parser_t *nadir_parser_new(nadir_arena_t *arena,
+                                 nadir_list_t *tokens);
 
 /**
  * @brief Generates an abstract syntax tree from the list of tokens.
@@ -87,7 +87,9 @@ nadir_parser_t *nadir_parser_new(nadir_list_t *tokens);
 nadir_parser_error_t nadir_parser_run(nadir_parser_t *parser);
 
 /**
- * @brief Frees the memory allocated for the parser and its associated resources.
+ * @brief Frees the memory allocated for the parser.
+ *
+ * @warning The parser is allocated on the arena and will be freed when the arena is freed.
  */
 void nadir_parser_free(nadir_parser_t *parser);
 

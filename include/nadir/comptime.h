@@ -6,7 +6,7 @@
  * @brief The comptime interface.
  *
  * The comptime interface provides functionality for evaluating
- * compile-time expressions in the assembler.
+ * compile-time procedures in the assembler.
  */
 
 #include "nadir/common/list.h"

@@ -65,7 +65,7 @@ typedef struct [[nodiscard]] {
  * @brief Lexer structure for the assembler.
  */
 typedef struct {
-    nadir_lexer_state_t state;
+    nadir_arena_t *arena;
 
     nadir_list_t *tokens; // List of `nadir_token_t`
     nadir_token_t token; // Temporary token for construction
@@ -76,6 +76,8 @@ typedef struct {
 
     nadir_u32_t line;
     nadir_u32_t column;
+
+    nadir_lexer_state_t state;
 } nadir_lexer_t;
 
 // [--------------------------------------------------------------] //
@@ -98,11 +100,10 @@ static inline nadir_lexer_error_t nadir_lexer_error_new(const nadir_lexer_error_
 }
 
 /**
- * @brief Creates a new lexer with the given source and length.
- *
- * @warning Allocates memory for the lexer and its associated resources.
+ * @brief Creates a new lexer with the given arena and source.
  */
-[[nodiscard]] nadir_lexer_t *nadir_lexer_new(const char *source,
+[[nodiscard]] nadir_lexer_t *nadir_lexer_new(nadir_arena_t *arena,
+                                             const char *source,
                                              nadir_u64_t source_length);
 
 /**
@@ -111,7 +112,9 @@ static inline nadir_lexer_error_t nadir_lexer_error_new(const nadir_lexer_error_
 nadir_lexer_error_t nadir_lexer_collect(nadir_lexer_t *lexer);
 
 /**
- * @brief Frees the lexer and its associated resources.
+ * @brief Frees the memory allocated for the lexer.
+ *
+ * @warning The lexer is allocated on the arena and will be freed when the arena is freed.
  */
 void nadir_lexer_free(nadir_lexer_t *lexer);
 

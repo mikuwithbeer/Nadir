@@ -4,6 +4,9 @@
 /**
  * @file number.h
  * @brief The number interface.
+ *
+ * This file defines the integer types and related constants for
+ * the assembler.
  */
 
 #include <stdint.h>

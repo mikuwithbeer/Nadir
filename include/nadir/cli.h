@@ -4,10 +4,12 @@
 /**
  * @file cli.h
  * @brief The CLI interface.
+ *
+ * This file defines the command-line interface structure and related
+ * constants for the assembler.
  */
 
 #include "nadir/common/list.h"
-#include "nadir/common/number.h"
 
 // [--------------------------------------------------------------] //
 // > Constants                                                    < //
@@ -23,6 +25,8 @@ constexpr char NADIR_CLI_DEFAULT_OUTPUT[] = "out.bin"; // Default output file
  * @brief Command-line interface structure for the assembler.
  */
 typedef struct {
+    nadir_arena_t *arena;
+
     const char *input_file;
     const char *output_file;
 
@@ -41,11 +45,9 @@ typedef struct {
 // [--------------------------------------------------------------] //
 
 /**
- * @brief Creates a new command-line interface structure.
- *
- * @warning Allocates memory for the input and output buffers, which must be freed.
+ * @brief Creates a new command-line interface structure with the given arena.
  */
-nadir_cli_t nadir_cli_new(void);
+nadir_cli_t nadir_cli_new(nadir_arena_t *arena);
 
 /**
  * @brief Parses the command-line arguments and populates the structure.
@@ -76,7 +78,9 @@ bool nadir_cli_write(nadir_cli_t *cli,
                      const nadir_list_t *output);
 
 /**
- * @brief Frees the memory allocated for the structure.
+ * @brief Closes the command-line interface and frees the associated resources.
+ *
+ * @warning The input and output buffers are allocated on the arena and will be freed when the arena is freed.
  */
 void nadir_cli_close(nadir_cli_t *cli);
 

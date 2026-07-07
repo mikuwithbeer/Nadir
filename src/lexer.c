@@ -5,7 +5,6 @@
 
 #include "nadir/lexer.h"
 
-#include <stdlib.h>
 #include <string.h>
 
 // [--------------------------------------------------------------] //
@@ -45,20 +44,23 @@ static nadir_lexer_error_t nadir_lexer_collect_eof(nadir_lexer_t *lexer);
 // > Function Implementations                                     < //
 // [--------------------------------------------------------------] //
 
-nadir_lexer_t *nadir_lexer_new(const char *source,
+nadir_lexer_t *nadir_lexer_new(nadir_arena_t *arena,
+                               const char *source,
                                const nadir_u64_t source_length) {
-    nadir_lexer_t *lexer = malloc(sizeof(nadir_lexer_t));
+    nadir_lexer_t *lexer = nadir_arena_allocate(arena, sizeof(nadir_lexer_t));
     if (lexer == nullptr) {
         return nullptr;
     }
 
-    const auto token_list = nadir_list_new(sizeof(nadir_token_t));
-    if (token_list == nullptr) {
-        free(lexer);
+    lexer->arena = arena;
+    lexer->tokens = nullptr;
+
+    const auto tokens = nadir_list_new(arena, sizeof(nadir_token_t));
+    if (tokens == nullptr) {
         return nullptr;
     }
 
-    lexer->tokens = token_list;
+    lexer->tokens = tokens;
     lexer->token = (nadir_token_t){};
 
     lexer->source = source;
@@ -134,12 +136,12 @@ void nadir_lexer_free(nadir_lexer_t *lexer) {
         return;
     }
 
-    if (lexer->tokens != nullptr) {
-        nadir_list_free(lexer->tokens);
-        lexer->tokens = nullptr;
-    }
-
-    free(lexer);
+    // The arena handles resource management, so we just reset the structure.
+    lexer->tokens = nullptr;
+    lexer->source = nullptr;
+    lexer->line = 0;
+    lexer->column = 0;
+    lexer->state = NADIR_LEXER_STATE_DEFAULT;
 }
 
 // [--------------------------------------------------------------] //

@@ -5,40 +5,45 @@
 
 #include "nadir/common/list.h"
 
-#include <stdlib.h>
 #include <string.h>
 
 // [--------------------------------------------------------------] //
 // > Function Implementations                                     < //
 // [--------------------------------------------------------------] //
 
-nadir_list_t *nadir_list_new(const nadir_u64_t size) {
-    nadir_list_t *list = malloc(sizeof(nadir_list_t));
+nadir_list_t *nadir_list_new(nadir_arena_t *arena,
+                             const nadir_u64_t size) {
+    nadir_list_t *list = nadir_arena_allocate(arena, sizeof(nadir_list_t));
     if (list == nullptr) {
         return nullptr;
     }
 
+    list->arena = arena;
+    list->items = nullptr; // Will be allocated on first appending
+
     list->length = 0;
-    list->capacity = NADIR_LIST_DEFAULT_CAPACITY;
+    list->capacity = 0;
     list->size = size;
 
-    void *items = malloc(list->capacity * list->size);
-    if (items == nullptr) {
-        free(list);
-        return nullptr;
-    }
-
-    list->items = items;
     return list;
 }
 
 bool nadir_list_append(nadir_list_t *list,
                        const void *item) {
     if (list->length >= list->capacity) {
-        const auto new_capacity = list->capacity << 1; // Double the capacity
-        const auto new_items = realloc(list->items, new_capacity * list->size);
+        auto new_capacity = list->capacity << 1; // Double the capacity
+        if (list->capacity == 0) {
+            new_capacity = NADIR_LIST_DEFAULT_CAPACITY;
+        }
+
+        const auto new_items = nadir_arena_allocate(list->arena, new_capacity * list->size);
         if (new_items == nullptr) {
             return false;
+        }
+
+        // Copy the existing items to the new array if exists.
+        if (list->items != nullptr) {
+            memcpy(new_items, list->items, list->length * list->size);
         }
 
         list->items = new_items;
@@ -65,10 +70,8 @@ void nadir_list_free(nadir_list_t *list) {
         return;
     }
 
-    if (list->items != nullptr) {
-        free(list->items);
-        list->items = nullptr;
-    }
-
-    free(list);
+    // The arena handles resource management, so we just reset the structure.
+    list->items = nullptr;
+    list->length = 0;
+    list->capacity = 0;
 }

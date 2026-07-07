@@ -5,7 +5,6 @@
 
 #include "nadir/common/table.h"
 
-#include <stdlib.h>
 #include <string.h>
 
 // [--------------------------------------------------------------] //
@@ -26,23 +25,30 @@
 // > Function Implementations                                     < //
 // [--------------------------------------------------------------] //
 
-nadir_table_t *nadir_table_new(const nadir_u64_t size) {
-    nadir_table_t *table = malloc(sizeof(nadir_table_t));
+nadir_table_t *nadir_table_new(nadir_arena_t *arena,
+                               const nadir_u64_t size) {
+    nadir_table_t *table = nadir_arena_allocate(arena, sizeof(nadir_table_t));
     if (table == nullptr) {
         return nullptr;
     }
 
+    table->arena = arena;
+    table->entries = nullptr;
+
     table->length = 0;
-    table->capacity = NADIR_TABLE_DEFAULT_CAPACITY;
+    table->capacity = NADIR_ARENA_DEFAULT_CAPACITY;
     table->size = size;
 
-    nadir_table_entry_t *entries = calloc(table->capacity, sizeof(nadir_table_entry_t));
-    if (entries == nullptr) {
-        free(table);
+    // Allocate the entry array from the arena.
+    const auto entries_size = table->capacity * sizeof(nadir_table_entry_t);
+    nadir_table_entry_t *entries = nadir_arena_allocate(arena, entries_size);
+    if (entries != nullptr) {
+        memset(entries, 0, entries_size);
+        table->entries = entries;
+    } else {
         return nullptr;
     }
 
-    table->entries = entries;
     return table;
 }
 
@@ -66,21 +72,19 @@ bool nadir_table_insert(nadir_table_t *table,
         return false;
     }
 
-    // Allocate memory for the new key and copy the data into it.
-    char *new_key = malloc(length + 1);
+    // Allocate memory from the arena for the new key.
+    char *new_key = nadir_arena_allocate(table->arena, length);
     if (new_key != nullptr) {
         memcpy(new_key, key, length);
-        new_key[length] = '\0';
     } else {
         return false;
     }
 
-    // Allocate memory for the new value and copy the data into it.
-    char *new_value = malloc(table->size);
+    // Allocate memory from the arena for the new value.
+    char *new_value = nadir_arena_allocate(table->arena, table->size);
     if (new_value != nullptr) {
         memcpy(new_value, value, table->size);
     } else {
-        free(new_key);
         return false;
     }
 
@@ -110,20 +114,10 @@ void nadir_table_free(nadir_table_t *table) {
         return;
     }
 
-    if (table->entries != nullptr) {
-        // Free the allocated values for each used entry in the table.
-        for (nadir_u64_t index = 0; index < table->capacity; index++) {
-            if (table->entries[index].exists) {
-                free(table->entries[index].key);
-                free(table->entries[index].value);
-            }
-        }
-
-        free(table->entries);
-        table->entries = nullptr;
-    }
-
-    free(table);
+    // The arena handles resource management, so we just reset the structure.
+    table->entries = nullptr;
+    table->length = 0;
+    table->capacity = 0;
 }
 
 // [--------------------------------------------------------------] //
@@ -164,10 +158,15 @@ static nadir_table_entry_t *nadir_table_find(nadir_table_entry_t *entries,
 
 static nadir_table_entry_t *nadir_table_grow(nadir_table_t *table) {
     const auto new_capacity = table->capacity << 1; // Double the capacity
-    nadir_table_entry_t *new_entries = calloc(new_capacity, sizeof(nadir_table_entry_t));
+    const auto new_entries_size = new_capacity * sizeof(nadir_table_entry_t);
+
+    // Allocate the new array from the arena.
+    nadir_table_entry_t *new_entries = nadir_arena_allocate(table->arena, new_entries_size);
     if (!new_entries) {
         return nullptr;
     }
+
+    memset(new_entries, 0, new_entries_size); // Initialize to zero
 
     for (nadir_u64_t index = 0; index < table->capacity; index++) {
         const auto old_entry = &table->entries[index];
@@ -183,8 +182,6 @@ static nadir_table_entry_t *nadir_table_grow(nadir_table_t *table) {
             *new_slot = *old_entry;
         }
     }
-
-    free(table->entries); // Free the old entries array
 
     table->capacity = new_capacity;
     return new_entries;

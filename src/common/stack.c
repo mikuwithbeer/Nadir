@@ -5,17 +5,20 @@
 
 #include "nadir/common/stack.h"
 
-#include <stdlib.h>
+#include <string.h>
 
 // [--------------------------------------------------------------] //
 // > Function Implementations                                     < //
 // [--------------------------------------------------------------] //
 
-nadir_stack_t *nadir_stack_new(void) {
-    const auto stack = calloc(1, sizeof(nadir_stack_t));
+nadir_stack_t *nadir_stack_new(nadir_arena_t *arena) {
+    nadir_stack_t *stack = nadir_arena_allocate(arena, sizeof(nadir_stack_t));
     if (stack == nullptr) {
         return nullptr;
     }
+
+    stack->arena = arena;
+    stack->length = 0;
 
     return stack;
 }
@@ -50,5 +53,7 @@ void nadir_stack_free(nadir_stack_t *stack) {
         return;
     }
 
-    free(stack);
+    // The arena handles resource management, so we just reset the structure.
+    memset(stack->data, 0, sizeof(stack->data));
+    stack->length = 0;
 }

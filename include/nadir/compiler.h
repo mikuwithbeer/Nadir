@@ -74,6 +74,7 @@ typedef struct {
  * @brief Compiler structure for the assembler.
  */
 typedef struct {
+    nadir_arena_t *arena;
     nadir_ast_t *ast;
 
     nadir_table_t *addresses; // Table of `nadir_u64_t`
@@ -105,7 +106,8 @@ static inline nadir_compiler_error_t nadir_compiler_error_new(const nadir_compil
 /**
  * @brief Creates a new compiler with the given abstract syntax tree.
  */
-[[nodiscard]] nadir_compiler_t *nadir_compiler_new(nadir_ast_t *ast);
+[[nodiscard]] nadir_compiler_t *nadir_compiler_new(nadir_arena_t *arena,
+                                                   nadir_ast_t *ast);
 
 /**
  * @brief Prepares the compiler by processing the abstract syntax tree and populating the necessary tables.
@@ -118,7 +120,9 @@ nadir_compiler_error_t nadir_compiler_prepare(nadir_compiler_t *compiler);
 nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler);
 
 /**
- * @brief Frees the memory allocated for the compiler and its associated resources.
+ * @brief Frees the memory allocated for the compiler.
+ *
+ * @warning The compiler is allocated on the arena and will be freed when the arena is freed.
  */
 void nadir_compiler_free(nadir_compiler_t *compiler);
 

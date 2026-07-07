@@ -9,13 +9,7 @@
  * the assembler.
  */
 
-#include "nadir/common/number.h"
-
-// [--------------------------------------------------------------] //
-// > Constants                                                    < //
-// [--------------------------------------------------------------] //
-
-constexpr auto NADIR_TABLE_DEFAULT_CAPACITY = 1 << 6;
+#include "nadir/common/arena.h"
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //
@@ -36,6 +30,7 @@ typedef struct {
  * @brief Generic table structure for the assembler and components.
  */
 typedef struct {
+    nadir_arena_t *arena;
     nadir_table_entry_t *entries;
 
     nadir_u64_t length;
@@ -48,11 +43,10 @@ typedef struct {
 // [--------------------------------------------------------------] //
 
 /**
- * @brief Creates a new table with the given value size.
- *
- * @warning Allocates memory for the table, which must be freed.
+ * @brief Creates a new table with the given arena and value size.
  */
-[[nodiscard]] nadir_table_t *nadir_table_new(nadir_u64_t size);
+[[nodiscard]] nadir_table_t *nadir_table_new(nadir_arena_t *arena,
+                                             nadir_u64_t size);
 
 /**
  * @brief Inserts a key-value pair into the table.
@@ -72,7 +66,9 @@ typedef struct {
                                       nadir_u64_t length);
 
 /**
- * @brief Frees the table and its values.
+ * @brief Frees the table and its entries.
+ *
+ * @warning The table is allocated on the arena and will be freed when the arena is freed.
  */
 void nadir_table_free(nadir_table_t *table);
 

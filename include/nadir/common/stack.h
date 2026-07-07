@@ -9,7 +9,7 @@
  * the assembler.
  */
 
-#include "nadir/common/number.h"
+#include "nadir/common/arena.h"
 
 // [--------------------------------------------------------------] //
 // > Constants                                                    < //
@@ -25,8 +25,10 @@ constexpr auto NADIR_STACK_MAXIMUM = 1 << 10;
  * @brief Generic stack structure for the assembler and components.
  */
 typedef struct {
-    nadir_i128_t data[NADIR_STACK_MAXIMUM];
+    nadir_arena_t *arena;
     nadir_u64_t length;
+
+    nadir_i128_t data[NADIR_STACK_MAXIMUM];
 } nadir_stack_t;
 
 // [--------------------------------------------------------------] //
@@ -34,11 +36,9 @@ typedef struct {
 // [--------------------------------------------------------------] //
 
 /**
- * @brief Creates a new stack.
- *
- * @warning Allocates memory for the stack, which must be freed.
+ * @brief Creates a new stack with the given arena.
  */
-[[nodiscard]] nadir_stack_t *nadir_stack_new(void);
+[[nodiscard]] nadir_stack_t *nadir_stack_new(nadir_arena_t *arena);
 
 /**
  * @brief Pushes a value onto the stack.
@@ -56,6 +56,8 @@ typedef struct {
 
 /**
  * @brief Frees the stack.
+ *
+ * @warning The stack is allocated on the arena and will be freed when the arena is freed.
  */
 void nadir_stack_free(nadir_stack_t *stack);
 

@@ -54,6 +54,7 @@ add_library(Nadir::Core ALIAS Core)
 
 target_sources(
     Core PRIVATE
+    src/common/arena.c
     src/common/list.c
     src/common/number.c
     src/common/stack.c

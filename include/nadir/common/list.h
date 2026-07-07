@@ -9,13 +9,13 @@
  * the assembler.
  */
 
-#include "nadir/common/number.h"
+#include "nadir/common/arena.h"
 
 // [--------------------------------------------------------------] //
 // > Constants                                                    < //
 // [--------------------------------------------------------------] //
 
-constexpr auto NADIR_LIST_DEFAULT_CAPACITY = 1 << 4;
+constexpr auto NADIR_LIST_DEFAULT_CAPACITY = 1 << 2;
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //
@@ -25,6 +25,7 @@ constexpr auto NADIR_LIST_DEFAULT_CAPACITY = 1 << 4;
  * @brief Generic list structure for the assembler and components.
  */
 typedef struct {
+    nadir_arena_t *arena;
     void *items;
 
     nadir_u64_t length;
@@ -37,14 +38,13 @@ typedef struct {
 // [--------------------------------------------------------------] //
 
 /**
- * @brief Creates a new list with the given item size.
- *
- * @warning Allocates memory for the list, which must be freed.
+ * @brief Creates a new list with the given arena and item size.
  */
-[[nodiscard]] nadir_list_t *nadir_list_new(nadir_u64_t size);
+[[nodiscard]] nadir_list_t *nadir_list_new(nadir_arena_t *arena,
+                                           nadir_u64_t size);
 
 /**
- * @brief Appends an item to the list.
+ * @brief Appends an item to the list, reallocating if necessary.
  *
  * @return false if the reallocation fails, true otherwise.
  */
@@ -52,13 +52,15 @@ typedef struct {
                                      const void *item);
 
 /**
- * @brief Fetches an item from the list by index.
+ * @brief Gets an item from the list at the given index.
  */
 [[nodiscard]] void *nadir_list_get(const nadir_list_t *list,
                                    nadir_u64_t index);
 
 /**
  * @brief Frees the list and its items.
+ *
+ * @warning The list is allocated on the arena and will be freed when the arena is freed.
  */
 void nadir_list_free(nadir_list_t *list);
 

@@ -5,7 +5,6 @@
 
 #include "nadir/comptime.h"
 
-#include <stdlib.h>
 #include <string.h>
 
 // [--------------------------------------------------------------] //
@@ -61,64 +60,53 @@ static inline nadir_compiler_error_t nadir_compiler_stack_pop(const nadir_compil
 // > Function Implementations                                     < //
 // [--------------------------------------------------------------] //
 
-nadir_compiler_t *nadir_compiler_new(nadir_ast_t *ast) {
-    nadir_compiler_t *compiler = malloc(sizeof(nadir_compiler_t));
+nadir_compiler_t *nadir_compiler_new(nadir_arena_t *arena,
+                                     nadir_ast_t *ast) {
+    nadir_compiler_t *compiler = nadir_arena_allocate(arena, sizeof(nadir_compiler_t));
     if (compiler == nullptr) {
         return nullptr;
     }
 
-    const auto addresses = nadir_table_new(sizeof(nadir_u64_t));
-    if (addresses == nullptr) {
-        free(compiler);
-        return nullptr;
-    }
-
-    const auto constants = nadir_table_new(sizeof(nadir_compiler_constant_t));
-    if (constants == nullptr) {
-        nadir_table_free(addresses);
-        free(compiler);
-        return nullptr;
-    }
-
-    const auto procedures = nadir_table_new(sizeof(nadir_compiler_procedure_t));
-    if (procedures == nullptr) {
-        nadir_table_free(constants);
-        nadir_table_free(addresses);
-        free(compiler);
-        return nullptr;
-    }
-
-    const auto stack = nadir_stack_new();
-    if (stack == nullptr) {
-        nadir_table_free(procedures);
-        nadir_table_free(constants);
-        nadir_table_free(addresses);
-        free(compiler);
-        return nullptr;
-    }
-
-    const auto output = nadir_list_new(sizeof(nadir_u8_t));
-    if (output == nullptr) {
-        nadir_stack_free(stack);
-        nadir_table_free(procedures);
-        nadir_table_free(constants);
-        nadir_table_free(addresses);
-        free(compiler);
-        return nullptr;
-    }
-
+    compiler->arena = arena;
     compiler->ast = ast;
-
-    compiler->addresses = addresses;
-    compiler->constants = constants;
-    compiler->procedures = procedures;
-
-    compiler->stack = stack;
-    compiler->output = output;
 
     compiler->binary_location = (nadir_u64_t) -1;
     compiler->binary_origin = 0;
 
+    const auto addresses = nadir_table_new(arena, sizeof(nadir_u64_t));
+    if (addresses == nullptr) {
+        return nullptr;
+    }
+
+    compiler->addresses = addresses;
+
+    const auto constants = nadir_table_new(arena, sizeof(nadir_compiler_constant_t));
+    if (constants == nullptr) {
+        return nullptr;
+    }
+
+    compiler->constants = constants;
+
+    const auto procedures = nadir_table_new(arena, sizeof(nadir_compiler_procedure_t));
+    if (procedures == nullptr) {
+        return nullptr;
+    }
+
+    compiler->procedures = procedures;
+
+    const auto stack = nadir_stack_new(arena);
+    if (stack == nullptr) {
+        return nullptr;
+    }
+
+    compiler->stack = stack;
+
+    const auto output = nadir_list_new(arena, sizeof(nadir_u8_t));
+    if (output == nullptr) {
+        return nullptr;
+    }
+
+    compiler->output = output;
     return compiler;
 }
 
@@ -229,32 +217,12 @@ void nadir_compiler_free(nadir_compiler_t *compiler) {
         return;
     }
 
-    if (compiler->output != nullptr) {
-        nadir_list_free(compiler->output);
-        compiler->output = nullptr;
-    }
-
-    if (compiler->stack != nullptr) {
-        nadir_stack_free(compiler->stack);
-        compiler->stack = nullptr;
-    }
-
-    if (compiler->procedures != nullptr) {
-        nadir_table_free(compiler->procedures);
-        compiler->procedures = nullptr;
-    }
-
-    if (compiler->constants != nullptr) {
-        nadir_table_free(compiler->constants);
-        compiler->constants = nullptr;
-    }
-
-    if (compiler->addresses != nullptr) {
-        nadir_table_free(compiler->addresses);
-        compiler->addresses = nullptr;
-    }
-
-    free(compiler);
+    // The arena handles resource management, so we just reset the structure.
+    compiler->output = nullptr;
+    compiler->stack = nullptr;
+    compiler->procedures = nullptr;
+    compiler->constants = nullptr;
+    compiler->addresses = nullptr;
 }
 
 // [--------------------------------------------------------------] //
@@ -390,11 +358,9 @@ nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
     }
 
     // Create a new context for the procedure call to hold the argument values.
-    // This context will be freed if an error occurs.
-    const auto context = nadir_list_new(sizeof(nadir_i128_t));
+    const auto context = nadir_list_new(compiler->arena, sizeof(nadir_i128_t));
     if (context == nullptr) {
-        error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
-        goto cleanup;
+        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
     }
 
     // Process each argument and validate its type against.
@@ -404,14 +370,14 @@ nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
         // Evaluate the argument expression to get its value.
         error = nadir_compiler_evaluate(compiler, nullptr, procedure_argument);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            goto cleanup;
+            return error;
         }
 
         // Pop the argument value from the stack.
         nadir_i128_t argument_value;
         error = nadir_compiler_stack_pop(compiler, &argument_value, procedure_argument->token);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            goto cleanup;
+            return error;
         }
 
         // Validate the argument type against the expected parameter type.
@@ -446,13 +412,11 @@ nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
         }
 
         if (!is_valid_type) {
-            error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH, procedure_argument->token);
-            goto cleanup;
+            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH, procedure_argument->token);
         }
 
         if (!nadir_list_append(context, &argument_value)) {
-            error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
-            goto cleanup;
+            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
         }
     }
 
@@ -463,32 +427,25 @@ nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
         // Evaluate the statement expression in the context of the procedure call.
         error = nadir_compiler_evaluate(compiler, context, statement);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            goto cleanup;
+            return error;
         }
 
         // Pop the statement value from the stack.
         nadir_i128_t statement_value;
         error = nadir_compiler_stack_pop(compiler, &statement_value, statement->token);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            goto cleanup;
+            return error;
         }
 
         // Guard against a byte mismatch when writing the statement value to the output.
         nadir_u8_t statement_byte = (nadir_u8_t) statement_value;
         if (statement_byte != statement_value) {
-            error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH, statement->token);
-            goto cleanup;
+            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH, statement->token);
         }
 
         if (!nadir_list_append(compiler->output, &statement_byte)) {
-            error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
-            goto cleanup;
+            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
         }
-    }
-
-cleanup:
-    if (context != nullptr) {
-        nadir_list_free(context);
     }
 
     return error;
@@ -573,8 +530,7 @@ nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compil
     nadir_compiler_error_t error;
 
     // Create a new list to hold the evaluated argument values for the compile-time call.
-    // This list will be freed if an error occurs.
-    const auto arguments = nadir_list_new(sizeof(nadir_i128_t));
+    const auto arguments = nadir_list_new(compiler->arena, sizeof(nadir_i128_t));
     if (arguments == nullptr) {
         return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
     }
@@ -586,27 +542,25 @@ nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compil
         // Evaluate the argument expression with the context.
         error = nadir_compiler_evaluate(compiler, context, argument);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            goto cleanup;
+            return error;
         }
 
         // Pop the argument value from the stack.
         nadir_i128_t argument_value;
         error = nadir_compiler_stack_pop(compiler, &argument_value, argument->token);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            goto cleanup;
+            return error;
         }
 
         if (!nadir_list_append(arguments, &argument_value)) {
-            error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
-            goto cleanup;
+            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
         }
     }
 
     // Determine the compile-time kind.
     const auto kind = nadir_comptime_kind(expression->token->string.value, expression->token->string.count);
     if (kind == NADIR_COMPTIME_KIND_NONE) {
-        error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_COMPTIME, expression->token);
-        goto cleanup;
+        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_COMPTIME, expression->token);
     }
 
     const auto comptime = (nadir_comptime_t){
@@ -620,15 +574,9 @@ nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compil
     if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
         // Propagate the error with the expression's token.
         error.token = expression->token;
-        goto cleanup;
+        return error;
     }
 
     error = nadir_compiler_stack_push(compiler, comptime_result, expression->token);
-
-cleanup:
-    if (arguments != nullptr) {
-        nadir_list_free(arguments);
-    }
-
     return error;
 }

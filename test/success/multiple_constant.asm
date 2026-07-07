@@ -2,7 +2,7 @@
 # It should still compile successfully.
 
 constant Register     {
-  A=0
+  A=-0
   ;}
 
 
@@ -13,8 +13,8 @@ constant Register{
 binary   $200
 {
   set_register(Register .
-    A, 1000);
-  set_register  (Register.B,2000) ;
+    A, 1_0_0_0);
+  set_register  (Register.B,+2______000) ;
 }
 
 procedure set_register(u8 ,  u16

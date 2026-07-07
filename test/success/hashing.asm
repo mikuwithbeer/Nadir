@@ -8,7 +8,6 @@ constant DJB2 {
   Mult = 33;
 }
 
-
 # Calculates a 32-bit FNV-1a hash for 2 characters and emits as Big-Endian.
 procedure emit_fnv1a_2chars_be(u8, u8) {
   @cast(@shr(@mul(@xor(@mul(@xor(FNV.Offset, @arg(0)), FNV.Prime), @arg(1)), FNV.Prime), 24), u8);

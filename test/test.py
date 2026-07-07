@@ -20,9 +20,7 @@ def main():
 
     try:
         process_result = subprocess.run(
-            [assembler_path, "-i", source_file, "-o", output_file],
-            capture_output=True,
-            text=True,
+            [assembler_path, "-i", source_file, "-o", output_file], capture_output=True
         )
     except Exception as exception:
         print(f"Failed to execute assembler: {exception}")

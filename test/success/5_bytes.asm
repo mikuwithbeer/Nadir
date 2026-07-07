@@ -8,6 +8,7 @@ binary $0 {
   @sub(@mul(Data.Three, 2), Data.Two);
   $5;
 }
+
 constant Data {
   Two = 2;
   Three = $03;

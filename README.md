@@ -1,10 +1,5 @@
 ![Logo](.github/assets/logo.svg)
 
-> [!WARNING]
-> **This project is currently under active development!**
-
----
-
 Nadir is a simple yet powerful, strongly typed, customizable assembler designed for ease of use and flexibility.
 
 ---
@@ -13,13 +8,19 @@ Nadir is a simple yet powerful, strongly typed, customizable assembler designed 
 
 - [X] Complete the core assembler implementation.
 - [X] Adequate error checking and reporting.
-- [ ] Implement comprehensive test suite.
-- [ ] Publish an architecture overview and language syntax guide.
+- [X] Implement a comprehensive test suite.
+- [X] Publish an architecture overview and language syntax guide.
 - [ ] Provide curated examples for showcasing the capabilities.
-- [ ] Make sure the project runs flawlessly on three major platforms:
-    - [ ] Windows
-    - [ ] Linux
+- [X] Make sure the project runs flawlessly on three major platforms:
+    - [X] Windows
+    - [X] Linux
     - [X] macOS
+
+---
+
+## Documentation
+
+The one-file documentation is available inside the [doc](doc/README.md) folder.
 
 ---
 

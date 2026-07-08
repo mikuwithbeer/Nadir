@@ -85,7 +85,7 @@ void nadir_cli_help(void) {
         "Options:\n"
         "  -h, --help       Print this help message and exit\n"
         "  -v, --version    Print the version number and exit\n"
-        "  -d, --dry-run    Assemble the input file without writing to the output file\n"
+        "  -d, --dry-run    Assemble the file without writing to the output file\n"
         "  -i, --input      Specify the input file to compile\n"
         "  -o, --output     Specify the output file to write to\n"
         "\n"

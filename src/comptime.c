@@ -19,6 +19,7 @@ nadir_comptime_kind_t nadir_comptime_kind(const char *name,
     if (NADIR_COMPTIME_MATCH("arg")) return NADIR_COMPTIME_KIND_ARG;
     if (NADIR_COMPTIME_MATCH("cast")) return NADIR_COMPTIME_KIND_CAST;
     if (NADIR_COMPTIME_MATCH("clamp")) return NADIR_COMPTIME_KIND_CLAMP;
+    if (NADIR_COMPTIME_MATCH("assert")) return NADIR_COMPTIME_KIND_ASSERT;
 
     if (NADIR_COMPTIME_MATCH("abs")) return NADIR_COMPTIME_KIND_ABS;
     if (NADIR_COMPTIME_MATCH("neg")) return NADIR_COMPTIME_KIND_NEG;
@@ -154,6 +155,23 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
                 *result = *value;
             }
 
+            break;
+        }
+        case NADIR_COMPTIME_KIND_ASSERT: {
+            if (comptime->arguments->length != 2) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+                return error;
+            }
+
+            const nadir_i128_t *condition = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 1);
+
+            if (!*condition) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ASSERTION_FAILED;
+                return error;
+            }
+
+            *result = *value;
             break;
         }
 
@@ -371,7 +389,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
                     *result = __builtin_bswap64((nadir_u64_t) *value);
                     break;
                 default:
-                    error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_INVALID_ARGUMENT;
+                    error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_INVALID_SWAP_WIDTH;
                     return error;
             }
 

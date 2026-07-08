@@ -9,7 +9,6 @@
  * compile-time procedures in the assembler.
  */
 
-#include "nadir/common/list.h"
 #include "nadir/compiler.h"
 
 // [--------------------------------------------------------------] //
@@ -31,6 +30,7 @@ typedef enum : nadir_u8_t {
     NADIR_COMPTIME_KIND_ARG,
     NADIR_COMPTIME_KIND_CAST,
     NADIR_COMPTIME_KIND_CLAMP,
+    NADIR_COMPTIME_KIND_ASSERT,
 
     NADIR_COMPTIME_KIND_ABS,
     NADIR_COMPTIME_KIND_NEG,

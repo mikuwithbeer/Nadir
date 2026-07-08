@@ -38,6 +38,7 @@ typedef struct {
 
     bool help;
     bool version;
+    bool dry_run;
 } nadir_cli_t;
 
 // [--------------------------------------------------------------] //

@@ -13,9 +13,10 @@
 // [--------------------------------------------------------------] //
 
 // Command-line options for the assembler.
-static const struct option cli_options[5] = {
+static const struct option cli_options[6] = {
     {"help", no_argument, nullptr, 'h'},
     {"version", no_argument, nullptr, 'v'},
+    {"dry-run", no_argument, nullptr, 'd'},
     {"input", required_argument, nullptr, 'i'},
     {"output", required_argument, nullptr, 'o'},
     {nullptr, 0, nullptr, 0},
@@ -40,6 +41,7 @@ nadir_cli_t nadir_cli_new(nadir_arena_t *arena) {
 
         .help = false,
         .version = false,
+        .dry_run = false,
     };
 }
 
@@ -48,7 +50,7 @@ bool nadir_cli_parse(nadir_cli_t *cli,
                      char **argv) {
     while (true) {
         // Parse the next command-line option.
-        const auto option = getopt_long(argc, argv, "hvi:o:", cli_options, nullptr);
+        const auto option = getopt_long(argc, argv, "hvdi:o:", cli_options, nullptr);
         if (option == -1) {
             break;
         }
@@ -59,6 +61,9 @@ bool nadir_cli_parse(nadir_cli_t *cli,
                 break;
             case 'v':
                 cli->version = true;
+                break;
+            case 'd':
+                cli->dry_run = true;
                 break;
             case 'i':
                 cli->input_file = optarg;
@@ -80,6 +85,7 @@ void nadir_cli_help(void) {
         "Options:\n"
         "  -h, --help       Print this help message and exit\n"
         "  -v, --version    Print the version number and exit\n"
+        "  -d, --dry-run    Assemble the input file without writing to the output file\n"
         "  -i, --input      Specify the input file to compile\n"
         "  -o, --output     Specify the output file to write to\n"
         "\n"

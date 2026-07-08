@@ -213,6 +213,11 @@ print:
 }
 
 static state_t process_success(void) {
+    if (cli.dry_run) {
+        printf("assembled %" PRIu64 " bytes, no output written due to dry-run mode\n", compiler->output->length);
+        return STATE_EXIT;
+    }
+
     if (!nadir_cli_write(&cli, compiler->output)) {
         fprintf(stderr, "error: failed to write output to file: %s\n", cli.output_file);
         return STATE_ERROR;

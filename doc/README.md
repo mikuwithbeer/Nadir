@@ -333,7 +333,7 @@ binary $200 {
 
 ---
 
-## Building Project
+## Compiling Your Program
 
 Now it is time to turn that beautiful text into cold, hard machine code.
 
@@ -354,6 +354,15 @@ Nadir -i main.asm
   generate an output file.
 - `-i, --input <file>`: Specify the input file. This is required.
 - `-o, --output <file>`: Specify the output file. If not provided, defaults to `out.bin`.
+
+---
+
+## Sample Programs
+
+> [!WARNING]
+> There are only a few sample programs available at the moment.
+
+Some sample programs are available in the [example](../example) folder.
 
 ---
 

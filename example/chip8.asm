@@ -1,5 +1,5 @@
 # |=================================================================|
-# | Hello there! Welcome to a beautifully simple CHIP-8 program.    |
+# | Hello there! Welcome to a beautifully simple CHIP-8 source.     |
 # |                                                                 |
 # | This program does:                                              |
 # | 1. Clear the display                                            |
@@ -90,7 +90,7 @@ binary $200 {
 }
 
 # |================================================|
-# | Opcodes                                        |
+# | Procedures                                     |
 # |================================================|
 
 # 00E0: Clear the display

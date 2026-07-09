@@ -10,7 +10,7 @@ Nadir is a simple yet powerful, strongly typed, customizable assembler designed 
 - [X] Adequate error checking and reporting.
 - [X] Implement a comprehensive test suite.
 - [X] Publish an architecture overview and language syntax guide.
-- [ ] Provide curated examples for showcasing the capabilities.
+- [X] Provide curated examples for showcasing the capabilities.
 - [X] Make sure the project runs flawlessly on three major platforms:
     - [X] Windows
     - [X] Linux

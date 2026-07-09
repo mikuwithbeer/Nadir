@@ -1,0 +1,31 @@
+name: Release Nadir
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  builder:
+    uses: ./.github/workflows/builder.yml
+
+  create-release:
+    needs: builder
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: artifacts-*
+          path: release_assets
+          merge-multiple: true
+
+      - name: Upload GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: release_assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

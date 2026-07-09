@@ -1,13 +1,10 @@
-name: Build and Test Nadir
+name: Nadir Builder
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_call:
 
 jobs:
-  build-and-test:
+  builder:
     name: Build and Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
 
@@ -20,11 +17,13 @@ jobs:
             cxx: clang++-22
             llvm: /usr/lib/llvm-22
             shell: bash
+
           - os: macos-latest
             cc: /opt/homebrew/opt/llvm@22/bin/clang
             cxx: /opt/homebrew/opt/llvm@22/bin/clang++
             llvm: /opt/homebrew/opt/llvm@22
             shell: bash
+
           - os: windows-latest
             cc: clang
             cxx: clang++
@@ -52,7 +51,7 @@ jobs:
 
       - name: Setup MSYS2
         if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@v2.32.0
         with:
           msystem: CLANG64
           update: true
@@ -77,3 +76,23 @@ jobs:
 
       - name: Test with CTest
         run: ctest --test-dir build --output-on-failure
+
+      - name: Package Artifacts
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp build/Nadir* dist/
+          cd dist
+          
+          ASSET_NAME="Nadir-${{ runner.os }}-${{ runner.arch }}"
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            7z a -tzip "../$ASSET_NAME.zip" .
+          else
+            tar -czvf "../$ASSET_NAME.tar.gz" .
+          fi
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: artifacts-${{ matrix.os }}
+          path: Nadir-*

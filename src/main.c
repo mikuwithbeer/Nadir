@@ -19,6 +19,7 @@
 // [--------------------------------------------------------------] //
 
 static nadir_arena_t cli_arena = {};
+static nadir_arena_t comptime_arena = {};
 static nadir_arena_t assembler_arena = {};
 
 static nadir_cli_t cli = {};
@@ -96,6 +97,16 @@ static state_t process_arena(void) {
         return STATE_ERROR;
     }
 
+    if (!nadir_arena_init(&comptime_arena, NADIR_ARENA_DEFAULT_CAPACITY)) {
+        fprintf(stderr, "error: failed to initialize comptime arena allocator\n");
+        return STATE_ERROR;
+    }
+
+    if (!nadir_arena_init(&assembler_arena, NADIR_ARENA_DEFAULT_CAPACITY)) {
+        fprintf(stderr, "error: failed to initialize assembler arena allocator\n");
+        return STATE_ERROR;
+    }
+
     return STATE_CONTINUE;
 }
 
@@ -125,11 +136,6 @@ static state_t process_cli(const int argc,
 
     if (!nadir_cli_read(&cli)) {
         fprintf(stderr, "error: failed to read input file: %s\n", cli.input_file);
-        return STATE_ERROR;
-    }
-
-    if (!nadir_arena_init(&assembler_arena, NADIR_ARENA_DEFAULT_CAPACITY)) {
-        fprintf(stderr, "error: failed to initialize assembler arena allocator\n");
         return STATE_ERROR;
     }
 
@@ -183,7 +189,7 @@ static state_t process_parser(void) {
 }
 
 static state_t process_compiler(void) {
-    compiler = nadir_compiler_new(&assembler_arena, parser->ast);
+    compiler = nadir_compiler_new(&assembler_arena, &comptime_arena, parser->ast);
 
     auto compiler_error = nadir_compiler_prepare(compiler);
     if (compiler_error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
@@ -235,6 +241,9 @@ static void process_cleanup(void) {
 
     nadir_arena_reset(&assembler_arena);
     nadir_arena_free(&assembler_arena);
+
+    nadir_arena_reset(&comptime_arena);
+    nadir_arena_free(&comptime_arena);
 
     nadir_arena_reset(&cli_arena);
     nadir_arena_free(&cli_arena);

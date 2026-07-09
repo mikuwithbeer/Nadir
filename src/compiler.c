@@ -61,6 +61,7 @@ static inline nadir_compiler_error_t nadir_compiler_stack_pop(const nadir_compil
 // [--------------------------------------------------------------] //
 
 nadir_compiler_t *nadir_compiler_new(nadir_arena_t *arena,
+                                     nadir_arena_t *comptime_arena,
                                      nadir_ast_t *ast) {
     nadir_compiler_t *compiler = nadir_arena_allocate(arena, sizeof(nadir_compiler_t));
     if (compiler == nullptr) {
@@ -68,6 +69,8 @@ nadir_compiler_t *nadir_compiler_new(nadir_arena_t *arena,
     }
 
     compiler->arena = arena;
+    compiler->comptime_arena = comptime_arena;
+
     compiler->ast = ast;
 
     compiler->binary_location = (nadir_u64_t) -1;
@@ -530,7 +533,7 @@ nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compil
     nadir_compiler_error_t error;
 
     // Create a new list to hold the evaluated argument values for the compile-time call.
-    const auto arguments = nadir_list_new(compiler->arena, sizeof(nadir_i128_t));
+    const auto arguments = nadir_list_new(compiler->comptime_arena, sizeof(nadir_i128_t));
     if (arguments == nullptr) {
         return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
     }
@@ -542,25 +545,27 @@ nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compil
         // Evaluate the argument expression with the context.
         error = nadir_compiler_evaluate(compiler, context, argument);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            return error;
+            goto cleanup;
         }
 
         // Pop the argument value from the stack.
         nadir_i128_t argument_value;
         error = nadir_compiler_stack_pop(compiler, &argument_value, argument->token);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            return error;
+            goto cleanup;
         }
 
         if (!nadir_list_append(arguments, &argument_value)) {
-            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
+            error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
+            goto cleanup;
         }
     }
 
     // Determine the compile-time kind.
     const auto kind = nadir_comptime_kind(expression->token->string.value, expression->token->string.count);
     if (kind == NADIR_COMPTIME_KIND_NONE) {
-        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_COMPTIME, expression->token);
+        error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_COMPTIME, expression->token);
+        goto cleanup;
     }
 
     const auto comptime = (nadir_comptime_t){
@@ -574,9 +579,14 @@ nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compil
     if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
         // Propagate the error with the expression's token.
         error.token = expression->token;
-        return error;
+        goto cleanup;
     }
 
     error = nadir_compiler_stack_push(compiler, comptime_result, expression->token);
+
+cleanup:
+    nadir_list_free(arguments); // This function does not free the underlying arena
+    nadir_arena_reset(compiler->comptime_arena); // Reset the compile-time arena for reuse
+
     return error;
 }

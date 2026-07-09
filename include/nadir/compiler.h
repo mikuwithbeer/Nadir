@@ -77,6 +77,8 @@ typedef struct {
  */
 typedef struct {
     nadir_arena_t *arena;
+    nadir_arena_t *comptime_arena; // Arena for compile-time evaluation
+
     nadir_ast_t *ast;
 
     nadir_table_t *addresses; // Table of `nadir_u64_t`
@@ -109,6 +111,7 @@ static inline nadir_compiler_error_t nadir_compiler_error_new(const nadir_compil
  * @brief Creates a new compiler with the given abstract syntax tree.
  */
 [[nodiscard]] nadir_compiler_t *nadir_compiler_new(nadir_arena_t *arena,
+                                                   nadir_arena_t *comptime_arena,
                                                    nadir_ast_t *ast);
 
 /**

@@ -243,8 +243,10 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
                 return error;
             }
 
-            nadir_i128_t value = 0;
-            for (nadir_u64_t index = 0; index < comptime->arguments->length; ++index) {
+            const nadir_i128_t *first = nadir_list_get(comptime->arguments, 0);
+            nadir_i128_t value = *first;
+
+            for (nadir_u64_t index = 1; index < comptime->arguments->length; ++index) {
                 const nadir_i128_t *argument = nadir_list_get(comptime->arguments, index);
                 value += *argument;
             }
@@ -298,7 +300,35 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
 
         case NADIR_COMPTIME_KIND_OR:
         case NADIR_COMPTIME_KIND_XOR:
-        case NADIR_COMPTIME_KIND_AND:
+        case NADIR_COMPTIME_KIND_AND: {
+            if (comptime->arguments->length < 2) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+                return error;
+            }
+
+            const nadir_i128_t *first = nadir_list_get(comptime->arguments, 0);
+            nadir_i128_t value = *first;
+
+            for (nadir_u64_t index = 1; index < comptime->arguments->length; ++index) {
+                const nadir_i128_t *argument = nadir_list_get(comptime->arguments, index);
+                switch (comptime->kind) {
+                    case NADIR_COMPTIME_KIND_OR:
+                        value |= *argument;
+                        break;
+                    case NADIR_COMPTIME_KIND_XOR:
+                        value ^= *argument;
+                        break;
+                    case NADIR_COMPTIME_KIND_AND:
+                        value &= *argument;
+                        break;
+                    default:
+                        break; // Unreachable
+                }
+            }
+
+            *result = value;
+            break;
+        }
         case NADIR_COMPTIME_KIND_SHL:
         case NADIR_COMPTIME_KIND_SHR: {
             if (comptime->arguments->length != 2) {
@@ -310,15 +340,6 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
 
             switch (comptime->kind) {
-                case NADIR_COMPTIME_KIND_OR:
-                    *result = *left | *right;
-                    break;
-                case NADIR_COMPTIME_KIND_XOR:
-                    *result = *left ^ *right;
-                    break;
-                case NADIR_COMPTIME_KIND_AND:
-                    *result = *left & *right;
-                    break;
                 case NADIR_COMPTIME_KIND_SHL:
                     // Guard against shifting by an invalid amount.
                     if (*right < 0 || *right > NADIR_I8_MAXIMUM) {

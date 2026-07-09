@@ -1,9 +1,9 @@
 ![Logo](.github/assets/logo.svg)
 
 > [!WARNING]
-> **This project is still not stable.**
+> **This project is pre-stable!**
 >
-> Features, APIs, and architecture are subject to change per release.
+> Features, APIs, language syntax, and architecture may change in any release. Backward compatibility is not guaranteed.
 
 Nadir, an assembler from rock bottom to one of a kind.
 

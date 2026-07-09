@@ -162,27 +162,27 @@ as you need.
 
 #### Math
 
-| Function                | Description                                             |
-|:------------------------|:--------------------------------------------------------|
-| **`@abs(value)`**       | Returns the absolute (positive) value.                  |
-| **`@neg(value)`**       | Flips positives to negatives, and vice versa.           |
-| **`@add(values...)`**   | Adds two or more values together. **(Variadic!)**       |
-| **`@sub(left, right)`** | Subtracts `right` from `left`.                          |
-| **`@mul(left, right)`** | Multiplies `left` by `right`.                           |
-| **`@div(left, right)`** | Divides `left` by `right`.                              |
-| **`@mod(left, right)`** | Returns the remainder after dividing `left` by `right`. |
+| Function                     | Description                                             |
+|:-----------------------------|:--------------------------------------------------------|
+| **`@abs(value)`**            | Returns the absolute (positive) value.                  |
+| **`@neg(value)`**            | Flips positives to negatives, and vice versa.           |
+| **`@add(first, second...)`** | Adds two or more values together. **(Variadic!)**       |
+| **`@sub(left, right)`**      | Subtracts `right` from `left`.                          |
+| **`@mul(left, right)`**      | Multiplies `left` by `right`.                           |
+| **`@div(left, right)`**      | Divides `left` by `right`.                              |
+| **`@mod(left, right)`**      | Returns the remainder after dividing `left` by `right`. |
 
 #### Bitwise
 
-| Function                   | Description                                                                       |
-|----------------------------|-----------------------------------------------------------------------------------|
-| **`@or(left, right)`**     | Performs a bitwise OR operation between `left` and `right`.                       |
-| **`@and(left, right)`**    | Performs a bitwise AND operation between `left` and `right`.                      |
-| **`@xor(left, right)`**    | Performs a bitwise XOR operation between `left` and `right`.                      |
-| **`@shl(value, bits)`**    | Shifts the bits of `value` to the left by the specified number of `bits`.         |
-| **`@shr(value, bits)`**    | Shifts the bits of `value` to the right by the specified number of `bits`.        |
-| **`@not(value)`**          | Flips every single bit inside your `value`.                                       |
-| **`@bswap(value, width)`** | Reverses the byte order of the `value`. `width` must be either `16`, `32`or `64`. |
+| Function                     | Description                                                                       |
+|------------------------------|-----------------------------------------------------------------------------------|
+| **`@or(first, second...)`**  | Performs a bitwise OR operation between given values. **(Variadic!)**             |
+| **`@and(first, second...)`** | Performs a bitwise AND operation between given values. **(Variadic!)**            |
+| **`@xor(first, second...)`** | Performs a bitwise XOR operation between given values. **(Variadic!)**            |
+| **`@shl(value, bits)`**      | Shifts the bits of `value` to the left by the specified number of `bits`.         |
+| **`@shr(value, bits)`**      | Shifts the bits of `value` to the right by the specified number of `bits`.        |
+| **`@not(value)`**            | Flips every single bit inside your `value`.                                       |
+| **`@bswap(value, width)`**   | Reverses the byte order of the `value`. `width` must be either `16`, `32`or `64`. |
 
 #### Logic and Comparison
 

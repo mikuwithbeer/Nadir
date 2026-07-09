@@ -44,6 +44,13 @@ typedef struct {
                                            nadir_u64_t size);
 
 /**
+ * @brief Reserves space for the list to hold at least the given capacity.
+ *
+ * @return false if the allocation fails, true otherwise.
+ */
+[[nodiscard]] bool nadir_list_reserve(nadir_list_t *list, uint64_t capacity);
+
+/**
  * @brief Appends an item to the list, reallocating if necessary.
  *
  * @return false if the reallocation fails, true otherwise.

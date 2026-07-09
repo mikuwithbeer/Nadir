@@ -60,6 +60,10 @@ nadir_lexer_t *nadir_lexer_new(nadir_arena_t *arena,
         return nullptr;
     }
 
+    if (!nadir_list_reserve(tokens, source_length / 2)) {
+        return nullptr;
+    }
+
     lexer->tokens = tokens;
     lexer->token = (nadir_token_t){};
 

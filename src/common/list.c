@@ -28,30 +28,42 @@ nadir_list_t *nadir_list_new(nadir_arena_t *arena,
     return list;
 }
 
+bool nadir_list_reserve(nadir_list_t *list,
+                        const nadir_u64_t capacity) {
+    if (capacity <= list->capacity) {
+        return true;
+    }
+
+    const auto new_items = nadir_arena_allocate(list->arena, capacity * list->size);
+    if (new_items == nullptr) {
+        return false;
+    }
+
+    if (list->items != nullptr) {
+        memcpy(new_items, list->items, list->length * list->size);
+    }
+
+    list->items = new_items;
+    list->capacity = capacity;
+
+    return true;
+}
+
 bool nadir_list_append(nadir_list_t *list,
                        const void *item) {
     if (list->length >= list->capacity) {
-        auto new_capacity = list->capacity << 1; // Double the capacity
-        if (list->capacity == 0) {
+        auto new_capacity = list->capacity << 1;
+        if (new_capacity == 0) {
             new_capacity = NADIR_LIST_DEFAULT_CAPACITY;
         }
 
-        const auto new_items = nadir_arena_allocate(list->arena, new_capacity * list->size);
-        if (new_items == nullptr) {
+        if (!nadir_list_reserve(list, new_capacity)) {
             return false;
         }
-
-        // Copy the existing items to the new array if exists.
-        if (list->items != nullptr) {
-            memcpy(new_items, list->items, list->length * list->size);
-        }
-
-        list->items = new_items;
-        list->capacity = new_capacity;
     }
 
-    // Copy the item into the list and increment the length.
-    memcpy((nadir_u8_t *)list->items + (list->length++) * list->size, item, list->size);
+    memcpy((nadir_u8_t *)list->items + list->length * list->size, item, list->size);
+    ++list->length;
     return true;
 }
 

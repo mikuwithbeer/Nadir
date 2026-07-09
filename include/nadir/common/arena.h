@@ -47,6 +47,8 @@ typedef struct {
 
 /**
  * @brief Initializes the arena with the given default capacity.
+ *
+ * @return false if the allocation fails, true otherwise.
  */
 [[nodiscard]] bool nadir_arena_init(nadir_arena_t *arena,
                                     nadir_u64_t default_capacity);

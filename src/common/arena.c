@@ -65,7 +65,8 @@ void nadir_arena_reset(nadir_arena_t *arena) {
         packet = packet->next;
     }
 
-    arena->current = arena->head; // Start back at the first package
+    // Start back at the first package.
+    arena->current = arena->head;
 }
 
 void nadir_arena_free(nadir_arena_t *arena) {

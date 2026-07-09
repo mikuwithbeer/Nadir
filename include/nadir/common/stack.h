@@ -42,6 +42,8 @@ typedef struct {
 
 /**
  * @brief Pushes a value onto the stack.
+ *
+ * @return false if the stack is full, true otherwise.
  */
 [[nodiscard]] bool nadir_stack_push(nadir_stack_t *stack,
                                     nadir_i128_t value);

@@ -1,15 +1,20 @@
-procedure pack_332(u8, u8, u8) {
-  @or(
-    @shl(@and(@arg(0), 7), 5), # mask 3 bits, shift to top
-    @shl(@and(@arg(1), 7), 2), # mask 3 bits, shift to middle
-    @and(@arg(2), 3)           # mask 2 bits, leave at bottom
-  );
+constant Test {
+  Red   = 5; # 101
+  Green = 3; # 011
+  Blue  = 2; # 10
+
+  # $AE (1010 1110)
+  Data = @insert(@insert(@insert(0, Test.Blue, 0, 2), Test.Green, 2, 3), Test.Red, 5, 3);
 }
 
-binary $0000 {
-  # binary 101
-  # binary 011
-  # binary 10
-  # 1010 1110 = $AE
-  pack_332(5, 3, 2);
+binary 0 {
+  Test.Data; # $AE
+
+  @mask(4); # $0F (0000 1111) - Low nibble mask
+  @mask(7); # $7F (0111 1111) - Standard ASCII mask
+  @mask(8); # $FF (1111 1111) - Full byte mask
+
+  @extract(Test.Data, 5, 3); # $05
+  @extract(Test.Data, 2, 3); # $03
+  @extract(Test.Data, 0, 2); # $02
 }

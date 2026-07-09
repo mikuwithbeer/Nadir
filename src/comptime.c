@@ -19,13 +19,11 @@ nadir_comptime_kind_t nadir_comptime_kind(const char *name,
     if (NADIR_COMPTIME_MATCH("arg")) return NADIR_COMPTIME_KIND_ARG;
     if (NADIR_COMPTIME_MATCH("cast")) return NADIR_COMPTIME_KIND_CAST;
     if (NADIR_COMPTIME_MATCH("clamp")) return NADIR_COMPTIME_KIND_CLAMP;
-    if (NADIR_COMPTIME_MATCH("assert")) return NADIR_COMPTIME_KIND_ASSERT;
-
-    if (NADIR_COMPTIME_MATCH("abs")) return NADIR_COMPTIME_KIND_ABS;
-    if (NADIR_COMPTIME_MATCH("neg")) return NADIR_COMPTIME_KIND_NEG;
     if (NADIR_COMPTIME_MATCH("max")) return NADIR_COMPTIME_KIND_MAX;
     if (NADIR_COMPTIME_MATCH("min")) return NADIR_COMPTIME_KIND_MIN;
 
+    if (NADIR_COMPTIME_MATCH("abs")) return NADIR_COMPTIME_KIND_ABS;
+    if (NADIR_COMPTIME_MATCH("neg")) return NADIR_COMPTIME_KIND_NEG;
     if (NADIR_COMPTIME_MATCH("add")) return NADIR_COMPTIME_KIND_ADD;
     if (NADIR_COMPTIME_MATCH("sub")) return NADIR_COMPTIME_KIND_SUB;
     if (NADIR_COMPTIME_MATCH("mul")) return NADIR_COMPTIME_KIND_MUL;
@@ -39,7 +37,11 @@ nadir_comptime_kind_t nadir_comptime_kind(const char *name,
     if (NADIR_COMPTIME_MATCH("shr")) return NADIR_COMPTIME_KIND_SHR;
     if (NADIR_COMPTIME_MATCH("not")) return NADIR_COMPTIME_KIND_NOT;
     if (NADIR_COMPTIME_MATCH("bswap")) return NADIR_COMPTIME_KIND_BSWAP;
+    if (NADIR_COMPTIME_MATCH("mask")) return NADIR_COMPTIME_KIND_MASK;
+    if (NADIR_COMPTIME_MATCH("insert")) return NADIR_COMPTIME_KIND_INSERT;
+    if (NADIR_COMPTIME_MATCH("extract")) return NADIR_COMPTIME_KIND_EXTRACT;
 
+    if (NADIR_COMPTIME_MATCH("assert")) return NADIR_COMPTIME_KIND_ASSERT;
     if (NADIR_COMPTIME_MATCH("if")) return NADIR_COMPTIME_KIND_IF;
     if (NADIR_COMPTIME_MATCH("eq")) return NADIR_COMPTIME_KIND_EQ;
     if (NADIR_COMPTIME_MATCH("lt")) return NADIR_COMPTIME_KIND_LT;
@@ -47,7 +49,6 @@ nadir_comptime_kind_t nadir_comptime_kind(const char *name,
     if (NADIR_COMPTIME_MATCH("le")) return NADIR_COMPTIME_KIND_LE;
     if (NADIR_COMPTIME_MATCH("ge")) return NADIR_COMPTIME_KIND_GE;
     if (NADIR_COMPTIME_MATCH("neq")) return NADIR_COMPTIME_KIND_NEQ;
-
     if (NADIR_COMPTIME_MATCH("lor")) return NADIR_COMPTIME_KIND_LOR;
     if (NADIR_COMPTIME_MATCH("land")) return NADIR_COMPTIME_KIND_LAND;
     if (NADIR_COMPTIME_MATCH("lnot")) return NADIR_COMPTIME_KIND_LNOT;
@@ -157,51 +158,6 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
 
             break;
         }
-        case NADIR_COMPTIME_KIND_ASSERT: {
-            if (comptime->arguments->length != 2) {
-                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
-                return error;
-            }
-
-            const nadir_i128_t *condition = nadir_list_get(comptime->arguments, 0);
-            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 1);
-
-            if (!*condition) {
-                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ASSERTION_FAILED;
-                return error;
-            }
-
-            *result = *value;
-            break;
-        }
-
-        case NADIR_COMPTIME_KIND_ABS: {
-            if (comptime->arguments->length != 1) {
-                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
-                return error;
-            }
-
-            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
-
-            if (*value < 0) {
-                *result = -*value;
-            } else {
-                *result = *value;
-            }
-
-            break;
-        }
-        case NADIR_COMPTIME_KIND_NEG: {
-            if (comptime->arguments->length != 1) {
-                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
-                return error;
-            }
-
-            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
-
-            *result = -*value;
-            break;
-        }
         case NADIR_COMPTIME_KIND_MAX: {
             if (comptime->arguments->length != 2) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
@@ -237,6 +193,33 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             break;
         }
 
+        case NADIR_COMPTIME_KIND_ABS: {
+            if (comptime->arguments->length != 1) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+                return error;
+            }
+
+            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
+
+            if (*value < 0) {
+                *result = -*value;
+            } else {
+                *result = *value;
+            }
+
+            break;
+        }
+        case NADIR_COMPTIME_KIND_NEG: {
+            if (comptime->arguments->length != 1) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+                return error;
+            }
+
+            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
+
+            *result = -*value;
+            break;
+        }
         case NADIR_COMPTIME_KIND_ADD: {
             if (comptime->arguments->length < 2) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
@@ -410,13 +393,105 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
                     *result = __builtin_bswap64((nadir_u64_t) *value);
                     break;
                 default:
-                    error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_INVALID_SWAP_WIDTH;
+                    error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_INVALID_BIT_WIDTH;
                     return error;
             }
 
             break;
         }
+        case NADIR_COMPTIME_KIND_MASK: {
+            if (comptime->arguments->length != 1) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+                return error;
+            }
 
+            const nadir_i128_t *width = nadir_list_get(comptime->arguments, 0);
+
+            // Guard against invalid bit width.
+            if (*width < 0 || *width > 128) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_INVALID_BIT_WIDTH;
+                return error;
+            }
+
+            if (*width == 128) {
+                *result = ~(nadir_i128_t) 0; // All bits set
+            } else {
+                *result = ((nadir_i128_t) 1 << *width) - 1;
+            }
+
+            break;
+        }
+        case NADIR_COMPTIME_KIND_INSERT: {
+            if (comptime->arguments->length != 4) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+                return error;
+            }
+
+            const nadir_i128_t *base = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 1);
+            const nadir_i128_t *offset = nadir_list_get(comptime->arguments, 2);
+            const nadir_i128_t *width = nadir_list_get(comptime->arguments, 3);
+
+            // Guard against invalid bit width and offset.
+            if (*offset < 0 || *offset > 127 || *width < 0 || *width > 128 || *offset + *width > 128) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_INVALID_BIT_WIDTH;
+                return error;
+            }
+
+            nadir_i128_t mask;
+            if (*width == 128) {
+                mask = ~(nadir_i128_t) 0; // All bits set
+            } else {
+                mask = ((nadir_i128_t) 1 << *width) - 1;
+            }
+
+            *result = (*base & ~(mask << *offset)) | ((*value & mask) << *offset);
+            break;
+        }
+        case NADIR_COMPTIME_KIND_EXTRACT: {
+            if (comptime->arguments->length != 3) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+                return error;
+            }
+
+            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *offset = nadir_list_get(comptime->arguments, 1);
+            const nadir_i128_t *width = nadir_list_get(comptime->arguments, 2);
+
+            // Guard against invalid bit width and offset.
+            if (*offset < 0 || *offset > 127 || *width < 0 || *width > 128 || *offset + *width > 128) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_INVALID_BIT_WIDTH;
+                return error;
+            }
+
+            nadir_i128_t mask;
+            if (*width == 128) {
+                mask = ~(nadir_i128_t) 0; // All bits set
+            } else {
+                mask = ((nadir_i128_t) 1 << *width) - 1;
+            }
+
+            *result = *value >> *offset & mask;
+            break;
+        }
+
+        case NADIR_COMPTIME_KIND_ASSERT: {
+            if (comptime->arguments->length != 2) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+                return error;
+            }
+
+            const nadir_i128_t *condition = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 1);
+
+            if (!*condition) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ASSERTION_FAILED;
+                return error;
+            }
+
+            *result = *value;
+            break;
+        }
         case NADIR_COMPTIME_KIND_IF: {
             if (comptime->arguments->length != 3) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
@@ -475,7 +550,6 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
 
             break;
         }
-
         case NADIR_COMPTIME_KIND_LOR:
         case NADIR_COMPTIME_KIND_LAND: {
             if (comptime->arguments->length != 2) {

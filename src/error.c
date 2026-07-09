@@ -255,10 +255,10 @@ char *nadir_error_encode(nadir_arena_t *arena,
                              (int) error->compiler.token->string.count,
                              error->compiler.token->string.value);
                     break;
-                case NADIR_COMPILER_ERROR_KIND_COMPTIME_INVALID_SWAP_WIDTH:
+                case NADIR_COMPILER_ERROR_KIND_COMPTIME_INVALID_BIT_WIDTH:
                     snprintf(pointer,
                              remaining,
-                             "invalid swap width specified in comptime '%.*s'",
+                             "invalid bit width specified in comptime '%.*s'",
                              (int) error->compiler.token->string.count,
                              error->compiler.token->string.value);
                     break;

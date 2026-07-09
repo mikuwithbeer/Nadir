@@ -174,15 +174,18 @@ as you need.
 
 #### Bitwise
 
-| Function                     | Description                                                                       |
-|------------------------------|-----------------------------------------------------------------------------------|
-| **`@or(first, second...)`**  | Performs a bitwise OR operation between given values. **(Variadic!)**             |
-| **`@and(first, second...)`** | Performs a bitwise AND operation between given values. **(Variadic!)**            |
-| **`@xor(first, second...)`** | Performs a bitwise XOR operation between given values. **(Variadic!)**            |
-| **`@shl(value, bits)`**      | Shifts the bits of `value` to the left by the specified number of `bits`.         |
-| **`@shr(value, bits)`**      | Shifts the bits of `value` to the right by the specified number of `bits`.        |
-| **`@not(value)`**            | Flips every single bit inside your `value`.                                       |
-| **`@bswap(value, width)`**   | Reverses the byte order of the `value`. `width` must be either `16`, `32`or `64`. |
+| Function                                  | Description                                                                                 |
+|-------------------------------------------|---------------------------------------------------------------------------------------------|
+| **`@or(first, second...)`**               | Performs a bitwise OR operation between given values. **(Variadic!)**                       |
+| **`@and(first, second...)`**              | Performs a bitwise AND operation between given values. **(Variadic!)**                      |
+| **`@xor(first, second...)`**              | Performs a bitwise XOR operation between given values. **(Variadic!)**                      |
+| **`@shl(value, bits)`**                   | Shifts the bits of `value` to the left by the specified number of `bits`.                   |
+| **`@shr(value, bits)`**                   | Shifts the bits of `value` to the right by the specified number of `bits`.                  |
+| **`@not(value)`**                         | Flips every single bit inside your `value`.                                                 |
+| **`@bswap(value, width)`**                | Reverses the byte order of the `value`. `width` must be either `16`, `32`or `64`.           |
+| **`@mask(width)`**                        | Generates a right-aligned bitmask of consecutive `1`s of the specified `width`.             |
+| **`@insert(base, value, offset, width)`** | Inserts a `value` into a `base` at a specific `offset`, constrained to a specific `width`.  |
+| **`@extract(value, offset, width)`**      | Extracts a chunk of bits of a specific `width` from a `value` starting at a given `offset`. |
 
 #### Logic and Comparison
 

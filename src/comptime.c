@@ -21,6 +21,7 @@ nadir_comptime_kind_t nadir_comptime_kind(const char *name,
     if (NADIR_COMPTIME_MATCH("clamp")) return NADIR_COMPTIME_KIND_CLAMP;
     if (NADIR_COMPTIME_MATCH("max")) return NADIR_COMPTIME_KIND_MAX;
     if (NADIR_COMPTIME_MATCH("min")) return NADIR_COMPTIME_KIND_MIN;
+    if (NADIR_COMPTIME_MATCH("here")) return NADIR_COMPTIME_KIND_HERE;
 
     if (NADIR_COMPTIME_MATCH("abs")) return NADIR_COMPTIME_KIND_ABS;
     if (NADIR_COMPTIME_MATCH("neg")) return NADIR_COMPTIME_KIND_NEG;
@@ -59,6 +60,7 @@ nadir_comptime_kind_t nadir_comptime_kind(const char *name,
 }
 
 nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
+                                          const nadir_compiler_t *compiler,
                                           const nadir_list_t *context,
                                           nadir_i128_t *result) {
     auto error = (nadir_compiler_error_t){};
@@ -190,6 +192,15 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
                 *result = *right;
             }
 
+            break;
+        }
+        case NADIR_COMPTIME_KIND_HERE: {
+            if (comptime->arguments->length != 0) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+                return error;
+            }
+
+            *result = (nadir_i128_t) compiler->binary_calculation;
             break;
         }
 

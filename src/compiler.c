@@ -75,6 +75,7 @@ nadir_compiler_t *nadir_compiler_new(nadir_arena_t *arena,
 
     compiler->binary_location = (nadir_u64_t) -1;
     compiler->binary_origin = 0;
+    compiler->binary_calculation = 0;
 
     const auto addresses = nadir_table_new(arena, sizeof(nadir_u64_t));
     if (addresses == nullptr) {
@@ -156,8 +157,9 @@ nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler) {
 
     // Run each statement in the binary declaration to generate the output.
     for (nadir_u64_t index = 0; index < binary->binary.statements->length; ++index) {
-        const nadir_ast_expression_t *statement = nadir_list_get(binary->binary.statements, index);
+        compiler->binary_calculation = compiler->binary_origin + compiler->output->length;
 
+        const nadir_ast_expression_t *statement = nadir_list_get(binary->binary.statements, index);
         switch (statement->kind) {
             case NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL:
             case NADIR_AST_EXPRESSION_KIND_MEMBER:
@@ -352,7 +354,6 @@ nadir_compiler_error_t nadir_compiler_prepare_procedure(const nadir_compiler_t *
 nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
                                                      const nadir_ast_declaration_binary_t *declaration) {
     compiler->binary_origin = declaration->origin;
-    compiler->binary_calculation = 0;
 
     // Prepare each statement in the binary declaration to calculate the binary origin.
     for (nadir_u64_t index = 0; index < declaration->statements->length; ++index) {
@@ -510,6 +511,7 @@ nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
 
     // Evaluate each statement in the procedure.
     for (nadir_u64_t index = 0; index < procedure->statements->length; ++index) {
+        compiler->binary_calculation = compiler->binary_origin + compiler->output->length;
         const nadir_ast_expression_t *statement = nadir_list_get(procedure->statements, index);
 
         // Evaluate the statement expression in the context of the procedure call.
@@ -660,7 +662,7 @@ nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compil
 
     // Evaluate the compile-time call with the provided context and arguments.
     nadir_i128_t comptime_result;
-    error = nadir_comptime_run(&comptime, context, &comptime_result);
+    error = nadir_comptime_run(&comptime, compiler, context, &comptime_result);
     if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
         // Propagate the error with the expression's token.
         error.token = expression->token;

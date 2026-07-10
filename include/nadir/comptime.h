@@ -32,6 +32,7 @@ typedef enum : nadir_u8_t {
     NADIR_COMPTIME_KIND_CLAMP,
     NADIR_COMPTIME_KIND_MAX,
     NADIR_COMPTIME_KIND_MIN,
+    NADIR_COMPTIME_KIND_HERE,
 
     NADIR_COMPTIME_KIND_ABS,
     NADIR_COMPTIME_KIND_NEG,
@@ -87,6 +88,7 @@ typedef struct {
  * @brief Evaluates the given comptime expression with the provided context.
  */
 [[nodiscard]] nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
+                                                        const nadir_compiler_t *compiler,
                                                         const nadir_list_t *context,
                                                         nadir_i128_t *result);
 

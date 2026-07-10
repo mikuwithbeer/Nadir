@@ -435,8 +435,7 @@ static nadir_lexer_error_t nadir_lexer_collect_ident(nadir_lexer_t *lexer,
     if (!nadir_token_value_uppercase(character) &&
         !nadir_token_value_lowercase(character) &&
         !nadir_token_value_digit(character) &&
-        !nadir_token_value_underscore(character)
-    ) {
+        !nadir_token_value_underscore(character)) {
         error.kind = NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER;
         error.character = character;
 

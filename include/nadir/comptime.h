@@ -64,6 +64,7 @@ typedef enum : nadir_u8_t {
     NADIR_COMPTIME_KIND_LOR,
     NADIR_COMPTIME_KIND_LAND,
     NADIR_COMPTIME_KIND_LNOT,
+    NADIR_COMPTIME_KIND_BETWEEN,
 } nadir_comptime_kind_t;
 
 /**

@@ -12,11 +12,11 @@
 constant BIOS {
   VideoMode = $00;
   Teletype = $0E;
+  Wait = $86;
 }
 
 constant Graphics {
   VGA = $13;
-  Foreground = $0D;
 }
 
 constant Register8 {
@@ -27,6 +27,8 @@ constant Register8 {
 
 constant Register16 {
   AX = 0;
+  CX = 1;
+  DX = 2;
   SI = 6;
 }
 
@@ -52,32 +54,37 @@ binary $7C00 {
   mov_r8_imm8(Register8.AL, Graphics.VGA);
   int_imm8($10);
 
-  # --- Print ---
-  mov_r16_imm16(Register16.SI, >STRING);
-  mov_r8_imm8(Register8.AH, BIOS.Teletype);
-  mov_r8_imm8(Register8.BL, Graphics.Foreground);
+  # --- Initialize Color ---
+  mov_r8_imm8(Register8.BL, $01);
 
-  <PRINT_LOOP;
-    lodsb();
-    test_r8_r8(Register8.AL, Register8.AL);
-    jcc_rel16(Condition.Equal, >HALT);
-    int_imm8($10);
-    jmp_rel16(>PRINT_LOOP);
+  # --- Main Loop ---
+  <MAIN_LOOP;
+    mov_r16_imm16(Register16.SI, >STRING);
 
-  # --- Halt ---
-  <HALT;
-    jmp_rel16(>HALT);
+    <PRINT_LOOP;
+      lodsb();
+      test_r8_r8(Register8.AL, Register8.AL);
+      jcc_rel16(Condition.Equal, >WAIT_STATE);
+
+      mov_r8_imm8(Register8.AH, BIOS.Teletype);
+      int_imm8($10);
+      jmp_rel16(>PRINT_LOOP);
+
+    <WAIT_STATE;
+      mov_r8_imm8(Register8.AH, BIOS.Wait);
+      mov_r16_imm16(Register16.CX, $000F);
+      mov_r16_imm16(Register16.DX, $4240);
+      int_imm8($15);
+      
+      inc_r8(Register8.BL);
+      jmp_rel16(>MAIN_LOOP);
 
   # --- String ---
-  <STRING;
-    $48; $65; $6C; $6C; $6F; $21; $20;
-    $54; $68; $69; $73; $20;
-    $77; $61; $73; $20;
-    $62; $75; $69; $6C; $74; $20;
-    $77; $69; $74; $68; $20;
-    $4E; $61; $64; $69; $72; $2E;
-    $0D; $0A;
-    $00;
+  <STRING; $48; $65; $6C; $6C; $6F; $21; $20; $54;
+           $68; $69; $73; $20; $77; $61; $73; $20;
+           $62; $75; $69; $6C; $74; $20; $77; $69;
+           $74; $68; $20; $4E; $61; $64; $69; $72;
+           $2E; $0D; $0A; $00;
 
   # --- Padding and Signature ---
   until $00 510;
@@ -90,18 +97,18 @@ binary $7C00 {
 
 procedure xor_r16_r16(u8, u8) {
   $31;
-  @add($C0, @add(@shl(@arg(1), 3), @arg(0)));
+  @insert(@insert($C0, @arg(1), 3, 3), @arg(0), 0, 3);
 }
 
 procedure mov_sreg_r16(u8, u8) {
   $8E;
-  @add($C0, @add(@shl(@arg(0), 3), @arg(1)));
+  @insert(@insert($C0, @arg(0), 3, 3), @arg(1), 0, 3);
 }
 
 procedure mov_r16_imm16(u8, u16) {
   @add($B8, @arg(0));
-  @and(@arg(1), $FF);
-  @and(@shr(@arg(1), 8), $FF);
+  @extract(@arg(1), 0, 8);
+  @extract(@arg(1), 8, 8);
 }
 
 procedure mov_r8_imm8(u8, u8) {
@@ -111,7 +118,12 @@ procedure mov_r8_imm8(u8, u8) {
 
 procedure test_r8_r8(u8, u8) {
   $84;
-  @add($C0, @add(@shl(@arg(1), 3), @arg(0)));
+  @insert(@insert($C0, @arg(1), 3, 3), @arg(0), 0, 3);
+}
+
+procedure inc_r8(u8) {
+  $FE;
+  @insert($C0, @arg(0), 0, 3);
 }
 
 procedure int_imm8(u8) {
@@ -122,14 +134,14 @@ procedure int_imm8(u8) {
 procedure jcc_rel16(u8, u16) {
   $0F;
   @add($80, @arg(0));
-  @and(@sub(@arg(1), @add(@here(), 2)), $FF);
-  @and(@shr(@sub(@arg(1), @add(@here(), 2)), 8), $FF);
+  @extract(@sub(@arg(1), @add(@here(), 2)), 0, 8);
+  @extract(@sub(@arg(1), @add(@here(), 2)), 8, 8);
 }
 
 procedure jmp_rel16(u16) {
   $E9;
-  @and(@sub(@arg(0), @add(@here(), 2)), $FF);
-  @and(@shr(@sub(@arg(0), @add(@here(), 2)), 8), $FF);
+  @extract(@sub(@arg(0), @add(@here(), 2)), 0, 8);
+  @extract(@sub(@arg(0), @add(@here(), 2)), 8, 8);
 }
 
 procedure lodsb() {

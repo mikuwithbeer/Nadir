@@ -53,6 +53,7 @@ nadir_comptime_kind_t nadir_comptime_kind(const char *name,
     if (NADIR_COMPTIME_MATCH("lor")) return NADIR_COMPTIME_KIND_LOR;
     if (NADIR_COMPTIME_MATCH("land")) return NADIR_COMPTIME_KIND_LAND;
     if (NADIR_COMPTIME_MATCH("lnot")) return NADIR_COMPTIME_KIND_LNOT;
+    if (NADIR_COMPTIME_MATCH("between")) return NADIR_COMPTIME_KIND_BETWEEN;
 
 #undef NADIR_COMPTIME_MATCH
 
@@ -593,6 +594,19 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
 
             *result = !*value;
+            break;
+        }
+        case NADIR_COMPTIME_KIND_BETWEEN: {
+            if (comptime->arguments->length != 3) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+                break;
+            }
+
+            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *minimum = nadir_list_get(comptime->arguments, 1);
+            const nadir_i128_t *maximum = nadir_list_get(comptime->arguments, 2);
+
+            *result = *value >= *minimum && *value <= *maximum;
             break;
         }
     }

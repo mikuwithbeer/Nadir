@@ -79,7 +79,7 @@ binary $200 {
 
   # --- Infinite Loop ---
   <LOOP;
-  jump(>LOOP);
+    jump(>LOOP);
 
   # --- Sprite Data ---
   <SPRITE_N; $90; $D0; $B0; $90; $90;

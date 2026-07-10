@@ -18,6 +18,14 @@ identifier          = @{ (ASCII_ALPHA_LOWER | ASCII_ALPHA_UPPER | "_") ~ (ASCII_
 member_access       = { identifier ~ "." ~ identifier }
 
 // [--------------------------------------------------------------] //
+// > Padding Expressions                                          < //
+// [--------------------------------------------------------------] //
+
+padding_until      = { "until" ~ padding_expression ~ padding_expression }
+padding_repeat     = { "repeat" ~ padding_expression ~ padding_expression }
+padding_expression = { comptime_call | member_access | numeric_literal }
+
+// [--------------------------------------------------------------] //
 // > Call Expressions                                             < //
 // [--------------------------------------------------------------] //
 
@@ -44,7 +52,7 @@ procedure_expression     = { comptime_call | member_access | numeric_literal }
 
 binary_declaration = { "binary" ~ numeric_literal ~ "{" ~ binary_statement* ~ "}" }
 binary_statement   = { binary_expression ~ ";" }
-binary_expression  = { procedure_call | store_address | comptime_call | member_access | numeric_literal }
+binary_expression  = { padding_until | padding_repeat | procedure_call | store_address | comptime_call | member_access | numeric_literal }
 
 // [--------------------------------------------------------------] //
 // > Grammar Entry Point                                          < //

@@ -212,6 +212,9 @@ char *nadir_error_encode(nadir_arena_t *arena,
                 case NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH:
                     snprintf(pointer, remaining, "value out of byte range");
                     break;
+                case NADIR_COMPILER_ERROR_KIND_PADDING_OUT_OF_RANGE:
+                    snprintf(pointer, remaining, "padding value exceeds the bound size");
+                    break;
 
                 case NADIR_COMPILER_ERROR_KIND_COMPTIME_NULL_CONTEXT:
                     snprintf(pointer,

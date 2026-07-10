@@ -36,6 +36,7 @@ typedef enum [[nodiscard]] : nadir_u8_t {
     NADIR_COMPILER_ERROR_KIND_ARGUMENT_MISMATCH,
     NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH,
     NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH,
+    NADIR_COMPILER_ERROR_KIND_PADDING_OUT_OF_RANGE,
 
     NADIR_COMPILER_ERROR_KIND_COMPTIME_NULL_CONTEXT,
     NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH,
@@ -89,7 +90,8 @@ typedef struct {
     nadir_list_t *output; // List of `nadir_u8_t`
 
     nadir_u64_t binary_location; // Index of the binary declaration
-    nadir_u64_t binary_origin; // Memory address origin for calculation
+    nadir_u64_t binary_origin; // Memory address origin
+    nadir_u64_t binary_calculation; // Memory address calculation
 } nadir_compiler_t;
 
 // [--------------------------------------------------------------] //

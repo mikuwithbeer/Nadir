@@ -27,6 +27,8 @@ typedef enum : nadir_u8_t {
     NADIR_AST_EXPRESSION_KIND_PROCEDURE_CALL,
     NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS,
     NADIR_AST_EXPRESSION_KIND_LOAD_ADDRESS,
+    NADIR_AST_EXPRESSION_KIND_UNTIL,
+    NADIR_AST_EXPRESSION_KIND_REPEAT,
 } nadir_ast_expression_kind_t;
 
 /**
@@ -41,7 +43,12 @@ typedef enum : nadir_u8_t {
 /**
  * @brief Expression structure for the abstract syntax tree.
  */
-typedef struct {
+typedef struct nadir_ast_expression_t nadir_ast_expression_t;
+
+/**
+ * @brief Expression structure for the abstract syntax tree.
+ */
+struct nadir_ast_expression_t {
     nadir_ast_expression_kind_t kind;
     nadir_token_t *token;
 
@@ -55,8 +62,14 @@ typedef struct {
         struct {
             nadir_list_t *arguments; // List of `nadir_ast_expression_t`
         } call;
+
+        // Until and repeat padding expressions.
+        struct {
+            nadir_ast_expression_t *value;
+            nadir_ast_expression_t *times;
+        } padding;
     };
-} nadir_ast_expression_t;
+};
 
 /**
  * @brief Constant entry structure for the abstract syntax tree.

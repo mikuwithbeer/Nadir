@@ -207,6 +207,53 @@ nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler) {
             }
             case NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS:
                 continue; // Already handled in the preparation phase
+            case NADIR_AST_EXPRESSION_KIND_UNTIL:
+            case NADIR_AST_EXPRESSION_KIND_REPEAT: {
+                // Evaluate the padding value expression to get its value.
+                error = nadir_compiler_evaluate(compiler, nullptr, statement->padding.value);
+                if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+                    return error;
+                }
+
+                nadir_i128_t padding_value;
+                error = nadir_compiler_stack_pop(compiler, &padding_value, statement->token);
+                if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+                    return error;
+                }
+
+                // Guard against a byte mismatch when writing the padding value to the output.
+                if (padding_value < NADIR_U8_MINIMUM || padding_value > NADIR_U8_MAXIMUM) {
+                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH,
+                                                    statement->padding.value->token);
+                }
+
+                // Evaluate the padding times expression to get its value.
+                error = nadir_compiler_evaluate(compiler, nullptr, statement->padding.times);
+                if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+                    return error;
+                }
+
+                nadir_i128_t padding_times;
+                error = nadir_compiler_stack_pop(compiler, &padding_times, statement->token);
+                if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+                    return error;
+                }
+
+                nadir_u64_t repeat_bytes = (nadir_u64_t) padding_times; // Already validated to be within the range
+                if (statement->kind == NADIR_AST_EXPRESSION_KIND_UNTIL) {
+                    repeat_bytes -= compiler->output->length; // Already validated to be within the range
+                }
+
+                // Append the padding bytes to the output.
+                for (nadir_u64_t i = 0; i < repeat_bytes; ++i) {
+                    const auto padding_byte = (nadir_u8_t) padding_value;
+                    if (!nadir_list_append(compiler->output, &padding_byte)) {
+                        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, statement->token);
+                    }
+                }
+
+                break;
+            }
             default:
                 break; // Unreachable
         }
@@ -305,6 +352,7 @@ nadir_compiler_error_t nadir_compiler_prepare_procedure(const nadir_compiler_t *
 nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
                                                      const nadir_ast_declaration_binary_t *declaration) {
     compiler->binary_origin = declaration->origin;
+    compiler->binary_calculation = 0;
 
     // Prepare each statement in the binary declaration to calculate the binary origin.
     for (nadir_u64_t index = 0; index < declaration->statements->length; ++index) {
@@ -314,7 +362,7 @@ nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
             case NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL:
             case NADIR_AST_EXPRESSION_KIND_MEMBER:
             case NADIR_AST_EXPRESSION_KIND_NUMBER: {
-                ++compiler->binary_origin; // Expected to be a single byte in the output
+                ++compiler->binary_calculation; // Expected to be a single byte in the output
                 break;
             }
             case NADIR_AST_EXPRESSION_KIND_PROCEDURE_CALL: {
@@ -328,16 +376,53 @@ nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
                 }
 
                 // Update the binary origin by adding the number of statements in the procedure.
-                compiler->binary_origin += procedure->statements->length;
+                compiler->binary_calculation += procedure->statements->length;
                 break;
             }
             case NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS: {
-                // Store the address with the current binary origin.
+                const auto memory_address = compiler->binary_calculation + compiler->binary_origin;
+
+                // Store the address in the addresses table.
                 if (!nadir_table_insert(compiler->addresses,
                                         statement->token->string.value + 1,
                                         statement->token->string.count - 1,
-                                        &compiler->binary_origin)) {
+                                        &memory_address)) {
                     return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_MULTIPLE_ADDRESS, statement->token);
+                }
+
+                break;
+            }
+            case NADIR_AST_EXPRESSION_KIND_UNTIL:
+            case NADIR_AST_EXPRESSION_KIND_REPEAT: {
+                // Evaluate the padding value expression to get its value.
+                auto error = nadir_compiler_evaluate(compiler, nullptr, statement->padding.times);
+                if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+                    return error;
+                }
+
+                nadir_i128_t padding_times;
+                error = nadir_compiler_stack_pop(compiler, &padding_times, statement->token);
+                if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+                    return error;
+                }
+
+                // Guard against a padding times value that is out of range.
+                if (padding_times <= NADIR_U64_MINIMUM || padding_times >= NADIR_U64_MAXIMUM) {
+                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_PADDING_OUT_OF_RANGE,
+                                                    statement->padding.times->token);
+                }
+
+                const auto repeat_bytes = (nadir_u64_t) padding_times;
+                if (statement->kind == NADIR_AST_EXPRESSION_KIND_UNTIL) {
+                    // Guard against a padding to value that is less or equal than the current binary calculation.
+                    if (compiler->binary_calculation >= repeat_bytes) {
+                        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_PADDING_OUT_OF_RANGE,
+                                                        statement->padding.times->token);
+                    }
+
+                    compiler->binary_calculation = repeat_bytes;
+                } else {
+                    compiler->binary_calculation += repeat_bytes;
                 }
 
                 break;

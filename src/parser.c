@@ -33,6 +33,10 @@ static nadir_parser_error_t nadir_parser_run_call(nadir_parser_t *parser,
                                                   nadir_token_t *token,
                                                   nadir_ast_expression_t *expression);
 
+static nadir_parser_error_t nadir_parser_run_padding(nadir_parser_t *parser,
+                                                     nadir_token_t *token,
+                                                     nadir_ast_expression_t *expression);
+
 // [--------------------------------------------------------------] //
 // > Inline Functions                                             < //
 // [--------------------------------------------------------------] //
@@ -97,7 +101,9 @@ static inline bool nadir_parser_is_binary_statement(const nadir_ast_expression_k
            kind == NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS ||
            kind == NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL ||
            kind == NADIR_AST_EXPRESSION_KIND_MEMBER ||
-           kind == NADIR_AST_EXPRESSION_KIND_NUMBER;
+           kind == NADIR_AST_EXPRESSION_KIND_NUMBER ||
+           kind == NADIR_AST_EXPRESSION_KIND_UNTIL ||
+           kind == NADIR_AST_EXPRESSION_KIND_REPEAT;
 }
 
 static inline bool nadir_parser_is_procedure_argument(const nadir_ast_expression_kind_t kind) {
@@ -111,6 +117,18 @@ static inline bool nadir_parser_is_comptime_argument(const nadir_ast_expression_
     return kind == NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL ||
            kind == NADIR_AST_EXPRESSION_KIND_MEMBER ||
            kind == NADIR_AST_EXPRESSION_KIND_TYPE ||
+           kind == NADIR_AST_EXPRESSION_KIND_NUMBER;
+}
+
+static inline bool nadir_parser_is_padding_value(const nadir_ast_expression_kind_t kind) {
+    return kind == NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL ||
+           kind == NADIR_AST_EXPRESSION_KIND_MEMBER ||
+           kind == NADIR_AST_EXPRESSION_KIND_NUMBER;
+}
+
+static inline bool nadir_parser_is_padding_times(const nadir_ast_expression_kind_t kind) {
+    return kind == NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL ||
+           kind == NADIR_AST_EXPRESSION_KIND_MEMBER ||
            kind == NADIR_AST_EXPRESSION_KIND_NUMBER;
 }
 
@@ -524,8 +542,7 @@ static nadir_parser_error_t nadir_parser_run_expression(nadir_parser_t *parser,
 
     // Parse number expressions.
     if (next_token->kind == NADIR_TOKEN_KIND_NUMBER) {
-        next_token = nadir_parser_advance(parser);
-        if (next_token == nullptr) {
+        if (nadir_parser_advance(parser) == nullptr) {
             return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
         }
 
@@ -537,8 +554,7 @@ static nadir_parser_error_t nadir_parser_run_expression(nadir_parser_t *parser,
 
     // Parse store address expressions.
     if (next_token->kind == NADIR_TOKEN_KIND_STORE_ADDRESS) {
-        next_token = nadir_parser_advance(parser);
-        if (next_token == nullptr) {
+        if (nadir_parser_advance(parser) == nullptr) {
             return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
         }
 
@@ -550,8 +566,7 @@ static nadir_parser_error_t nadir_parser_run_expression(nadir_parser_t *parser,
 
     // Parse load address expressions.
     if (next_token->kind == NADIR_TOKEN_KIND_LOAD_ADDRESS) {
-        next_token = nadir_parser_advance(parser);
-        if (next_token == nullptr) {
+        if (nadir_parser_advance(parser) == nullptr) {
             return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
         }
 
@@ -561,10 +576,29 @@ static nadir_parser_error_t nadir_parser_run_expression(nadir_parser_t *parser,
         return error;
     }
 
+    // Parse padding to (until) expression.
+    if (next_token->kind == NADIR_TOKEN_KIND_UNTIL) {
+        if (nadir_parser_advance(parser) == nullptr) {
+            return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
+        }
+
+        expression->kind = NADIR_AST_EXPRESSION_KIND_UNTIL;
+        return nadir_parser_run_padding(parser, next_token, expression);
+    }
+
+    // Parse padding by (repeat) expression.
+    if (next_token->kind == NADIR_TOKEN_KIND_REPEAT) {
+        if (nadir_parser_advance(parser) == nullptr) {
+            return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
+        }
+
+        expression->kind = NADIR_AST_EXPRESSION_KIND_REPEAT;
+        return nadir_parser_run_padding(parser, next_token, expression);
+    }
+
     // Parse type expressions.
     if (nadir_token_value_type(next_token->kind)) {
-        next_token = nadir_parser_advance(parser);
-        if (next_token == nullptr) {
+        if (nadir_parser_advance(parser) == nullptr) {
             return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
         }
 
@@ -693,5 +727,48 @@ static nadir_parser_error_t nadir_parser_run_call(nadir_parser_t *parser,
 
     // Consume the right parenthesis.
     error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_RIGHT_PAREN, &next_token);
+    return error;
+}
+
+static nadir_parser_error_t nadir_parser_run_padding(nadir_parser_t *parser,
+                                                     nadir_token_t *token,
+                                                     nadir_ast_expression_t *expression) {
+    // Parse the padding value expression.
+    nadir_ast_expression_t value_expression = {};
+    auto error = nadir_parser_run_expression(parser, &value_expression);
+    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+        return error;
+    }
+
+    if (!nadir_parser_is_padding_value(value_expression.kind)) {
+        return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EXPRESSION, value_expression.token);
+    }
+
+    // Parse the padding times expression.
+    nadir_ast_expression_t times_expression = {};
+    error = nadir_parser_run_expression(parser, &times_expression);
+    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+        return error;
+    }
+
+    if (!nadir_parser_is_padding_times(times_expression.kind)) {
+        return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EXPRESSION, times_expression.token);
+    }
+
+    // Allocate memory for the value and times expressions in the padding expression.
+    nadir_ast_expression_t *value = nadir_arena_allocate(parser->arena, sizeof(nadir_ast_expression_t));
+    nadir_ast_expression_t *times = nadir_arena_allocate(parser->arena, sizeof(nadir_ast_expression_t));
+
+    if (value == nullptr || times == nullptr) {
+        return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, token);
+    }
+
+    *value = value_expression;
+    *times = times_expression;
+
+    expression->token = token;
+    expression->padding.value = value;
+    expression->padding.times = times;
+
     return error;
 }

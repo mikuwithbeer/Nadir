@@ -409,6 +409,8 @@ static nadir_lexer_error_t nadir_lexer_collect_ident(nadir_lexer_t *lexer,
         if (NADIR_LEXER_IDENT_MATCH("constant")) lexer->token.kind = NADIR_TOKEN_KIND_CONSTANT;
         else if (NADIR_LEXER_IDENT_MATCH("procedure")) lexer->token.kind = NADIR_TOKEN_KIND_PROCEDURE;
         else if (NADIR_LEXER_IDENT_MATCH("binary")) lexer->token.kind = NADIR_TOKEN_KIND_BINARY;
+        else if (NADIR_LEXER_IDENT_MATCH("until")) lexer->token.kind = NADIR_TOKEN_KIND_UNTIL;
+        else if (NADIR_LEXER_IDENT_MATCH("repeat")) lexer->token.kind = NADIR_TOKEN_KIND_REPEAT;
         else if (NADIR_LEXER_IDENT_MATCH("u8")) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U8;
         else if (NADIR_LEXER_IDENT_MATCH("u16")) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U16;
         else if (NADIR_LEXER_IDENT_MATCH("u32")) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U32;

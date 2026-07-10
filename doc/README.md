@@ -152,13 +152,14 @@ as you need.
 
 #### Utility
 
-| Function                      | Description                                                                 |
-|:------------------------------|:----------------------------------------------------------------------------|
-| **`@arg(index)`**             | Reads an argument passed into a procedure. *Only usable inside procedures.* |
-| **`@cast(value, type)`**      | Forces a value into a specific data type.                                   |
-| **`@clamp(value, min, max)`** | Keeps a value safely between a minimum and a maximum.                       |
-| **`@max(left, right)`**       | Returns the larger of two values.                                           |
-| **`@min(left, right)`**       | Returns the smaller of two values.                                          |
+| Function                      | Description                                                                            |
+|:------------------------------|:---------------------------------------------------------------------------------------|
+| **`@arg(index)`**             | Reads an argument passed into a procedure. *Only usable inside procedures.*            |
+| **`@cast(value, type)`**      | Forces a value into a specific data type.                                              |
+| **`@clamp(value, min, max)`** | Keeps a value safely between a minimum and a maximum.                                  |
+| **`@max(left, right)`**       | Returns the larger of two values.                                                      |
+| **`@min(left, right)`**       | Returns the smaller of two values.                                                     |
+| **`@here()`**                 | Evaluates to the current address. *Undefined behavior if used inside constant blocks!* |
 
 #### Math
 
@@ -333,6 +334,41 @@ binary $200 {
 
 > [!NOTE]
 > The location of the binary block is **not** important.
+
+### Padding
+
+When building custom architectures, you often need to align data to specific memory boundaries or fill out empty space.
+Nadir provides two straightforward ways to inject padding directly into your binary block.
+
+> [!IMPORTANT]
+> First parameter is the byte to fill with, which must be between `$00` and `$FF`.
+
+> [!NOTE]
+> Arguments are evaluated at compile-time, so you can use constants, procedures, and comptimes to calculate
+> the values.
+
+#### Until
+
+The `until` keyword pads your output with a specific byte until the total size of your binary reaches the target value.
+
+```asm
+binary $200 {
+  $01; $02; $03;
+  until $00 16; # Fills $00 until the total size is 16 bytes
+}
+```
+
+#### Repeat
+
+The `repeat` keyword is much more direct. It simply takes a byte and duplicates it a set number of times.
+
+```asm
+binary $200 {
+  # ...
+  repeat $10 32; # Appends 32 copies of $10 to the output
+  # ...
+}
+```
 
 ---
 

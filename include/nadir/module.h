@@ -5,9 +5,8 @@
  * @file module.h
  * @brief The module interface.
  *
- * This file defines the modularity structure for the assembler,
- * allowing for the inclusion of external files and the management
- * of their abstract syntax trees.
+ * This file defines the module structure and related constants for
+ * the assembler.
  */
 
 #include "nadir/common/table.h"

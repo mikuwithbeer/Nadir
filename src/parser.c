@@ -44,7 +44,7 @@ static nadir_parser_error_t nadir_parser_run_padding(nadir_parser_t *parser,
 // > Inline Functions                                             < //
 // [--------------------------------------------------------------] //
 
-static inline nadir_token_t *nadir_parser_peek(const nadir_parser_t *parser) {
+[[nodiscard]] static inline nadir_token_t *nadir_parser_peek(const nadir_parser_t *parser) {
     if (parser->token_index >= parser->tokens->length) {
         return nullptr;
     }
@@ -52,7 +52,7 @@ static inline nadir_token_t *nadir_parser_peek(const nadir_parser_t *parser) {
     return nadir_list_get(parser->tokens, parser->token_index);
 }
 
-static inline nadir_token_t *nadir_parser_advance(nadir_parser_t *parser) {
+[[nodiscard]] static inline nadir_token_t *nadir_parser_advance(nadir_parser_t *parser) {
     const auto token = nadir_parser_peek(parser);
     if (token == nullptr) {
         return nullptr;
@@ -87,19 +87,19 @@ static inline nadir_parser_error_t nadir_parser_consume(nadir_parser_t *parser,
     return error;
 }
 
-static inline bool nadir_parser_is_constant_expression(const nadir_ast_expression_kind_t kind) {
+[[nodiscard]] static inline bool nadir_parser_is_constant_expression(const nadir_ast_expression_kind_t kind) {
     return kind == NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL ||
            kind == NADIR_AST_EXPRESSION_KIND_MEMBER ||
            kind == NADIR_AST_EXPRESSION_KIND_NUMBER;
 }
 
-static inline bool nadir_parser_is_procedure_statement(const nadir_ast_expression_kind_t kind) {
+[[nodiscard]] static inline bool nadir_parser_is_procedure_statement(const nadir_ast_expression_kind_t kind) {
     return kind == NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL ||
            kind == NADIR_AST_EXPRESSION_KIND_MEMBER ||
            kind == NADIR_AST_EXPRESSION_KIND_NUMBER;
 }
 
-static inline bool nadir_parser_is_binary_statement(const nadir_ast_expression_kind_t kind) {
+[[nodiscard]] static inline bool nadir_parser_is_binary_statement(const nadir_ast_expression_kind_t kind) {
     return kind == NADIR_AST_EXPRESSION_KIND_PROCEDURE_CALL ||
            kind == NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS ||
            kind == NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL ||
@@ -109,27 +109,27 @@ static inline bool nadir_parser_is_binary_statement(const nadir_ast_expression_k
            kind == NADIR_AST_EXPRESSION_KIND_REPEAT;
 }
 
-static inline bool nadir_parser_is_procedure_argument(const nadir_ast_expression_kind_t kind) {
+[[nodiscard]] static inline bool nadir_parser_is_procedure_argument(const nadir_ast_expression_kind_t kind) {
     return kind == NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL ||
            kind == NADIR_AST_EXPRESSION_KIND_LOAD_ADDRESS ||
            kind == NADIR_AST_EXPRESSION_KIND_MEMBER ||
            kind == NADIR_AST_EXPRESSION_KIND_NUMBER;
 }
 
-static inline bool nadir_parser_is_comptime_argument(const nadir_ast_expression_kind_t kind) {
+[[nodiscard]] static inline bool nadir_parser_is_comptime_argument(const nadir_ast_expression_kind_t kind) {
     return kind == NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL ||
            kind == NADIR_AST_EXPRESSION_KIND_MEMBER ||
            kind == NADIR_AST_EXPRESSION_KIND_TYPE ||
            kind == NADIR_AST_EXPRESSION_KIND_NUMBER;
 }
 
-static inline bool nadir_parser_is_padding_value(const nadir_ast_expression_kind_t kind) {
+[[nodiscard]] static inline bool nadir_parser_is_padding_value(const nadir_ast_expression_kind_t kind) {
     return kind == NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL ||
            kind == NADIR_AST_EXPRESSION_KIND_MEMBER ||
            kind == NADIR_AST_EXPRESSION_KIND_NUMBER;
 }
 
-static inline bool nadir_parser_is_padding_times(const nadir_ast_expression_kind_t kind) {
+[[nodiscard]] static inline bool nadir_parser_is_padding_times(const nadir_ast_expression_kind_t kind) {
     return kind == NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL ||
            kind == NADIR_AST_EXPRESSION_KIND_MEMBER ||
            kind == NADIR_AST_EXPRESSION_KIND_NUMBER;
@@ -487,9 +487,7 @@ static nadir_parser_error_t nadir_parser_run_include(nadir_parser_t *parser,
     const auto declaration = (nadir_ast_declaration_t){
         .token = token,
         .kind = NADIR_AST_DECLARATION_KIND_INCLUDE,
-        .include = {
-            .path = path_token,
-        }
+        .include.path = path_token,
     };
 
     if (!nadir_list_append(parser->ast->declarations, &declaration)) {

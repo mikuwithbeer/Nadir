@@ -100,8 +100,8 @@ typedef struct {
 /**
  * @brief Creates a new compiler error with the given kind and token.
  */
-static inline nadir_compiler_error_t nadir_compiler_error_new(const nadir_compiler_error_kind_t kind,
-                                                              nadir_token_t *token) {
+[[maybe_unused]] static inline nadir_compiler_error_t nadir_compiler_error_new(const nadir_compiler_error_kind_t kind,
+                                                                               nadir_token_t *token) {
     return (nadir_compiler_error_t){
         .kind = kind,
         .token = token,

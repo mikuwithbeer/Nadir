@@ -3,6 +3,8 @@
  * @brief The module implementation.
  */
 
+#define _POSIX_C_SOURCE 202405L
+
 #include "nadir/module.h"
 #include "nadir/error.h"
 
@@ -143,7 +145,7 @@ static const char *nadir_module_path_last_seperator(const char *path) {
 
 static char *nadir_module_path_absolute(nadir_arena_t *arena,
                                         const char *path) {
-    char *absolute_path = nadir_arena_allocate(arena, NADIR_MODULE_PATH_MAXIMUM);
+    char *absolute_path = nadir_arena_allocate(arena, NADIR_MODULE_PATH_MAXIMUM * sizeof(char));
     if (absolute_path == nullptr) {
         fprintf(stderr, "error(module): out of memory\n");
         return nullptr;
@@ -167,7 +169,7 @@ static void nadir_module_path_include(const char *current_file,
                                       char *output) {
     const char *last_seperator = nadir_module_path_last_seperator(current_file);
     if (last_seperator == nullptr) {
-        snprintf(output, NADIR_MODULE_PATH_MAXIMUM, "%.*s", (int)target_length, target_path);
+        snprintf(output, NADIR_MODULE_PATH_MAXIMUM, "%.*s", (int) target_length, target_path);
         return;
     }
 

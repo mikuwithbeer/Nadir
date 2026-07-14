@@ -91,8 +91,8 @@ typedef struct {
 /**
  * @brief Creates a new lexer error with the given parameters.
  */
-static inline nadir_lexer_error_t nadir_lexer_error_new(const nadir_lexer_t *lexer,
-                                                        const nadir_lexer_error_kind_t kind) {
+[[maybe_unused]] static inline nadir_lexer_error_t nadir_lexer_error_new(const nadir_lexer_t *lexer,
+                                                                         const nadir_lexer_error_kind_t kind) {
     return (nadir_lexer_error_t){
         .kind = kind,
 

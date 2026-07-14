@@ -170,11 +170,11 @@ static state_t process_success(void) {
     }
 
     if (!nadir_cli_write(&cli, compiler->output)) {
-        fprintf(stderr, "error: failed to write output to file: %s\n", cli.output_file);
+        fprintf(stderr, "error: failed to write output to file '%s'\n", cli.output_file);
         return STATE_ERROR;
     }
 
-    printf("wrote %" PRIu64 " bytes to: %s\n", compiler->output->length, cli.output_file);
+    printf("wrote %" PRIu64 " bytes to '%s'\n", compiler->output->length, cli.output_file);
     return STATE_EXIT;
 }
 

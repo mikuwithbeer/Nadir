@@ -9,9 +9,9 @@
  * the assembler.
  */
 
+#include "nadir/compiler.h"
 #include "nadir/lexer.h"
 #include "nadir/parser.h"
-#include "nadir/compiler.h"
 
 // [--------------------------------------------------------------] //
 // > Constants                                                    < //
@@ -26,7 +26,7 @@ constexpr auto NADIR_ERROR_STRING_MAXIMUM = 1 << 9;
 /**
  * @brief Error kinds for the assembler.
  */
-typedef enum : nadir_u8_t {
+typedef enum [[nodiscard]] : nadir_u8_t {
     NADIR_ERROR_KIND_NONE,
     NADIR_ERROR_KIND_LEXER,
     NADIR_ERROR_KIND_PARSER,
@@ -36,7 +36,7 @@ typedef enum : nadir_u8_t {
 /**
  * @brief Error structure for the assembler.
  */
-typedef struct {
+typedef struct [[nodiscard]] {
     nadir_error_kind_t kind;
 
     union {
@@ -55,7 +55,7 @@ typedef struct {
  *
  * @warning The returned string is allocated on the given arena and will be freed when the arena is freed.
  */
-char *nadir_error_encode(nadir_arena_t *arena,
-                         const nadir_error_t *error);
+[[nodiscard]] char *nadir_error_encode(nadir_arena_t *arena,
+                                       const nadir_error_t *error);
 
 #endif //NADIR_ERROR_H

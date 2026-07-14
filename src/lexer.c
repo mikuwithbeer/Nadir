@@ -74,7 +74,7 @@ nadir_lexer_t *nadir_lexer_new(nadir_arena_t *arena,
     }
 
     // Allocate and read the file contents.
-    char *source_buffer = nadir_arena_allocate(lexer->arena, (nadir_u64_t) source_size + 1);
+    char *source_buffer = nadir_arena_allocate(arena, (nadir_u64_t) source_size + 1);
     if (source_buffer == nullptr) {
         fclose(source_file);
         return nullptr;
@@ -94,13 +94,13 @@ nadir_lexer_t *nadir_lexer_new(nadir_arena_t *arena,
     lexer->source_length = source_length;
     lexer->source_index = 0;
 
-    const auto tokens = nadir_list_new(lexer->arena, sizeof(nadir_token_t));
+    const auto tokens = nadir_list_new(arena, sizeof(nadir_token_t));
     if (tokens == nullptr) {
         return nullptr;
     }
 
     // Reserve space for tokens based on the source length.
-    if (!nadir_list_reserve(tokens, lexer->source_length / 2)) {
+    if (!nadir_list_reserve(tokens, source_length / 2)) {
         return nullptr;
     }
 

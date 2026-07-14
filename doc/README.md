@@ -370,6 +370,41 @@ binary $200 {
 }
 ```
 
+### Modules
+
+As your project grows, keeping everything in a single file quickly becomes difficult to manage. Nadir allows you to
+organize your code across multiple files using the `include` keyword.
+
+It is a top-level directive that inserts another source file into the current compilation unit. During compilation, the
+contents of the included file are parsed, and its abstract syntax tree is merged with the current one.
+
+```asm
+# main.asm
+include [instructions.asm]
+
+binary $100 {
+  # ...
+  move(Register.A, 10);
+  # ...
+}
+
+# architecture.asm
+constant Register {
+  A = 0;
+  B = 1;
+  C = 2;
+}
+
+# instructions.asm
+include [architecture.asm]
+
+procedure move(u8, u8) {
+  $FF;
+  @clamp(@arg(0), Register.A, Register.C);
+  @arg(1);
+}
+```
+
 ---
 
 ## Compiling Your Program

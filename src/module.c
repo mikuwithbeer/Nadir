@@ -3,7 +3,11 @@
  * @brief The module implementation.
  */
 
-#define _POSIX_C_SOURCE 202405L
+#if defined(__linux__) || defined(__gnu_linux__)
+#define _XOPEN_SOURCE 800
+#elif defined(__APPLE__) && defined(__MACH__)
+#define _DARWIN_C_SOURCE
+#endif
 
 #include "nadir/module.h"
 #include "nadir/error.h"

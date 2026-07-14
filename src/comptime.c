@@ -41,6 +41,8 @@ nadir_comptime_kind_t nadir_comptime_kind(const char *name,
     if (NADIR_COMPTIME_MATCH("mask")) return NADIR_COMPTIME_KIND_MASK;
     if (NADIR_COMPTIME_MATCH("insert")) return NADIR_COMPTIME_KIND_INSERT;
     if (NADIR_COMPTIME_MATCH("extract")) return NADIR_COMPTIME_KIND_EXTRACT;
+    if (NADIR_COMPTIME_MATCH("rotl")) return NADIR_COMPTIME_KIND_ROTL;
+    if (NADIR_COMPTIME_MATCH("rotr")) return NADIR_COMPTIME_KIND_ROTR;
 
     if (NADIR_COMPTIME_MATCH("assert")) return NADIR_COMPTIME_KIND_ASSERT;
     if (NADIR_COMPTIME_MATCH("if")) return NADIR_COMPTIME_KIND_IF;
@@ -484,6 +486,49 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             }
 
             *result = *value >> *offset & mask;
+            break;
+        }
+        case NADIR_COMPTIME_KIND_ROTL:
+        case NADIR_COMPTIME_KIND_ROTR: {
+            if (comptime->arguments->length != 3) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+                return error;
+            }
+
+            const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
+            const nadir_i128_t *shift = nadir_list_get(comptime->arguments, 1);
+            const nadir_i128_t *width = nadir_list_get(comptime->arguments, 2);
+
+            // Guard against invalid bit width.
+            if (*width < 1 || *width > 128) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_INVALID_BIT_WIDTH;
+                return error;
+            }
+
+            // Guard against negative shift values.
+            if (*shift < 0) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_SHIFT_OUT_OF_BOUND;
+                return error;
+            }
+
+            const auto bits = (nadir_u32_t) *width;
+            const auto rotation = (nadir_u32_t) (*shift % bits);
+
+            const auto mask = bits == 128 ? NADIR_U128_MAXIMUM : ((nadir_u128_t) 1 << bits) - 1;
+            const auto normalized = (nadir_u128_t) *value & mask;
+
+            // Early out for no-op rotations.
+            if (rotation == 0) {
+                *result = (nadir_i128_t) normalized;
+                break;
+            }
+
+            if (comptime->kind == NADIR_COMPTIME_KIND_ROTL) {
+                *result = (nadir_i128_t) ((normalized << rotation | normalized >> (bits - rotation)) & mask);
+            } else {
+                *result = (nadir_i128_t) ((normalized >> rotation | normalized << (bits - rotation)) & mask);
+            }
+
             break;
         }
 

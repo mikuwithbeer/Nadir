@@ -9,16 +9,17 @@
 // > Function Implementations                                     < //
 // [--------------------------------------------------------------] //
 
-nadir_token_t nadir_token_new(const nadir_token_kind_t kind,
+nadir_token_t nadir_token_new(const char *path,
+                              const nadir_token_kind_t kind,
                               const nadir_u32_t line,
                               const nadir_u32_t column) {
-    nadir_token_t token = {};
+    return (nadir_token_t){
+        .path = path,
+        .kind = kind,
 
-    token.line = line;
-    token.column = column;
-    token.kind = kind;
-
-    return token;
+        .column = column,
+        .line = line
+    };
 }
 
 void nadir_token_start(nadir_token_t *token,

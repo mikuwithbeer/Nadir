@@ -26,6 +26,8 @@ constexpr auto NADIR_TOKEN_VALUE_LEFT_BRACE = '{';
 constexpr auto NADIR_TOKEN_VALUE_RIGHT_BRACE = '}';
 constexpr auto NADIR_TOKEN_VALUE_LEFT_PAREN = '(';
 constexpr auto NADIR_TOKEN_VALUE_RIGHT_PAREN = ')';
+constexpr auto NADIR_TOKEN_VALUE_LEFT_BRACKET = '[';
+constexpr auto NADIR_TOKEN_VALUE_RIGHT_BRACKET = ']';
 constexpr auto NADIR_TOKEN_VALUE_EQUAL = '=';
 constexpr auto NADIR_TOKEN_VALUE_COMMA = ',';
 constexpr auto NADIR_TOKEN_VALUE_DOT = '.';
@@ -41,6 +43,7 @@ constexpr auto NADIR_TOKEN_VALUE_SEMICOLON = ';';
 typedef enum : nadir_u8_t {
     NADIR_TOKEN_KIND_NUMBER,
     NADIR_TOKEN_KIND_IDENT,
+    NADIR_TOKEN_KIND_PATH,
     NADIR_TOKEN_KIND_COMPTIME,
     NADIR_TOKEN_KIND_STORE_ADDRESS,
     NADIR_TOKEN_KIND_LOAD_ADDRESS,
@@ -59,6 +62,7 @@ typedef enum : nadir_u8_t {
     NADIR_TOKEN_KIND_CONSTANT,
     NADIR_TOKEN_KIND_PROCEDURE,
     NADIR_TOKEN_KIND_BINARY,
+    NADIR_TOKEN_KIND_INCLUDE,
 
     NADIR_TOKEN_KIND_TYPE_U8,
     NADIR_TOKEN_KIND_TYPE_U16,
@@ -85,6 +89,8 @@ typedef struct {
         } string;
     };
 
+    const char *path;
+
     nadir_u32_t line;
     nadir_u32_t column;
 
@@ -98,7 +104,8 @@ typedef struct {
 /**
  * @brief Creates a new token with the given parameters.
  */
-[[nodiscard]] nadir_token_t nadir_token_new(nadir_token_kind_t kind,
+[[nodiscard]] nadir_token_t nadir_token_new(const char *path,
+                                            nadir_token_kind_t kind,
                                             nadir_u32_t line,
                                             nadir_u32_t column);
 
@@ -119,42 +126,42 @@ void nadir_token_start(nadir_token_t *token,
 /**
  * @brief Checks if a character is a whitespace character (' ', '\\n', '\\t', '\\r').
  */
-static inline bool nadir_token_value_whitespace(const char character) {
+[[nodiscard, maybe_unused]] static inline bool nadir_token_value_whitespace(const char character) {
     return character == ' ' || character == '\n' || character == '\t' || character == '\r';
 }
 
 /**
  * @brief Checks if a character is an uppercase alphabetic character (A-Z).
  */
-static inline bool nadir_token_value_uppercase(const char character) {
+[[nodiscard, maybe_unused]] static inline bool nadir_token_value_uppercase(const char character) {
     return character >= 'A' && character <= 'Z';
 }
 
 /**
  * @brief Checks if a character is a lowercase alphabetic character (a-z).
  */
-static inline bool nadir_token_value_lowercase(const char character) {
+[[nodiscard, maybe_unused]] static inline bool nadir_token_value_lowercase(const char character) {
     return character >= 'a' && character <= 'z';
 }
 
 /**
  * @brief Checks if a character is an underscore ('_').
  */
-static inline bool nadir_token_value_underscore(const char character) {
+[[nodiscard, maybe_unused]] static inline bool nadir_token_value_underscore(const char character) {
     return character == '_';
 }
 
 /**
  * @brief Checks if a character is a digit (0-9).
  */
-static inline bool nadir_token_value_digit(const char character) {
+[[nodiscard, maybe_unused]] static inline bool nadir_token_value_digit(const char character) {
     return character >= '0' && character <= '9';
 }
 
 /**
  * @brief Checks if a character is a hexadecimal (0-9, A-F, a-f).
  */
-static inline bool nadir_token_value_hexadecimal(const char character) {
+[[nodiscard, maybe_unused]] static inline bool nadir_token_value_hexadecimal(const char character) {
     return (character >= '0' && character <= '9') ||
            (character >= 'A' && character <= 'F') ||
            (character >= 'a' && character <= 'f');
@@ -163,14 +170,30 @@ static inline bool nadir_token_value_hexadecimal(const char character) {
 /**
  * @brief Checks if a character is a sign character ('+', '-').
  */
-static inline bool nadir_token_value_sign(const char character) {
+[[nodiscard, maybe_unused]] static inline bool nadir_token_value_sign(const char character) {
     return character == '+' || character == '-';
+}
+
+/**
+ * @brief Checks if a character is valid in a path character.
+ */
+[[nodiscard, maybe_unused]] static inline bool nadir_token_value_path(const char character) {
+    return (character >= '0' && character <= '9') ||
+           (character >= 'A' && character <= 'Z') ||
+           (character >= 'a' && character <= 'z') ||
+           character == '_' ||
+           character == '-' ||
+           character == '.' ||
+           character == ':' ||
+           character == ' ' ||
+           character == '/' ||
+           character == '\\';
 }
 
 /**
  * @brief Checks if a character is a single-character token.
  */
-static inline bool nadir_token_value_single(const char character) {
+[[nodiscard, maybe_unused]] static inline bool nadir_token_value_single(const char character) {
     return character == NADIR_TOKEN_VALUE_COMMENT ||
            character == NADIR_TOKEN_VALUE_LEFT_BRACE ||
            character == NADIR_TOKEN_VALUE_RIGHT_BRACE ||
@@ -185,7 +208,7 @@ static inline bool nadir_token_value_single(const char character) {
 /**
  * @brief Checks if a token kind is a type token ('u8', 'u16', 'u32', 'u64', 'i8', 'i16', 'i32', 'i64').
  */
-static inline bool nadir_token_value_type(const nadir_token_kind_t kind) {
+[[nodiscard, maybe_unused]] static inline bool nadir_token_value_type(const nadir_token_kind_t kind) {
     return kind >= NADIR_TOKEN_KIND_TYPE_U8 && kind <= NADIR_TOKEN_KIND_TYPE_I64;
 }
 

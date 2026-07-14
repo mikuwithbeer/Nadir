@@ -9,6 +9,7 @@
 
 #include "nadir/cli.h"
 #include "nadir/error.h"
+#include "nadir/module.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -18,13 +19,10 @@
 // > Global Variables                                             < //
 // [--------------------------------------------------------------] //
 
-static nadir_arena_t cli_arena = {};
-static nadir_arena_t comptime_arena = {};
-static nadir_arena_t assembler_arena = {};
+static nadir_arena_t arena = {};
 
 static nadir_cli_t cli = {};
-static nadir_lexer_t *lexer = nullptr;
-static nadir_parser_t *parser = nullptr;
+static nadir_module_t *module = nullptr;
 static nadir_compiler_t *compiler = nullptr;
 
 // [--------------------------------------------------------------] //
@@ -46,9 +44,7 @@ static state_t process_arena(void);
 static state_t process_cli(int argc,
                            char **argv);
 
-static state_t process_lexer(void);
-
-static state_t process_parser(void);
+static state_t process_module(void);
 
 static state_t process_compiler(void);
 
@@ -68,11 +64,7 @@ int main(const int argc,
     }
 
     if (state == STATE_CONTINUE) {
-        state = process_lexer();
-    }
-
-    if (state == STATE_CONTINUE) {
-        state = process_parser();
+        state = process_module();
     }
 
     if (state == STATE_CONTINUE) {
@@ -92,18 +84,8 @@ int main(const int argc,
 // [--------------------------------------------------------------] //
 
 static state_t process_arena(void) {
-    if (!nadir_arena_init(&cli_arena, NADIR_ARENA_DEFAULT_CAPACITY)) {
-        fprintf(stderr, "error: failed to initialize command-line arena allocator\n");
-        return STATE_ERROR;
-    }
-
-    if (!nadir_arena_init(&comptime_arena, NADIR_ARENA_DEFAULT_CAPACITY)) {
-        fprintf(stderr, "error: failed to initialize comptime arena allocator\n");
-        return STATE_ERROR;
-    }
-
-    if (!nadir_arena_init(&assembler_arena, NADIR_ARENA_DEFAULT_CAPACITY)) {
-        fprintf(stderr, "error: failed to initialize assembler arena allocator\n");
+    if (!nadir_arena_init(&arena, NADIR_ARENA_DEFAULT_CAPACITY)) {
+        fprintf(stderr, "error: failed to initialize arena allocator\n");
         return STATE_ERROR;
     }
 
@@ -112,7 +94,7 @@ static state_t process_arena(void) {
 
 static state_t process_cli(const int argc,
                            char **argv) {
-    cli = nadir_cli_new(&cli_arena);
+    cli = nadir_cli_new(&arena);
 
     if (!nadir_cli_parse(&cli, argc, argv)) {
         fprintf(stderr, "error: failed to parse command-line arguments\n");
@@ -134,54 +116,17 @@ static state_t process_cli(const int argc,
         return STATE_ERROR;
     }
 
-    if (!nadir_cli_read(&cli)) {
-        fprintf(stderr, "error: failed to read input file: %s\n", cli.input_file);
-        return STATE_ERROR;
-    }
-
     return STATE_CONTINUE;
 }
 
-static state_t process_lexer(void) {
-    lexer = nadir_lexer_new(&assembler_arena, cli.input, cli.input_length);
-
-    const auto lexer_error = nadir_lexer_collect(lexer);
-    if (lexer_error.kind != NADIR_LEXER_ERROR_KIND_NONE) {
-        const nadir_error_t error = {
-            .kind = NADIR_ERROR_KIND_LEXER,
-            .lexer = lexer_error,
-        };
-
-        const auto message = nadir_error_encode(&cli_arena, &error);
-        if (message != nullptr) {
-            fprintf(stderr, "%s:%s\n", cli.input_file, message);
-        } else {
-            fprintf(stderr, "error: out of memory\n");
-        }
-
+static state_t process_module(void) {
+    module = nadir_module_new(&arena);
+    if (module == nullptr) {
+        fprintf(stderr, "error: failed to create module\n");
         return STATE_ERROR;
     }
 
-    return STATE_CONTINUE;
-}
-
-static state_t process_parser(void) {
-    parser = nadir_parser_new(&assembler_arena, lexer->tokens);
-
-    const auto parser_error = nadir_parser_run(parser);
-    if (parser_error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
-        const nadir_error_t error = {
-            .kind = NADIR_ERROR_KIND_PARSER,
-            .parser = parser_error,
-        };
-
-        const auto message = nadir_error_encode(&cli_arena, &error);
-        if (message != nullptr) {
-            fprintf(stderr, "%s:%s\n", cli.input_file, message);
-        } else {
-            fprintf(stderr, "error: out of memory\n");
-        }
-
+    if (!nadir_module_resolve(module, cli.input_file)) {
         return STATE_ERROR;
     }
 
@@ -189,7 +134,7 @@ static state_t process_parser(void) {
 }
 
 static state_t process_compiler(void) {
-    compiler = nadir_compiler_new(&assembler_arena, &comptime_arena, parser->ast);
+    compiler = nadir_compiler_new(&arena, module->ast);
 
     auto compiler_error = nadir_compiler_prepare(compiler);
     if (compiler_error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
@@ -205,9 +150,9 @@ print:
             .compiler = compiler_error,
         };
 
-        const auto message = nadir_error_encode(&cli_arena, &error);
+        const auto message = nadir_error_encode(&arena, &error);
         if (message != nullptr) {
-            fprintf(stderr, "%s:%s\n", cli.input_file, message);
+            fprintf(stderr, "%s\n", message);
         } else {
             fprintf(stderr, "error: out of memory\n");
         }
@@ -235,16 +180,9 @@ static state_t process_success(void) {
 
 static void process_cleanup(void) {
     nadir_compiler_free(compiler);
-    nadir_parser_free(parser);
-    nadir_lexer_free(lexer);
+    nadir_module_free(module);
     nadir_cli_close(&cli);
 
-    nadir_arena_reset(&assembler_arena);
-    nadir_arena_free(&assembler_arena);
-
-    nadir_arena_reset(&comptime_arena);
-    nadir_arena_free(&comptime_arena);
-
-    nadir_arena_reset(&cli_arena);
-    nadir_arena_free(&cli_arena);
+    nadir_arena_reset(&arena);
+    nadir_arena_free(&arena);
 }

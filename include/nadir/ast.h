@@ -38,6 +38,7 @@ typedef enum : nadir_u8_t {
     NADIR_AST_DECLARATION_KIND_CONSTANT,
     NADIR_AST_DECLARATION_KIND_PROCEDURE,
     NADIR_AST_DECLARATION_KIND_BINARY,
+    NADIR_AST_DECLARATION_KIND_INCLUDE,
 } nadir_ast_declaration_kind_t;
 
 /**
@@ -105,6 +106,13 @@ typedef struct {
 } nadir_ast_declaration_binary_t;
 
 /**
+ * @brief Include declaration structure for the abstract syntax tree.
+ */
+typedef struct {
+    nadir_token_t *path;
+} nadir_ast_declaration_include_t;
+
+/**
  * @brief Declaration structure for the abstract syntax tree.
  */
 typedef struct {
@@ -115,6 +123,7 @@ typedef struct {
         nadir_ast_declaration_constant_t constant;
         nadir_ast_declaration_procedure_t procedure;
         nadir_ast_declaration_binary_t binary;
+        nadir_ast_declaration_include_t include;
     };
 } nadir_ast_declaration_t;
 

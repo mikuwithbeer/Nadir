@@ -65,6 +65,7 @@ target_sources(
     src/comptime.c
     src/error.c
     src/lexer.c
+    src/module.c
     src/parser.c
     src/token.c
 )

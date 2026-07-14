@@ -34,7 +34,8 @@ char *nadir_error_encode(nadir_arena_t *arena,
         case NADIR_ERROR_KIND_LEXER:
             written = snprintf(pointer,
                                remaining,
-                               "%" PRIu32 ":%" PRIu32 ": error(lexer): ",
+                               "%s:%" PRIu32 ":%" PRIu32 ": error(lexer): ",
+                               error->lexer.path,
                                error->lexer.line,
                                error->lexer.column);
 
@@ -74,7 +75,8 @@ char *nadir_error_encode(nadir_arena_t *arena,
             } else {
                 written = snprintf(pointer,
                                    remaining,
-                                   "%" PRIu32 ":%" PRIu32 ": error(parser): ",
+                                   "%s:%" PRIu32 ":%" PRIu32 ": error(parser): ",
+                                   error->parser.token->path,
                                    error->parser.token->line,
                                    error->parser.token->column);
             }
@@ -127,7 +129,8 @@ char *nadir_error_encode(nadir_arena_t *arena,
             } else {
                 written = snprintf(pointer,
                                    remaining,
-                                   "%" PRIu32 ":%" PRIu32 ": error(compiler): ",
+                                   "%s:%" PRIu32 ":%" PRIu32 ": error(compiler): ",
+                                   error->compiler.token->path,
                                    error->compiler.token->line,
                                    error->compiler.token->column);
             }
@@ -214,6 +217,9 @@ char *nadir_error_encode(nadir_arena_t *arena,
                     break;
                 case NADIR_COMPILER_ERROR_KIND_PADDING_OUT_OF_RANGE:
                     snprintf(pointer, remaining, "padding value exceeds the bound size");
+                    break;
+                case NADIR_COMPILER_ERROR_KIND_ALREADY_FOUND_BINARY:
+                    snprintf(pointer, remaining, "redefinition of binary declaration");
                     break;
 
                 case NADIR_COMPILER_ERROR_KIND_COMPTIME_NULL_CONTEXT:

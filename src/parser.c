@@ -22,6 +22,9 @@ static nadir_parser_error_t nadir_parser_run_procedure_parameters(nadir_parser_t
 static nadir_parser_error_t nadir_parser_run_binary(nadir_parser_t *parser,
                                                     nadir_token_t *token);
 
+static nadir_parser_error_t nadir_parser_run_include(nadir_parser_t *parser,
+                                                     nadir_token_t *token);
+
 static nadir_parser_error_t nadir_parser_run_statements(nadir_parser_t *parser,
                                                         nadir_ast_declaration_kind_t kind,
                                                         nadir_list_t *statements);
@@ -180,6 +183,8 @@ nadir_parser_error_t nadir_parser_run(nadir_parser_t *parser) {
                 parser->seen_binary = true; // Mark that a binary declaration has been seen
                 error = nadir_parser_run_binary(parser, token);
             }
+        } else if (token->kind == NADIR_TOKEN_KIND_INCLUDE) {
+            error = nadir_parser_run_include(parser, token);
         } else {
             error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_TOKEN, token);
         }
@@ -460,6 +465,30 @@ static nadir_parser_error_t nadir_parser_run_binary(nadir_parser_t *parser,
         .binary = {
             .origin = origin_value,
             .statements = statements,
+        }
+    };
+
+    if (!nadir_list_append(parser->ast->declarations, &declaration)) {
+        error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, token);
+    }
+
+    return error;
+}
+
+static nadir_parser_error_t nadir_parser_run_include(nadir_parser_t *parser,
+                                                     nadir_token_t *token) {
+    // Consume the include path.
+    nadir_token_t *path_token;
+    auto error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_PATH, &path_token);
+    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+        return error;
+    }
+
+    const auto declaration = (nadir_ast_declaration_t){
+        .token = token,
+        .kind = NADIR_AST_DECLARATION_KIND_INCLUDE,
+        .include = {
+            .path = path_token,
         }
     };
 

@@ -34,6 +34,7 @@ typedef enum : nadir_u8_t {
     NADIR_LEXER_STATE_IDENT,
     NADIR_LEXER_STATE_COMPTIME,
     NADIR_LEXER_STATE_ADDRESS,
+    NADIR_LEXER_STATE_PATH,
 } nadir_lexer_state_t;
 
 /**
@@ -54,11 +55,13 @@ typedef enum [[nodiscard]] : nadir_u8_t {
  * @brief Error structure for the lexer.
  */
 typedef struct [[nodiscard]] {
+    const char *path;
+
     nadir_u32_t line;
     nadir_u32_t column;
 
-    nadir_lexer_error_kind_t kind;
     char character;
+    nadir_lexer_error_kind_t kind;
 } nadir_lexer_error_t;
 
 /**
@@ -71,6 +74,7 @@ typedef struct {
     nadir_token_t token; // Temporary token for construction
 
     const char *source;
+    const char *source_path;
     nadir_u64_t source_length;
     nadir_u64_t source_index;
 
@@ -87,14 +91,15 @@ typedef struct {
 /**
  * @brief Creates a new lexer error with the given parameters.
  */
-static inline nadir_lexer_error_t nadir_lexer_error_new(const nadir_lexer_error_kind_t kind,
-                                                        const nadir_u32_t line,
-                                                        const nadir_u32_t column) {
+static inline nadir_lexer_error_t nadir_lexer_error_new(const nadir_lexer_t *lexer,
+                                                        const nadir_lexer_error_kind_t kind) {
     return (nadir_lexer_error_t){
-        .line = line,
-        .column = column,
-
         .kind = kind,
+
+        .path = lexer->source_path,
+        .line = lexer->line,
+        .column = lexer->column,
+
         .character = '\0',
     };
 }
@@ -103,8 +108,7 @@ static inline nadir_lexer_error_t nadir_lexer_error_new(const nadir_lexer_error_
  * @brief Creates a new lexer with the given arena and source.
  */
 [[nodiscard]] nadir_lexer_t *nadir_lexer_new(nadir_arena_t *arena,
-                                             const char *source,
-                                             nadir_u64_t source_length);
+                                             const char *source_path);
 
 /**
  * @brief Collects tokens from the source and returns any lexer errors encountered.

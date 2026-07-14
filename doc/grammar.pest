@@ -38,6 +38,13 @@ procedure_argument      = { comptime_call | load_address | member_access | numer
 procedure_argument_list = { procedure_argument ~ ("," ~ procedure_argument){,16} }
 
 // [--------------------------------------------------------------] //
+// > Include Declaration                                          < //
+// [--------------------------------------------------------------] //
+
+include_declaration = { "include" ~ "[" ~ include_expression ~ "]" }
+include_expression  = { (!"]" ~ ASCII)+ }
+
+// [--------------------------------------------------------------] //
 // > Block Declarations                                           < //
 // [--------------------------------------------------------------] //
 
@@ -58,6 +65,6 @@ binary_expression  = { padding_until | padding_repeat | procedure_call | store_a
 // > Grammar Entry Point                                          < //
 // [--------------------------------------------------------------] //
 
-optional_declaration = { constant_declaration | procedure_declaration }
+optional_declaration = { include_declaration | constant_declaration | procedure_declaration }
 required_declaration = { binary_declaration }
 assembly_declaration = { SOI ~ optional_declaration* ~ required_declaration ~ optional_declaration* ~ EOI }

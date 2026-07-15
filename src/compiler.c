@@ -6,6 +6,7 @@
 #include "nadir/comptime.h"
 
 #include <string.h>
+#include <stddef.h>
 
 // [--------------------------------------------------------------] //
 // > Forward Declarations                                         < //
@@ -258,7 +259,7 @@ nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler) {
                 break;
             }
             default:
-                break; // Unreachable
+                unreachable();
         }
     }
 
@@ -430,7 +431,7 @@ nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
                 break;
             }
             default:
-                break; // Unreachable
+                unreachable();
         }
     }
 
@@ -498,7 +499,7 @@ nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
                 is_valid_type = argument_value >= NADIR_I64_MINIMUM && argument_value <= NADIR_I64_MAXIMUM;
                 break;
             default:
-                break; // Unreachable
+                unreachable();
         }
 
         if (!is_valid_type) {
@@ -545,7 +546,7 @@ nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
 nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
                                                const nadir_list_t *context,
                                                const nadir_ast_expression_t *expression) {
-    auto error = (nadir_compiler_error_t){};
+    nadir_compiler_error_t error;
 
     // Evaluate the expression based on its kind and push the result onto the stack.
     switch (expression->kind) {
@@ -609,7 +610,7 @@ nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
             break;
         }
         default:
-            break; // Unreachable
+            unreachable();
     }
 
     return error;

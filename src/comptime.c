@@ -336,27 +336,16 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
             const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
 
-            switch (comptime->kind) {
-                case NADIR_COMPTIME_KIND_SHL:
-                    // Guard against shifting by an invalid amount.
-                    if (*right < 0 || *right > NADIR_I8_MAXIMUM) {
-                        error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_SHIFT_OUT_OF_BOUND;
-                        return error;
-                    }
+            // Guard against shifting by an invalid amount.
+            if (*right < 0 || *right > NADIR_I8_MAXIMUM) {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_SHIFT_OUT_OF_BOUND;
+                return error;
+            }
 
-                    *result = *left << *right;
-                    break;
-                case NADIR_COMPTIME_KIND_SHR:
-                    // Guard against shifting by an invalid amount.
-                    if (*right < 0 || *right > NADIR_I8_MAXIMUM) {
-                        error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_SHIFT_OUT_OF_BOUND;
-                        return error;
-                    }
-
-                    *result = *left >> *right;
-                    break;
-                default:
-                    break; // Unreachable
+            if (comptime->kind == NADIR_COMPTIME_KIND_SHL) {
+                *result = *left << *right;
+            } else {
+                *result = *left >> *right;
             }
 
             break;
@@ -617,15 +606,10 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             const nadir_i128_t *left = nadir_list_get(comptime->arguments, 0);
             const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
 
-            switch (comptime->kind) {
-                case NADIR_COMPTIME_KIND_LOR:
-                    *result = *left || *right;
-                    break;
-                case NADIR_COMPTIME_KIND_LAND:
-                    *result = *left && *right;
-                    break;
-                default:
-                    break; // Unreachable
+            if (comptime->kind == NADIR_COMPTIME_KIND_LOR) {
+                *result = *left || *right;
+            } else {
+                *result = *left && *right;
             }
 
             break;

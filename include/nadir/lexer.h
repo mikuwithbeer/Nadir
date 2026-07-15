@@ -13,13 +13,6 @@
 #include "nadir/token.h"
 
 // [--------------------------------------------------------------] //
-// > Constants                                                    < //
-// [--------------------------------------------------------------] //
-
-constexpr auto NADIR_LEXER_NUMBER_BASE10_MAXIMUM = 41; // 40 digits + sign
-constexpr auto NADIR_LEXER_NUMBER_BASE16_MAXIMUM = (1 << 5) + 1; // 32 digits + sign
-
-// [--------------------------------------------------------------] //
 // > Data Structures                                              < //
 // [--------------------------------------------------------------] //
 
@@ -45,7 +38,6 @@ typedef enum [[nodiscard]] : nadir_u8_t {
     NADIR_LEXER_ERROR_KIND_BUFFER_OVERFLOW,
     NADIR_LEXER_ERROR_KIND_OUT_OF_MEMORY,
     NADIR_LEXER_ERROR_KIND_UNKNOWN_CHARACTER,
-    NADIR_LEXER_ERROR_KIND_NUMBER_TOO_LONG,
     NADIR_LEXER_ERROR_KIND_INVALID_NUMBER,
     NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER,
     NADIR_LEXER_ERROR_KIND_UNEXPECTED_STATE,

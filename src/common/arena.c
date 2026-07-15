@@ -18,7 +18,7 @@ static nadir_arena_packet_t *nadir_arena_allocate_packet(nadir_u64_t capacity);
 // [--------------------------------------------------------------] //
 
 bool nadir_arena_init(nadir_arena_t *arena,
-                      nadir_u64_t default_capacity) {
+                      const nadir_u64_t default_capacity) {
     const auto packet = nadir_arena_allocate_packet(default_capacity);
     if (packet == nullptr) {
         return false;

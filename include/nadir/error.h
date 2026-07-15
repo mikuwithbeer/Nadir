@@ -17,7 +17,7 @@
 // > Constants                                                    < //
 // [--------------------------------------------------------------] //
 
-constexpr auto NADIR_ERROR_STRING_MAXIMUM = 1 << 9;
+constexpr auto NADIR_ERROR_STRING_MAXIMUM = 1 << 10;
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //

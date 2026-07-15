@@ -15,7 +15,7 @@
 // > Constants                                                    < //
 // [--------------------------------------------------------------] //
 
-constexpr auto NADIR_ARENA_DEFAULT_CAPACITY = 1 << 4;
+constexpr auto NADIR_ARENA_DEFAULT_CAPACITY = 1 << 5;
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //

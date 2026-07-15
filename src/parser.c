@@ -172,21 +172,28 @@ nadir_parser_error_t nadir_parser_run(nadir_parser_t *parser) {
             break;
         }
 
-        if (token->kind == NADIR_TOKEN_KIND_CONSTANT) {
-            error = nadir_parser_run_constant(parser);
-        } else if (token->kind == NADIR_TOKEN_KIND_PROCEDURE) {
-            error = nadir_parser_run_procedure(parser);
-        } else if (token->kind == NADIR_TOKEN_KIND_BINARY) {
-            if (parser->seen_binary) {
-                error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_ALREADY_FOUND_BINARY, token);
-            } else {
-                parser->seen_binary = true; // Mark that a binary declaration has been seen
-                error = nadir_parser_run_binary(parser, token);
-            }
-        } else if (token->kind == NADIR_TOKEN_KIND_INCLUDE) {
-            error = nadir_parser_run_include(parser, token);
-        } else {
-            error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_TOKEN, token);
+        switch (token->kind) {
+            case NADIR_TOKEN_KIND_CONSTANT:
+                error = nadir_parser_run_constant(parser);
+                break;
+            case NADIR_TOKEN_KIND_PROCEDURE:
+                error = nadir_parser_run_procedure(parser);
+                break;
+            case NADIR_TOKEN_KIND_BINARY:
+                if (parser->seen_binary) {
+                    error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_ALREADY_FOUND_BINARY, token);
+                } else {
+                    parser->seen_binary = true; // Mark that a binary declaration has been seen
+                    error = nadir_parser_run_binary(parser, token);
+                }
+
+                break;
+            case NADIR_TOKEN_KIND_INCLUDE:
+                error = nadir_parser_run_include(parser, token);
+                break;
+            default:
+                error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_TOKEN, token);
+                break;
         }
     }
 
@@ -415,9 +422,7 @@ static nadir_parser_error_t nadir_parser_run_procedure_parameters(nadir_parser_t
             next_token = nadir_parser_peek(parser);
             expect_parameter = next_token && next_token->kind == NADIR_TOKEN_KIND_COMMA;
             if (expect_parameter) {
-                if (nadir_parser_advance(parser) == nullptr) {
-                    return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, next_token);
-                }
+                (void) nadir_parser_advance(parser); // Consume the comma
             }
         } while (expect_parameter);
     }
@@ -558,129 +563,88 @@ static nadir_parser_error_t nadir_parser_run_expression(nadir_parser_t *parser,
         return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
     }
 
-    // Parse compile-time expressions.
-    if (next_token->kind == NADIR_TOKEN_KIND_COMPTIME) {
-        if (nadir_parser_advance(parser) == nullptr) {
-            return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, next_token);
-        }
+    switch (next_token->kind) {
+        case NADIR_TOKEN_KIND_COMPTIME:
+            (void) nadir_parser_advance(parser);
 
-        return nadir_parser_run_call(parser, next_token, expression);
-    }
+            return nadir_parser_run_call(parser, next_token, expression);
+        case NADIR_TOKEN_KIND_NUMBER:
+            (void) nadir_parser_advance(parser);
+            expression->kind = NADIR_AST_EXPRESSION_KIND_NUMBER;
+            expression->token = next_token;
 
-    // Parse number expressions.
-    if (next_token->kind == NADIR_TOKEN_KIND_NUMBER) {
-        if (nadir_parser_advance(parser) == nullptr) {
-            return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
-        }
-
-        expression->kind = NADIR_AST_EXPRESSION_KIND_NUMBER;
-        expression->token = next_token;
-
-        return error;
-    }
-
-    // Parse store address expressions.
-    if (next_token->kind == NADIR_TOKEN_KIND_STORE_ADDRESS) {
-        if (nadir_parser_advance(parser) == nullptr) {
-            return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
-        }
-
-        expression->kind = NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS;
-        expression->token = next_token;
-
-        return error;
-    }
-
-    // Parse load address expressions.
-    if (next_token->kind == NADIR_TOKEN_KIND_LOAD_ADDRESS) {
-        if (nadir_parser_advance(parser) == nullptr) {
-            return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
-        }
-
-        expression->kind = NADIR_AST_EXPRESSION_KIND_LOAD_ADDRESS;
-        expression->token = next_token;
-
-        return error;
-    }
-
-    // Parse padding to (until) expression.
-    if (next_token->kind == NADIR_TOKEN_KIND_UNTIL) {
-        if (nadir_parser_advance(parser) == nullptr) {
-            return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
-        }
-
-        expression->kind = NADIR_AST_EXPRESSION_KIND_UNTIL;
-        return nadir_parser_run_padding(parser, next_token, expression);
-    }
-
-    // Parse padding by (repeat) expression.
-    if (next_token->kind == NADIR_TOKEN_KIND_REPEAT) {
-        if (nadir_parser_advance(parser) == nullptr) {
-            return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
-        }
-
-        expression->kind = NADIR_AST_EXPRESSION_KIND_REPEAT;
-        return nadir_parser_run_padding(parser, next_token, expression);
-    }
-
-    // Parse type expressions.
-    if (nadir_token_value_type(next_token->kind)) {
-        if (nadir_parser_advance(parser) == nullptr) {
-            return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
-        }
-
-        expression->kind = NADIR_AST_EXPRESSION_KIND_TYPE;
-        expression->token = next_token;
-
-        return error;
-    }
-
-    // Parse member expressions and procedure calls.
-    if (next_token->kind == NADIR_TOKEN_KIND_IDENT) {
-        // Consume the identifier token.
-        nadir_token_t *ident_token;
-        error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_IDENT, &ident_token);
-        if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
             return error;
-        }
+        case NADIR_TOKEN_KIND_STORE_ADDRESS:
+            (void) nadir_parser_advance(parser);
+            expression->kind = NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS;
+            expression->token = next_token;
 
-        // Determine whether it's a call or access.
-        next_token = nadir_parser_peek(parser);
-        if (next_token == nullptr) {
-            return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, ident_token);
-        }
+            return error;
+        case NADIR_TOKEN_KIND_LOAD_ADDRESS:
+            (void) nadir_parser_advance(parser);
+            expression->kind = NADIR_AST_EXPRESSION_KIND_LOAD_ADDRESS;
+            expression->token = next_token;
 
-        // Check if it's a procedure call.
-        if (next_token->kind == NADIR_TOKEN_KIND_LEFT_PAREN) {
-            return nadir_parser_run_call(parser, ident_token, expression);
-        }
+            return error;
+        case NADIR_TOKEN_KIND_UNTIL:
+            (void) nadir_parser_advance(parser);
+            expression->kind = NADIR_AST_EXPRESSION_KIND_UNTIL;
 
-        // Check if it's member access.
-        if (next_token->kind == NADIR_TOKEN_KIND_DOT) {
-            // Consume the dot.
-            error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_DOT, nullptr);
+            return nadir_parser_run_padding(parser, next_token, expression);
+        case NADIR_TOKEN_KIND_REPEAT:
+            (void) nadir_parser_advance(parser);
+            expression->kind = NADIR_AST_EXPRESSION_KIND_REPEAT;
+
+            return nadir_parser_run_padding(parser, next_token, expression);
+        case NADIR_TOKEN_KIND_IDENT:
+            // Consume the identifier token for the expression.
+            nadir_token_t *ident_token;
+            error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_IDENT, &ident_token);
             if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
                 return error;
             }
 
-            // Consume the field identifier.
-            nadir_token_t *field_token;
-            error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_IDENT, &field_token);
-            if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+            next_token = nadir_parser_peek(parser);
+            if (next_token == nullptr) {
+                return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, ident_token);
+            }
+
+            // Determine whether the identifier is a procedure call or member access.
+            switch (next_token->kind) {
+                case NADIR_TOKEN_KIND_LEFT_PAREN:
+                    return nadir_parser_run_call(parser, ident_token, expression);
+                case NADIR_TOKEN_KIND_DOT:
+                    // Consume the dot token for member access.
+                    error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_DOT, nullptr);
+                    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+                        return error;
+                    }
+
+                    // Consume the field identifier token for member access.
+                    nadir_token_t *field_token;
+                    error = nadir_parser_consume(parser, NADIR_TOKEN_KIND_IDENT, &field_token);
+                    if (error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+                        return error;
+                    }
+
+                    expression->kind = NADIR_AST_EXPRESSION_KIND_MEMBER;
+                    expression->token = ident_token;
+                    expression->member.field = field_token;
+                    return error;
+                default:
+                    return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_MISSING_EXPRESSION, next_token);
+            }
+        default:
+            if (nadir_token_value_type(next_token->kind)) {
+                (void) nadir_parser_advance(parser);
+                expression->kind = NADIR_AST_EXPRESSION_KIND_TYPE;
+                expression->token = next_token;
+
                 return error;
             }
 
-            expression->kind = NADIR_AST_EXPRESSION_KIND_MEMBER;
-            expression->token = ident_token;
-            expression->member.field = field_token;
-
-            return error;
-        }
+            return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_MISSING_EXPRESSION, next_token);
     }
-
-    // None of the above conditions are met.
-    error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_MISSING_EXPRESSION, next_token);
-    return error;
 }
 
 static nadir_parser_error_t nadir_parser_run_call(nadir_parser_t *parser,
@@ -745,9 +709,7 @@ static nadir_parser_error_t nadir_parser_run_call(nadir_parser_t *parser,
             next_token = nadir_parser_peek(parser);
             expect_argument = next_token && next_token->kind == NADIR_TOKEN_KIND_COMMA;
             if (expect_argument) {
-                if (nadir_parser_advance(parser) == nullptr) {
-                    return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, next_token);
-                }
+                (void) nadir_parser_advance(parser); // Consume the comma
             }
         } while (expect_argument);
     }

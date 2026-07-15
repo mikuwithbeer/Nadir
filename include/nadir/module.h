@@ -17,7 +17,7 @@
 // [--------------------------------------------------------------] //
 
 constexpr auto NADIR_MODULE_PATH_MINIMUM = 1 << 1;
-constexpr auto NADIR_MODULE_PATH_MAXIMUM = 1 << 8;
+constexpr auto NADIR_MODULE_PATH_MAXIMUM = 1 << 9;
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //

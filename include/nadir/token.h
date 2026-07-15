@@ -15,7 +15,9 @@
 // > Constants                                                    < //
 // [--------------------------------------------------------------] //
 
-constexpr auto NADIR_TOKEN_VALUE_MAXIMUM = (1 << 6) + 1; // 64 characters + 1 for null terminator
+constexpr auto NADIR_TOKEN_DEFAULT_MAXIMUM = 1 << 6;
+constexpr auto NADIR_TOKEN_NUMBER_MAXIMUM = 0x30;
+constexpr auto NADIR_TOKEN_PATH_MAXIMUM = 1 << 9;
 
 constexpr auto NADIR_TOKEN_VALUE_COMMENT = '#';
 constexpr auto NADIR_TOKEN_VALUE_COMPTIME = '@';

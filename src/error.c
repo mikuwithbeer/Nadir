@@ -46,16 +46,13 @@ char *nadir_error_encode(nadir_arena_t *arena,
                 case NADIR_LEXER_ERROR_KIND_NONE:
                     break;
                 case NADIR_LEXER_ERROR_KIND_BUFFER_OVERFLOW:
-                    snprintf(pointer, remaining, "buffer overflow in tokenization");
+                    snprintf(pointer, remaining, "token exceeded the maximum allowed size");
                     break;
                 case NADIR_LEXER_ERROR_KIND_OUT_OF_MEMORY:
                     snprintf(pointer, remaining, "memory allocation failed during tokenization");
                     break;
                 case NADIR_LEXER_ERROR_KIND_UNKNOWN_CHARACTER:
                     snprintf(pointer, remaining, "unrecognized character '%c'", error->lexer.character);
-                    break;
-                case NADIR_LEXER_ERROR_KIND_NUMBER_TOO_LONG:
-                    snprintf(pointer, remaining, "numeric literal exceeds maximum allowed length");
                     break;
                 case NADIR_LEXER_ERROR_KIND_INVALID_NUMBER:
                     snprintf(pointer, remaining, "malformed numeric literal");

@@ -30,7 +30,14 @@ void nadir_token_start(nadir_token_t *token,
 }
 
 bool nadir_token_increment(nadir_token_t *token) {
-    if (token->string.count < NADIR_TOKEN_VALUE_MAXIMUM - 1) {
+    nadir_u64_t maximum = NADIR_TOKEN_DEFAULT_MAXIMUM;
+    if (token->kind == NADIR_TOKEN_KIND_NUMBER) {
+        maximum = NADIR_TOKEN_NUMBER_MAXIMUM;
+    } else if (token->kind == NADIR_TOKEN_KIND_PATH) {
+        maximum = NADIR_TOKEN_PATH_MAXIMUM;
+    }
+
+    if (token->string.count < maximum) {
         ++token->string.count;
         return true;
     }

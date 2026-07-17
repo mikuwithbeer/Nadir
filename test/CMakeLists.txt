@@ -1,12 +1,8 @@
 cmake_minimum_required(VERSION 4.0)
 
-# --- Tester Executable ---
-add_executable(Tester tester.cpp)
-target_sources(Tester
-    PRIVATE
-    FILE_SET CXX_MODULES
-    FILES common.cppm
-)
+# --- Python Interpreter ---
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+set(Tester "${CMAKE_CURRENT_SOURCE_DIR}/tester.py")
 
 # --- Success Testing ---
 file(
@@ -22,7 +18,8 @@ foreach (SOURCE_PATH IN LISTS SUCCESS_SOURCES)
 
     add_test(
         NAME "test_success_${SOURCE_NAME}"
-        COMMAND $<TARGET_FILE:Tester>
+        COMMAND Python3::Interpreter
+        ${Tester}
         $<TARGET_FILE:Nadir>
         "success"
         ${SOURCE_PATH}
@@ -44,7 +41,8 @@ foreach (SOURCE_PATH IN LISTS FAILURE_SOURCES)
 
     add_test(
         NAME "test_failure_${SOURCE_NAME}"
-        COMMAND $<TARGET_FILE:Tester>
+        COMMAND Python3::Interpreter
+        ${Tester}
         $<TARGET_FILE:Nadir>
         "failure"
         ${SOURCE_PATH}

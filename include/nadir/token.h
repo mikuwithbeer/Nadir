@@ -75,7 +75,7 @@ typedef enum : nadir_u8_t {
     NADIR_TOKEN_KIND_TYPE_I32,
     NADIR_TOKEN_KIND_TYPE_I64,
 
-    NADIR_TOKEN_KIND_EOF = 0xFF
+    NADIR_TOKEN_KIND_EOF = 0xFF,
 } nadir_token_kind_t;
 
 /**

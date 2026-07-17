@@ -12,26 +12,26 @@
 // > Forward Declarations                                         < //
 // [--------------------------------------------------------------] //
 
-nadir_compiler_error_t nadir_compiler_prepare_constant(nadir_compiler_t *compiler,
-                                                       const nadir_ast_declaration_constant_t *declaration);
+static nadir_compiler_error_t nadir_compiler_prepare_constant(nadir_compiler_t *compiler,
+                                                              const nadir_ast_declaration_constant_t *declaration);
 
-nadir_compiler_error_t nadir_compiler_prepare_procedure(const nadir_compiler_t *compiler,
-                                                        const nadir_ast_declaration_procedure_t *declaration);
+static nadir_compiler_error_t nadir_compiler_prepare_procedure(const nadir_compiler_t *compiler,
+                                                               const nadir_ast_declaration_procedure_t *declaration);
 
-nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
-                                                     const nadir_ast_declaration_binary_t *declaration);
+static nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
+                                                            const nadir_ast_declaration_binary_t *declaration);
 
-nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
-                                                    const nadir_ast_expression_t *expression,
-                                                    const nadir_compiler_procedure_t *procedure);
+static nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
+                                                           const nadir_ast_expression_t *expression,
+                                                           const nadir_compiler_procedure_t *procedure);
 
-nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
-                                               const nadir_list_t *context,
-                                               const nadir_ast_expression_t *expression);
+static nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
+                                                      const nadir_list_t *context,
+                                                      const nadir_ast_expression_t *expression);
 
-nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compiler,
-                                                        const nadir_list_t *context,
-                                                        const nadir_ast_expression_t *expression);
+static nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compiler,
+                                                               const nadir_list_t *context,
+                                                               const nadir_ast_expression_t *expression);
 
 // [--------------------------------------------------------------] //
 // > Inline Functions                                             < //
@@ -275,8 +275,8 @@ void nadir_compiler_free(nadir_compiler_t *compiler) {
 // > Internal Functions                                           < //
 // [--------------------------------------------------------------] //
 
-nadir_compiler_error_t nadir_compiler_prepare_constant(nadir_compiler_t *compiler,
-                                                       const nadir_ast_declaration_constant_t *declaration) {
+static nadir_compiler_error_t nadir_compiler_prepare_constant(nadir_compiler_t *compiler,
+                                                              const nadir_ast_declaration_constant_t *declaration) {
     auto error = (nadir_compiler_error_t){};
 
     const auto object_string_value = declaration->name->string.value;
@@ -322,8 +322,8 @@ nadir_compiler_error_t nadir_compiler_prepare_constant(nadir_compiler_t *compile
     return error;
 }
 
-nadir_compiler_error_t nadir_compiler_prepare_procedure(const nadir_compiler_t *compiler,
-                                                        const nadir_ast_declaration_procedure_t *declaration) {
+static nadir_compiler_error_t nadir_compiler_prepare_procedure(const nadir_compiler_t *compiler,
+                                                               const nadir_ast_declaration_procedure_t *declaration) {
     const auto procedure = (nadir_compiler_procedure_t){
         .token = declaration->name,
         .parameters = declaration->parameters,
@@ -340,8 +340,8 @@ nadir_compiler_error_t nadir_compiler_prepare_procedure(const nadir_compiler_t *
     return (nadir_compiler_error_t){};
 }
 
-nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
-                                                     const nadir_ast_declaration_binary_t *declaration) {
+static nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
+                                                            const nadir_ast_declaration_binary_t *declaration) {
     compiler->binary_origin = declaration->origin;
 
     for (nadir_u64_t index = 0; index < declaration->statements->length; ++index) {
@@ -427,9 +427,9 @@ nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *compiler,
     return (nadir_compiler_error_t){};
 }
 
-nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
-                                                    const nadir_ast_expression_t *expression,
-                                                    const nadir_compiler_procedure_t *procedure) {
+static nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
+                                                           const nadir_ast_expression_t *expression,
+                                                           const nadir_compiler_procedure_t *procedure) {
     auto error = (nadir_compiler_error_t){};
 
     if (procedure->parameters->length != expression->call.arguments->length) {
@@ -528,9 +528,9 @@ nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *compiler,
     return error;
 }
 
-nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
-                                               const nadir_list_t *context,
-                                               const nadir_ast_expression_t *expression) {
+static nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
+                                                      const nadir_list_t *context,
+                                                      const nadir_ast_expression_t *expression) {
     nadir_compiler_error_t error;
 
     switch (expression->kind) {
@@ -593,9 +593,9 @@ nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
     return error;
 }
 
-nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compiler,
-                                                        const nadir_list_t *context,
-                                                        const nadir_ast_expression_t *expression) {
+static nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compiler,
+                                                               const nadir_list_t *context,
+                                                               const nadir_ast_expression_t *expression) {
     nadir_compiler_error_t error;
 
     // List to hold the evaluated argument values for the compile-time call.

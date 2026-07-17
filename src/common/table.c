@@ -142,7 +142,7 @@ static nadir_table_entry_t *nadir_table_find(nadir_table_entry_t *entries,
                                              const char *key,
                                              const nadir_u64_t length) {
     const auto hash = nadir_table_hash(key, length);
-    nadir_u64_t index = hash & capacity - 1;
+    nadir_u64_t index = hash & (capacity - 1);
 
     while (entries[index].exists) {
         if (entries[index].key_length == length && memcmp(key, entries[index].key, length) == 0) {

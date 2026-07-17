@@ -13,13 +13,14 @@
 // [--------------------------------------------------------------] //
 
 // Command-line options for the assembler.
-static const struct option cli_options[6] = {
-    {"help", no_argument, nullptr, 'h'},
-    {"version", no_argument, nullptr, 'v'},
-    {"dry-run", no_argument, nullptr, 'd'},
-    {"input", required_argument, nullptr, 'i'},
-    {"output", required_argument, nullptr, 'o'},
-    {nullptr, 0, nullptr, 0},
+static const struct option cli_options[] = {
+    {.name = "help", .has_arg = no_argument, .flag = nullptr, .val = 'h'},
+    {.name = "version", .has_arg = no_argument, .flag = nullptr, .val = 'v'},
+    {.name = "dry-run", .has_arg = no_argument, .flag = nullptr, .val = 'd'},
+    {.name = "quite", .has_arg = no_argument, .flag = nullptr, .val = 'q'},
+    {.name = "input", .has_arg = required_argument, .flag = nullptr, .val = 'i'},
+    {.name = "output", .has_arg = required_argument, .flag = nullptr, .val = 'o'},
+    {},
 };
 
 // [--------------------------------------------------------------] //
@@ -44,7 +45,7 @@ bool nadir_cli_parse(nadir_cli_t *cli,
                      char **argv) {
     while (true) {
         // Parse the next command-line option.
-        const auto option = getopt_long(argc, argv, "hvdi:o:", cli_options, nullptr);
+        const auto option = getopt_long(argc, argv, "hvdqi:o:", cli_options, nullptr);
         if (option == -1) {
             break;
         }
@@ -58,6 +59,9 @@ bool nadir_cli_parse(nadir_cli_t *cli,
                 break;
             case 'd':
                 cli->dry_run = true;
+                break;
+            case 'q':
+                cli->quiet = true;
                 break;
             case 'i':
                 cli->input_file = optarg;
@@ -73,23 +77,25 @@ bool nadir_cli_parse(nadir_cli_t *cli,
     return true;
 }
 
-void nadir_cli_help(void) {
+void nadir_cli_help() {
     puts("Usage: Nadir [OPTIONS]\n"
         "\n"
         "Options:\n"
         "  -h, --help       Print this help message and exit\n"
         "  -v, --version    Print the version number and exit\n"
         "  -d, --dry-run    Assemble the file without writing to the output file\n"
+        "  -q, --quiet      Suppress all output except for errors\n"
         "  -i, --input      Specify the input file to compile\n"
         "  -o, --output     Specify the output file to write to\n"
         "\n"
         "Examples:\n"
         "  Nadir --version\n"
-        "  Nadir -i main.asm -o main.bin");
+        "  Nadir -i nes.asm -o prod.bin\n"
+        "  Nadir -i boot.asm --quite -d");
 }
 
-void nadir_cli_version(void) {
-    printf("Nadir Assembler v%s\n", NADIR_VERSION);
+void nadir_cli_version() {
+    puts("Nadir Assembler v" NADIR_VERSION);
 }
 
 bool nadir_cli_write(const nadir_cli_t *cli,

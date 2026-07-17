@@ -39,18 +39,18 @@ typedef enum [[nodiscard]] {
 // > Forward Declarations                                         < //
 // [--------------------------------------------------------------] //
 
-static state_t process_arena(void);
+static state_t process_arena();
 
 static state_t process_cli(int argc,
                            char **argv);
 
-static state_t process_module(void);
+static state_t process_module();
 
-static state_t process_compiler(void);
+static state_t process_compiler();
 
-static state_t process_success(void);
+static state_t process_success();
 
-static void process_cleanup(void);
+static void process_cleanup();
 
 // [--------------------------------------------------------------] //
 // > Main Function                                                < //
@@ -83,7 +83,7 @@ int main(const int argc,
 // > Internal Functions                                           < //
 // [--------------------------------------------------------------] //
 
-static state_t process_arena(void) {
+static state_t process_arena() {
     if (!nadir_arena_init(&arena, NADIR_ARENA_DEFAULT_CAPACITY)) {
         fprintf(stderr, "error: failed to initialize arena allocator\n");
         return STATE_ERROR;
@@ -119,7 +119,7 @@ static state_t process_cli(const int argc,
     return STATE_CONTINUE;
 }
 
-static state_t process_module(void) {
+static state_t process_module() {
     module = nadir_module_new(&arena);
     if (module == nullptr) {
         fprintf(stderr, "error: failed to create module\n");
@@ -133,7 +133,7 @@ static state_t process_module(void) {
     return STATE_CONTINUE;
 }
 
-static state_t process_compiler(void) {
+static state_t process_compiler() {
     compiler = nadir_compiler_new(&arena, module->ast);
 
     auto compiler_error = nadir_compiler_prepare(compiler);
@@ -163,9 +163,12 @@ print:
     return STATE_CONTINUE;
 }
 
-static state_t process_success(void) {
+static state_t process_success() {
     if (cli.dry_run) {
-        printf("assembled %" PRIu64 " bytes, no output written due to dry-run mode\n", compiler->output->length);
+        if (!cli.quiet) {
+            printf("assembled %" PRIu64 " bytes, no output written due to dry-run mode\n", compiler->output->length);
+        }
+
         return STATE_EXIT;
     }
 
@@ -174,11 +177,14 @@ static state_t process_success(void) {
         return STATE_ERROR;
     }
 
-    printf("wrote %" PRIu64 " bytes to '%s'\n", compiler->output->length, cli.output_file);
+    if (!cli.quiet) {
+        printf("wrote %" PRIu64 " bytes to '%s'\n", compiler->output->length, cli.output_file);
+    }
+
     return STATE_EXIT;
 }
 
-static void process_cleanup(void) {
+static void process_cleanup() {
     nadir_compiler_free(compiler);
     nadir_module_free(module);
     nadir_cli_close(&cli);

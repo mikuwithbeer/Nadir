@@ -18,7 +18,7 @@ nadir_token_t nadir_token_new(const char *path,
         .kind = kind,
 
         .column = column,
-        .line = line
+        .line = line,
     };
 }
 

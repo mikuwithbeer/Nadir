@@ -33,6 +33,7 @@ typedef struct {
     bool help;
     bool version;
     bool dry_run;
+    bool quiet;
 } nadir_cli_t;
 
 // [--------------------------------------------------------------] //
@@ -54,12 +55,12 @@ typedef struct {
 /**
  * @brief Prints the help message to the standard output.
  */
-void nadir_cli_help(void);
+void nadir_cli_help();
 
 /**
  * @brief Prints the version information to the standard output.
  */
-void nadir_cli_version(void);
+void nadir_cli_version();
 
 /**
  * @brief Writes the given output to the file.

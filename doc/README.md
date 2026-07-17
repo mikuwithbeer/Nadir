@@ -9,9 +9,9 @@ usage so you can get up and running smoothly.
 
 Nadir is a small, customizable assembler for generating binary files.
 
-Unlike most assemblers that are strictly tied to specific architectures (~~like x86, RISC-V, or ARM~~), Nadir hands you
-a completely blank canvas. It doesn't come with any built-in instructions or registers. Instead, it gives you a dead
-simple language to craft your very own architecture.
+Unlike most assemblers that are strictly tied to specific architectures, Nadir hands you a completely blank canvas. It
+doesn't come with any built-in instructions or registers, but it gives you an elegant language to craft your very own
+architecture.
 
 ---
 
@@ -217,8 +217,7 @@ routine or read a block of data sitting at the end of your file. Nadir handles t
 #### Store Address
 
 To mark a spot in your code, use the `<` symbol followed by an **UPPERCASE ALPHABETIC** name. Think of it as dropping a
-pin
-on a map.
+pin on a map.
 
 ```asm
 binary 0 {
@@ -424,12 +423,12 @@ Nadir -i main.asm
 
 ### Flags and Options
 
-- `-h, --help`: Display help information, including all available flags and options.
-- `-v, --version`: Display the current version of the Nadir assembler.
-- `-d, --dry-run`: Enable dry run mode. The assembler will parse the input file and report any errors, but it will not
-  generate an output file.
-- `-i, --input <file>`: Specify the input file. This is required.
-- `-o, --output <file>`: Specify the output file. If not provided, defaults to `out.bin`.
+- `-h, --help`: Show all available options.
+- `-v, --version`: Show the current version of Nadir.
+- `-d, --dry-run`: Assemble without writing an output file. Great for catching mistakes.
+- `-q, --quiet`: Keep things quiet. Only show important messages.
+- `-i, --input <file>`: The input file to assemble. This one is required.
+- `-o, --output <file>`: The output file. Defaults to `out.bin` if omitted.
 
 ---
 

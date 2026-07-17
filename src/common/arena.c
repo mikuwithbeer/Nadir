@@ -32,7 +32,7 @@ bool nadir_arena_init(nadir_arena_t *arena,
 
 void *nadir_arena_allocate(nadir_arena_t *arena,
                            const nadir_u64_t size) {
-    const auto alignment = size + 7 & ~(nadir_u64_t) 7; // Align to 8 bytes
+    const auto alignment = (size + 7) & ~(nadir_u64_t) 7; // Align to 8 bytes
 
     // Check if the current packet has enough space for the requested allocation.
     if (arena->current->offset + alignment > arena->current->capacity) {

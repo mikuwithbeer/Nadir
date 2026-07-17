@@ -101,7 +101,6 @@ bool nadir_cli_write(const nadir_cli_t *cli,
 
     const auto written = fwrite(output->items, output->size, output->length, output_file);
 
-    // Validate whether the number of items written matches the expected length.
     if (output->length != written) {
         fclose(output_file);
         return false;

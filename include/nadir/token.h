@@ -112,16 +112,16 @@ typedef struct {
                                             nadir_u32_t column);
 
 /**
- * @brief Initializes the token's value and count.
+ * @brief Initializes the token string value and count.
  */
 void nadir_token_start(nadir_token_t *token,
                        const char *source,
                        nadir_u64_t index);
 
 /**
- * @brief Increments the token's length.
+ * @brief Increments the token string length.
  *
- * @return False if it reached the maximum limit, true otherwise.
+ * @return false if it reached the maximum limit, true otherwise.
  */
 [[nodiscard]] bool nadir_token_increment(nadir_token_t *token);
 

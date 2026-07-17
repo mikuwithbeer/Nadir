@@ -57,15 +57,13 @@ nadir_lexer_t *nadir_lexer_new(nadir_arena_t *arena,
 
     lexer->arena = arena;
 
-    // Open the input file for reading.
     const auto source_file = fopen(source_path, "rb");
     if (source_file == nullptr) {
         return nullptr;
     }
 
-    // Determine the size of the input file.
     fseek(source_file, 0, SEEK_END);
-    const auto source_size = ftell(source_file);
+    const auto source_size = ftell(source_file); // End of the file to determine the size
     fseek(source_file, 0, SEEK_SET);
 
     if (source_size <= 0) {
@@ -73,7 +71,6 @@ nadir_lexer_t *nadir_lexer_new(nadir_arena_t *arena,
         return nullptr;
     }
 
-    // Allocate and read the file contents.
     char *source_buffer = nadir_arena_allocate(arena, (nadir_u64_t) source_size + 1);
     if (source_buffer == nullptr) {
         fclose(source_file);
@@ -81,9 +78,8 @@ nadir_lexer_t *nadir_lexer_new(nadir_arena_t *arena,
     }
 
     const auto source_length = fread(source_buffer, sizeof(char), (nadir_u64_t) source_size, source_file);
-    source_buffer[source_length] = '\0';
+    source_buffer[source_length] = '\0'; // Null-terminate the buffer for safety
 
-    // Validate whether the number of bytes read matches the expected size.
     if ((nadir_u64_t) source_size != source_length) {
         fclose(source_file);
         return nullptr;
@@ -117,11 +113,11 @@ nadir_lexer_t *nadir_lexer_new(nadir_arena_t *arena,
 nadir_lexer_error_t nadir_lexer_collect(nadir_lexer_t *lexer) {
     auto error = (nadir_lexer_error_t){};
 
+    // State machine that transitions between different states based on the characters it encounters in the source code.
     while (lexer->source_index < lexer->source_length) {
         const char character = lexer->source[lexer->source_index];
-        bool recollect = false;
+        bool recollect = false; // Determines whether current character should be reprocessed in the next iteration
 
-        // Process the character based on the current lexer state.
         switch (lexer->state) {
             case NADIR_LEXER_STATE_DEFAULT:
                 error = nadir_lexer_collect_default(lexer, character, &recollect);
@@ -159,7 +155,6 @@ nadir_lexer_error_t nadir_lexer_collect(nadir_lexer_t *lexer) {
             continue;
         }
 
-        // Update the line and column numbers based on the character.
         if (character == '\n') {
             ++lexer->line;
             lexer->column = 1;
@@ -197,19 +192,18 @@ static nadir_lexer_error_t nadir_lexer_collect_default(nadir_lexer_t *lexer,
                                                        const char character,
                                                        bool *recollect) {
     auto error = nadir_lexer_error_new(lexer, NADIR_LEXER_ERROR_KIND_NONE);
-
-    // Ignore whitespace characters.
     if (nadir_token_value_whitespace(character)) {
         return error;
     }
 
-    // Check for comment.
     if (character == NADIR_TOKEN_VALUE_COMMENT) {
         lexer->state = NADIR_LEXER_STATE_COMMENT;
         return error;
     }
 
     lexer->token = nadir_token_new(lexer->source_path, NADIR_TOKEN_KIND_EOF, lexer->line, lexer->column);
+
+    // Start the token value with the current character position.
     nadir_token_start(&lexer->token, lexer->source, lexer->source_index);
 
     switch (character) {
@@ -304,6 +298,7 @@ static nadir_lexer_error_t nadir_lexer_collect_default(nadir_lexer_t *lexer,
         return error;
     }
 
+    // Immediately finalize single-character tokens.
     if (nadir_token_value_single(character)) {
         if (!nadir_token_increment(&lexer->token)) {
             error.kind = NADIR_LEXER_ERROR_KIND_BUFFER_OVERFLOW;
@@ -317,6 +312,7 @@ static nadir_lexer_error_t nadir_lexer_collect_default(nadir_lexer_t *lexer,
         return error;
     }
 
+    // Fallback for unrecognized characters.
     error.kind = NADIR_LEXER_ERROR_KIND_UNKNOWN_CHARACTER;
     error.character = character;
     return error;
@@ -324,7 +320,7 @@ static nadir_lexer_error_t nadir_lexer_collect_default(nadir_lexer_t *lexer,
 
 static nadir_lexer_error_t nadir_lexer_collect_comment(nadir_lexer_t *lexer,
                                                        const char character) {
-    // Ignore all characters until a newline is found.
+    // Comments are ignored until a newline is encountered.
     if (character == '\n') {
         lexer->state = NADIR_LEXER_STATE_DEFAULT;
     }
@@ -443,6 +439,7 @@ static nadir_lexer_error_t nadir_lexer_collect_ident(nadir_lexer_t *lexer,
 #define NADIR_LEXER_IDENT_MATCH(literal) \
     (lexer->token.string.count == (sizeof(literal) - 1) && memcmp(lexer->token.string.value, literal, lexer->token.string.count) == 0)
 
+        // Reserved keywords and types are also valid identifiers, so we check for them here.
         if (NADIR_LEXER_IDENT_MATCH("constant")) lexer->token.kind = NADIR_TOKEN_KIND_CONSTANT;
         else if (NADIR_LEXER_IDENT_MATCH("procedure")) lexer->token.kind = NADIR_TOKEN_KIND_PROCEDURE;
         else if (NADIR_LEXER_IDENT_MATCH("binary")) lexer->token.kind = NADIR_TOKEN_KIND_BINARY;

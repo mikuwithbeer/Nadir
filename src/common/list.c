@@ -40,6 +40,7 @@ bool nadir_list_reserve(nadir_list_t *list,
     }
 
     if (list->items != nullptr) {
+        // Copy existing items to the new memory block.
         memcpy(new_items, list->items, list->length * list->size);
     }
 
@@ -52,7 +53,7 @@ bool nadir_list_reserve(nadir_list_t *list,
 bool nadir_list_append(nadir_list_t *list,
                        const void *item) {
     if (list->length >= list->capacity) {
-        auto new_capacity = list->capacity << 1;
+        auto new_capacity = list->capacity * 2;
         if (new_capacity == 0) {
             new_capacity = NADIR_LIST_DEFAULT_CAPACITY;
         }

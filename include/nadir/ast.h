@@ -54,17 +54,17 @@ struct nadir_ast_expression_t {
     nadir_token_t *token;
 
     union {
-        // Member field access.
+        // Member access expression.
         struct {
             nadir_token_t *field;
         } member;
 
-        // Procedure and comptime arguments.
+        // Comptime and procedure call expressions.
         struct {
             nadir_list_t *arguments; // List of `nadir_ast_expression_t`
         } call;
 
-        // Until and repeat padding expressions.
+        // Padding expressions (until and repeat).
         struct {
             nadir_ast_expression_t *value;
             nadir_ast_expression_t *times;

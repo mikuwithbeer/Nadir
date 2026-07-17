@@ -21,6 +21,9 @@
 // > Forward Declarations                                         < //
 // [--------------------------------------------------------------] //
 
+[[nodiscard]] static nadir_ast_t *nadir_module_parse(const nadir_module_t *module,
+                                                     const char *absolute_path);
+
 [[nodiscard]] static const char *nadir_module_path_last_seperator(const char *path);
 
 [[nodiscard]] static char *nadir_module_path_absolute(nadir_arena_t *arena,
@@ -30,9 +33,6 @@ static void nadir_module_path_include(const char *current_file,
                                       const char *target_path,
                                       nadir_u64_t target_length,
                                       char *output);
-
-[[nodiscard]] static nadir_ast_t *nadir_module_parse(const nadir_module_t *module,
-                                                     const char *absolute_path);
 
 // [--------------------------------------------------------------] //
 // > Function Implementations                                     < //
@@ -63,7 +63,7 @@ nadir_module_t *nadir_module_new(nadir_arena_t *arena) {
 
 bool nadir_module_resolve(nadir_module_t *module,
                           const char *path) {
-    // Resolve the absolute path of the module to be imported.
+    // Absolute paths ensure that the same module is not imported multiple times with different relative paths.
     char *absolute_path = nadir_module_path_absolute(module->arena, path);
     if (absolute_path == nullptr) {
         return false;
@@ -78,7 +78,6 @@ bool nadir_module_resolve(nadir_module_t *module,
         return false;
     }
 
-    // Parse the module and collect its abstract syntax tree.
     const auto ast = nadir_module_parse(module, absolute_path);
     if (ast == nullptr) {
         return false;
@@ -87,7 +86,6 @@ bool nadir_module_resolve(nadir_module_t *module,
     for (nadir_u64_t index = 0; index < ast->declarations->length; ++index) {
         const nadir_ast_declaration_t *declaration = nadir_list_get(ast->declarations, index);
 
-        // Handle include declarations by resolving the included module.
         if (declaration->kind == NADIR_AST_DECLARATION_KIND_INCLUDE) {
             const auto path_start = declaration->include.path->string.value;
             const auto path_count = declaration->include.path->string.count;
@@ -101,15 +99,14 @@ bool nadir_module_resolve(nadir_module_t *module,
                 return false;
             }
 
-            char next_path[NADIR_MODULE_PATH_MAXIMUM] = {};
+            char next_path[NADIR_MODULE_PATH_MAXIMUM] = {}; // Next module path to resolve
             nadir_module_path_include(absolute_path, path_start, path_count, next_path);
 
-            // Resolve the included module recursively.
+            // Recursively resolve included modules.
             if (!nadir_module_resolve(module, next_path)) {
                 return false;
             }
         } else {
-            // Append the declaration to the current abstract syntax tree.
             if (!nadir_list_append(module->ast->declarations, declaration)) {
                 fprintf(stderr, "error(ast): out of memory\n");
                 return false;
@@ -133,6 +130,59 @@ void nadir_module_free(nadir_module_t *module) {
 // [--------------------------------------------------------------] //
 // > Internal Functions                                           < //
 // [--------------------------------------------------------------] //
+
+static nadir_ast_t *nadir_module_parse(const nadir_module_t *module,
+                                       const char *absolute_path) {
+    auto error = (nadir_error_t){};
+
+    const auto lexer = nadir_lexer_new(module->arena, absolute_path);
+    if (lexer == nullptr) {
+        fprintf(stderr, "error(lexer): failed to initialize for '%s'\n", absolute_path);
+        return nullptr;
+    }
+
+    const auto lexer_error = nadir_lexer_collect(lexer);
+    if (lexer_error.kind != NADIR_LEXER_ERROR_KIND_NONE) {
+        error = (nadir_error_t){
+            .kind = NADIR_ERROR_KIND_LEXER,
+            .lexer = lexer_error
+        };
+
+        const auto message = nadir_error_encode(module->arena, &error);
+        if (message != nullptr) {
+            fprintf(stderr, "%s\n", message);
+        } else {
+            fprintf(stderr, "error(lexer): out of memory\n");
+        }
+
+        return nullptr;
+    }
+
+    const auto parser = nadir_parser_new(module->arena, lexer->tokens);
+    if (parser == nullptr) {
+        fprintf(stderr, "error(parser): failed to initialize for '%s'\n", absolute_path);
+        return nullptr;
+    }
+
+    const auto parser_error = nadir_parser_run(parser);
+    if (parser_error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
+        error = (nadir_error_t){
+            .kind = NADIR_ERROR_KIND_PARSER,
+            .parser = parser_error
+        };
+
+        const auto message = nadir_error_encode(module->arena, &error);
+        if (message != nullptr) {
+            fprintf(stderr, "%s\n", message);
+        } else {
+            fprintf(stderr, "error(parser): out of memory\n");
+        }
+
+        return nullptr;
+    }
+
+    return parser->ast;
+}
 
 static const char *nadir_module_path_last_seperator(const char *path) {
     const char *last_slash = strrchr(path, '/');
@@ -185,61 +235,4 @@ static void nadir_module_path_include(const char *current_file,
              current_file,
              (int) target_length,
              target_path);
-}
-
-static nadir_ast_t *nadir_module_parse(const nadir_module_t *module,
-                                       const char *absolute_path) {
-    auto error = (nadir_error_t){};
-
-    // Initialize the lexer for the given module path.
-    const auto lexer = nadir_lexer_new(module->arena, absolute_path);
-    if (lexer == nullptr) {
-        fprintf(stderr, "error(lexer): failed to initialize for '%s'\n", absolute_path);
-        return nullptr;
-    }
-
-    // Run the lexer to collect tokens from the source.
-    const auto lexer_error = nadir_lexer_collect(lexer);
-    if (lexer_error.kind != NADIR_LEXER_ERROR_KIND_NONE) {
-        error = (nadir_error_t){
-            .kind = NADIR_ERROR_KIND_LEXER,
-            .lexer = lexer_error
-        };
-
-        const auto message = nadir_error_encode(module->arena, &error);
-        if (message != nullptr) {
-            fprintf(stderr, "%s\n", message);
-        } else {
-            fprintf(stderr, "error(lexer): out of memory\n");
-        }
-
-        return nullptr;
-    }
-
-    // Initialize the parser for the collected tokens.
-    const auto parser = nadir_parser_new(module->arena, lexer->tokens);
-    if (parser == nullptr) {
-        fprintf(stderr, "error(parser): failed to initialize for '%s'\n", absolute_path);
-        return nullptr;
-    }
-
-    // Run the parser to generate the abstract syntax tree.
-    const auto parser_error = nadir_parser_run(parser);
-    if (parser_error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
-        error = (nadir_error_t){
-            .kind = NADIR_ERROR_KIND_PARSER,
-            .parser = parser_error
-        };
-
-        const auto message = nadir_error_encode(module->arena, &error);
-        if (message != nullptr) {
-            fprintf(stderr, "%s\n", message);
-        } else {
-            fprintf(stderr, "error(parser): out of memory\n");
-        }
-
-        return nullptr;
-    }
-
-    return parser->ast;
 }

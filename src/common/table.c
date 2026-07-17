@@ -39,7 +39,7 @@ nadir_table_t *nadir_table_new(nadir_arena_t *arena,
     table->capacity = NADIR_ARENA_DEFAULT_CAPACITY;
     table->size = size;
 
-    // Allocate the entry array from the arena.
+    // Allocate memory for the entry array from the arena.
     const auto entries_size = table->capacity * sizeof(nadir_table_entry_t);
     nadir_table_entry_t *entries = nadir_arena_allocate(arena, entries_size);
     if (entries != nullptr) {
@@ -166,7 +166,7 @@ static nadir_table_entry_t *nadir_table_grow(nadir_table_t *table) {
         return nullptr;
     }
 
-    memset(new_entries, 0, new_entries_size); // Initialize to zero
+    memset(new_entries, 0, new_entries_size); // Zero out the new entries for safety.
 
     for (nadir_u64_t index = 0; index < table->capacity; index++) {
         const auto old_entry = &table->entries[index];

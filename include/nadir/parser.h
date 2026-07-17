@@ -15,7 +15,7 @@
 // > Constants                                                    < //
 // [--------------------------------------------------------------] //
 
-constexpr auto NADIR_PARSER_ARGUMENTS_MAXIMUM = 1 << 4; // 16 arguments per procedure
+constexpr auto NADIR_PARSER_ARGUMENTS_MAXIMUM = 1 << 4;
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //
@@ -67,10 +67,10 @@ typedef struct {
 /**
  * @brief Creates a new parser error with the given kind and token.
  */
-[[maybe_unused]] static inline nadir_parser_error_t nadir_parser_error_new(const nadir_parser_error_kind_t id,
+[[maybe_unused]] static inline nadir_parser_error_t nadir_parser_error_new(const nadir_parser_error_kind_t kind,
                                                                            nadir_token_t *token) {
     return (nadir_parser_error_t){
-        .kind = id,
+        .kind = kind,
         .token = token,
     };
 }

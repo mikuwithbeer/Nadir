@@ -16,53 +16,53 @@ nadir_comptime_kind_t nadir_comptime_kind(const char *name,
                                           const nadir_u64_t length) {
     switch (length) {
         case 3:
-            if (memcmp(name, "@if", 3) == 0) return NADIR_COMPTIME_KIND_IF;
-            if (memcmp(name, "@eq", 3) == 0) return NADIR_COMPTIME_KIND_EQ;
-            if (memcmp(name, "@lt", 3) == 0) return NADIR_COMPTIME_KIND_LT;
-            if (memcmp(name, "@gt", 3) == 0) return NADIR_COMPTIME_KIND_GT;
-            if (memcmp(name, "@le", 3) == 0) return NADIR_COMPTIME_KIND_LE;
-            if (memcmp(name, "@ge", 3) == 0) return NADIR_COMPTIME_KIND_GE;
-            if (memcmp(name, "@or", 3) == 0) return NADIR_COMPTIME_KIND_OR;
+            if (memcmp(name, "@if", length) == 0) return NADIR_COMPTIME_KIND_IF;
+            if (memcmp(name, "@eq", length) == 0) return NADIR_COMPTIME_KIND_EQ;
+            if (memcmp(name, "@lt", length) == 0) return NADIR_COMPTIME_KIND_LT;
+            if (memcmp(name, "@gt", length) == 0) return NADIR_COMPTIME_KIND_GT;
+            if (memcmp(name, "@le", length) == 0) return NADIR_COMPTIME_KIND_LE;
+            if (memcmp(name, "@ge", length) == 0) return NADIR_COMPTIME_KIND_GE;
+            if (memcmp(name, "@or", length) == 0) return NADIR_COMPTIME_KIND_OR;
             return NADIR_COMPTIME_KIND_NONE;
         case 4:
-            if (memcmp(name, "@arg", 4) == 0) return NADIR_COMPTIME_KIND_ARG;
-            if (memcmp(name, "@abs", 4) == 0) return NADIR_COMPTIME_KIND_ABS;
-            if (memcmp(name, "@neg", 4) == 0) return NADIR_COMPTIME_KIND_NEG;
-            if (memcmp(name, "@add", 4) == 0) return NADIR_COMPTIME_KIND_ADD;
-            if (memcmp(name, "@sub", 4) == 0) return NADIR_COMPTIME_KIND_SUB;
-            if (memcmp(name, "@mul", 4) == 0) return NADIR_COMPTIME_KIND_MUL;
-            if (memcmp(name, "@div", 4) == 0) return NADIR_COMPTIME_KIND_DIV;
-            if (memcmp(name, "@mod", 4) == 0) return NADIR_COMPTIME_KIND_MOD;
-            if (memcmp(name, "@and", 4) == 0) return NADIR_COMPTIME_KIND_AND;
-            if (memcmp(name, "@xor", 4) == 0) return NADIR_COMPTIME_KIND_XOR;
-            if (memcmp(name, "@shl", 4) == 0) return NADIR_COMPTIME_KIND_SHL;
-            if (memcmp(name, "@shr", 4) == 0) return NADIR_COMPTIME_KIND_SHR;
-            if (memcmp(name, "@not", 4) == 0) return NADIR_COMPTIME_KIND_NOT;
-            if (memcmp(name, "@neq", 4) == 0) return NADIR_COMPTIME_KIND_NEQ;
-            if (memcmp(name, "@lor", 4) == 0) return NADIR_COMPTIME_KIND_LOR;
-            if (memcmp(name, "@max", 4) == 0) return NADIR_COMPTIME_KIND_MAX;
-            if (memcmp(name, "@min", 4) == 0) return NADIR_COMPTIME_KIND_MIN;
+            if (memcmp(name, "@arg", length) == 0) return NADIR_COMPTIME_KIND_ARG;
+            if (memcmp(name, "@abs", length) == 0) return NADIR_COMPTIME_KIND_ABS;
+            if (memcmp(name, "@neg", length) == 0) return NADIR_COMPTIME_KIND_NEG;
+            if (memcmp(name, "@add", length) == 0) return NADIR_COMPTIME_KIND_ADD;
+            if (memcmp(name, "@sub", length) == 0) return NADIR_COMPTIME_KIND_SUB;
+            if (memcmp(name, "@mul", length) == 0) return NADIR_COMPTIME_KIND_MUL;
+            if (memcmp(name, "@div", length) == 0) return NADIR_COMPTIME_KIND_DIV;
+            if (memcmp(name, "@mod", length) == 0) return NADIR_COMPTIME_KIND_MOD;
+            if (memcmp(name, "@and", length) == 0) return NADIR_COMPTIME_KIND_AND;
+            if (memcmp(name, "@xor", length) == 0) return NADIR_COMPTIME_KIND_XOR;
+            if (memcmp(name, "@shl", length) == 0) return NADIR_COMPTIME_KIND_SHL;
+            if (memcmp(name, "@shr", length) == 0) return NADIR_COMPTIME_KIND_SHR;
+            if (memcmp(name, "@not", length) == 0) return NADIR_COMPTIME_KIND_NOT;
+            if (memcmp(name, "@neq", length) == 0) return NADIR_COMPTIME_KIND_NEQ;
+            if (memcmp(name, "@lor", length) == 0) return NADIR_COMPTIME_KIND_LOR;
+            if (memcmp(name, "@max", length) == 0) return NADIR_COMPTIME_KIND_MAX;
+            if (memcmp(name, "@min", length) == 0) return NADIR_COMPTIME_KIND_MIN;
             return NADIR_COMPTIME_KIND_NONE;
         case 5:
-            if (memcmp(name, "@cast", 5) == 0) return NADIR_COMPTIME_KIND_CAST;
-            if (memcmp(name, "@here", 5) == 0) return NADIR_COMPTIME_KIND_HERE;
-            if (memcmp(name, "@mask", 5) == 0) return NADIR_COMPTIME_KIND_MASK;
-            if (memcmp(name, "@rotl", 5) == 0) return NADIR_COMPTIME_KIND_ROTL;
-            if (memcmp(name, "@rotr", 5) == 0) return NADIR_COMPTIME_KIND_ROTR;
-            if (memcmp(name, "@land", 5) == 0) return NADIR_COMPTIME_KIND_LAND;
-            if (memcmp(name, "@lnot", 5) == 0) return NADIR_COMPTIME_KIND_LNOT;
+            if (memcmp(name, "@cast", length) == 0) return NADIR_COMPTIME_KIND_CAST;
+            if (memcmp(name, "@here", length) == 0) return NADIR_COMPTIME_KIND_HERE;
+            if (memcmp(name, "@mask", length) == 0) return NADIR_COMPTIME_KIND_MASK;
+            if (memcmp(name, "@rotl", length) == 0) return NADIR_COMPTIME_KIND_ROTL;
+            if (memcmp(name, "@rotr", length) == 0) return NADIR_COMPTIME_KIND_ROTR;
+            if (memcmp(name, "@land", length) == 0) return NADIR_COMPTIME_KIND_LAND;
+            if (memcmp(name, "@lnot", length) == 0) return NADIR_COMPTIME_KIND_LNOT;
             return NADIR_COMPTIME_KIND_NONE;
         case 6:
-            if (memcmp(name, "@clamp", 6) == 0) return NADIR_COMPTIME_KIND_CLAMP;
-            if (memcmp(name, "@bswap", 6) == 0) return NADIR_COMPTIME_KIND_BSWAP;
+            if (memcmp(name, "@clamp", length) == 0) return NADIR_COMPTIME_KIND_CLAMP;
+            if (memcmp(name, "@bswap", length) == 0) return NADIR_COMPTIME_KIND_BSWAP;
             return NADIR_COMPTIME_KIND_NONE;
         case 7:
-            if (memcmp(name, "@insert", 7) == 0) return NADIR_COMPTIME_KIND_INSERT;
-            if (memcmp(name, "@assert", 7) == 0) return NADIR_COMPTIME_KIND_ASSERT;
+            if (memcmp(name, "@insert", length) == 0) return NADIR_COMPTIME_KIND_INSERT;
+            if (memcmp(name, "@assert", length) == 0) return NADIR_COMPTIME_KIND_ASSERT;
             return NADIR_COMPTIME_KIND_NONE;
         case 8:
-            if (memcmp(name, "@extract", 8) == 0) return NADIR_COMPTIME_KIND_EXTRACT;
-            if (memcmp(name, "@between", 8) == 0) return NADIR_COMPTIME_KIND_BETWEEN;
+            if (memcmp(name, "@extract", length) == 0) return NADIR_COMPTIME_KIND_EXTRACT;
+            if (memcmp(name, "@between", length) == 0) return NADIR_COMPTIME_KIND_BETWEEN;
             return NADIR_COMPTIME_KIND_NONE;
         default:
             return NADIR_COMPTIME_KIND_NONE;

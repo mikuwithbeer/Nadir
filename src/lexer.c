@@ -436,28 +436,53 @@ static nadir_lexer_error_t nadir_lexer_collect_ident(nadir_lexer_t *lexer,
     if (nadir_token_value_whitespace(character) || nadir_token_value_single(character)) {
         lexer->state = NADIR_LEXER_STATE_DEFAULT;
 
-#define NADIR_LEXER_IDENT_MATCH(literal) \
-    (lexer->token.string.count == (sizeof(literal) - 1) && memcmp(lexer->token.string.value, literal, lexer->token.string.count) == 0)
+        const auto string_value = lexer->token.string.value;
+        const auto string_count = lexer->token.string.count;
 
         // Reserved keywords and types are also valid identifiers, so we check for them here.
-        if (NADIR_LEXER_IDENT_MATCH("constant")) lexer->token.kind = NADIR_TOKEN_KIND_CONSTANT;
-        else if (NADIR_LEXER_IDENT_MATCH("procedure")) lexer->token.kind = NADIR_TOKEN_KIND_PROCEDURE;
-        else if (NADIR_LEXER_IDENT_MATCH("binary")) lexer->token.kind = NADIR_TOKEN_KIND_BINARY;
-        else if (NADIR_LEXER_IDENT_MATCH("include")) lexer->token.kind = NADIR_TOKEN_KIND_INCLUDE;
-        else if (NADIR_LEXER_IDENT_MATCH("until")) lexer->token.kind = NADIR_TOKEN_KIND_UNTIL;
-        else if (NADIR_LEXER_IDENT_MATCH("repeat")) lexer->token.kind = NADIR_TOKEN_KIND_REPEAT;
-        else if (NADIR_LEXER_IDENT_MATCH("u8")) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U8;
-        else if (NADIR_LEXER_IDENT_MATCH("u16")) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U16;
-        else if (NADIR_LEXER_IDENT_MATCH("u32")) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U32;
-        else if (NADIR_LEXER_IDENT_MATCH("u64")) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_U64;
-        else if (NADIR_LEXER_IDENT_MATCH("i8")) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_I8;
-        else if (NADIR_LEXER_IDENT_MATCH("i16")) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_I16;
-        else if (NADIR_LEXER_IDENT_MATCH("i32")) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_I32;
-        else if (NADIR_LEXER_IDENT_MATCH("i64")) lexer->token.kind = NADIR_TOKEN_KIND_TYPE_I64;
-        else lexer->token.kind = NADIR_TOKEN_KIND_IDENT;
+        nadir_token_kind_t kind;
+        switch (string_count) {
+            case 2:
+                if (memcmp(string_value, "u8", string_count) == 0) kind = NADIR_TOKEN_KIND_TYPE_U8;
+                else if (memcmp(string_value, "i8", string_count) == 0) kind = NADIR_TOKEN_KIND_TYPE_I8;
+                else kind = NADIR_TOKEN_KIND_IDENT;
+                break;
+            case 3:
+                if (memcmp(string_value, "u16", string_count) == 0) kind = NADIR_TOKEN_KIND_TYPE_U16;
+                else if (memcmp(string_value, "i16", string_count) == 0) kind = NADIR_TOKEN_KIND_TYPE_I16;
+                else if (memcmp(string_value, "u32", string_count) == 0) kind = NADIR_TOKEN_KIND_TYPE_U32;
+                else if (memcmp(string_value, "i32", string_count) == 0) kind = NADIR_TOKEN_KIND_TYPE_I32;
+                else if (memcmp(string_value, "u64", string_count) == 0) kind = NADIR_TOKEN_KIND_TYPE_U64;
+                else if (memcmp(string_value, "i64", string_count) == 0) kind = NADIR_TOKEN_KIND_TYPE_I64;
+                else kind = NADIR_TOKEN_KIND_IDENT;
+                break;
+            case 5:
+                if (memcmp(string_value, "until", string_count) == 0) kind = NADIR_TOKEN_KIND_UNTIL;
+                else kind = NADIR_TOKEN_KIND_IDENT;
+                break;
+            case 6:
+                if (memcmp(string_value, "binary", string_count) == 0) kind = NADIR_TOKEN_KIND_BINARY;
+                else if (memcmp(string_value, "repeat", string_count) == 0) kind = NADIR_TOKEN_KIND_REPEAT;
+                else kind = NADIR_TOKEN_KIND_IDENT;
+                break;
+            case 7:
+                if (memcmp(string_value, "include", string_count) == 0) kind = NADIR_TOKEN_KIND_INCLUDE;
+                else kind = NADIR_TOKEN_KIND_IDENT;
+                break;
+            case 8:
+                if (memcmp(string_value, "constant", string_count) == 0) kind = NADIR_TOKEN_KIND_CONSTANT;
+                else kind = NADIR_TOKEN_KIND_IDENT;
+                break;
+            case 9:
+                if (memcmp(string_value, "procedure", string_count) == 0) kind = NADIR_TOKEN_KIND_PROCEDURE;
+                else kind = NADIR_TOKEN_KIND_IDENT;
+                break;
+            default:
+                kind = NADIR_TOKEN_KIND_IDENT;
+                break;
+        }
 
-#undef NADIR_LEXER_IDENT_MATCH
-
+        lexer->token.kind = kind;
         if (!nadir_list_append(lexer->tokens, &lexer->token)) {
             error.kind = NADIR_LEXER_ERROR_KIND_OUT_OF_MEMORY;
         }

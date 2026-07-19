@@ -15,6 +15,8 @@ set(CMAKE_C_EXTENSIONS OFF)
 add_library(Options INTERFACE)
 add_library(Nadir::Options ALIAS Options)
 
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+
 target_compile_options(
     Options INTERFACE
     # --- Warnings ---
@@ -42,11 +44,14 @@ target_compile_options(
     -Wvla
     -Wimplicit-fallthrough
     -Wunused-macros
+    # --- Release ---
+    $<$<CONFIG:Release>:-O3>
 )
 
 target_compile_definitions(
     Options INTERFACE
     $<$<CONFIG:Debug>:DEBUG>
+    $<$<CONFIG:Release>:NDEBUG>
 )
 
 # --- Core Library ---

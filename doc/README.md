@@ -457,11 +457,11 @@ disk. The trade-off is memory usage grows with the size of your source code.
 
 |  Source Size   | Peak Memory |
 |:--------------:|------------:|
-|  **1k lines**  |       ~1 MB |
-| **10k lines**  |      ~10 MB |
-| **100k lines** |      ~75 MB |
-| **500k lines** |     ~365 MB |
-|  **1M lines**  |     ~720 MB |
+|  **1k lines**  |       ~2 MB |
+| **10k lines**  |       ~8 MB |
+| **100k lines** |      ~70 MB |
+| **500k lines** |     ~330 MB |
+|  **1M lines**  |     ~650 MB |
 
 While it is not fully memory-optimized, you can compile an average project in a fraction of a second with a memory cost
 you will barely notice.

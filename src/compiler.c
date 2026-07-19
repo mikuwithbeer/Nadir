@@ -27,35 +27,13 @@ static nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *com
 
 static nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
                                                       const nadir_context_t *context,
-                                                      const nadir_ast_expression_t *expression);
+                                                      const nadir_ast_expression_t *expression,
+                                                      nadir_i128_t *result);
 
 static nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compiler,
                                                                const nadir_context_t *context,
-                                                               const nadir_ast_expression_t *expression);
-
-// [--------------------------------------------------------------] //
-// > Inline Functions                                             < //
-// [--------------------------------------------------------------] //
-
-static inline nadir_compiler_error_t nadir_compiler_stack_push(const nadir_compiler_t *compiler,
-                                                               const nadir_i128_t value,
-                                                               nadir_token_t *token) {
-    if (!nadir_stack_push(compiler->stack, value)) {
-        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_STACK_FAILED, token);
-    }
-
-    return (nadir_compiler_error_t){};
-}
-
-static inline nadir_compiler_error_t nadir_compiler_stack_pop(const nadir_compiler_t *compiler,
-                                                              nadir_i128_t *value,
-                                                              nadir_token_t *token) {
-    if (!nadir_stack_pop(compiler->stack, value)) {
-        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_STACK_FAILED, token);
-    }
-
-    return (nadir_compiler_error_t){};
-}
+                                                               const nadir_ast_expression_t *expression,
+                                                               nadir_i128_t *result);
 
 // [--------------------------------------------------------------] //
 // > Function Implementations                                     < //
@@ -90,11 +68,6 @@ nadir_compiler_t *nadir_compiler_new(nadir_arena_t *arena,
         return nullptr;
     }
 
-    const auto stack = nadir_stack_new(arena);
-    if (stack == nullptr) {
-        return nullptr;
-    }
-
     const auto output = nadir_list_new(arena, sizeof(nadir_u8_t));
     if (output == nullptr) {
         return nullptr;
@@ -103,7 +76,6 @@ nadir_compiler_t *nadir_compiler_new(nadir_arena_t *arena,
     compiler->addresses = addresses;
     compiler->constants = constants;
     compiler->procedures = procedures;
-    compiler->stack = stack;
     compiler->output = output;
 
     return compiler;
@@ -164,13 +136,8 @@ nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler) {
             case NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL:
             case NADIR_AST_EXPRESSION_KIND_MEMBER:
             case NADIR_AST_EXPRESSION_KIND_NUMBER: {
-                error = nadir_compiler_evaluate(compiler, nullptr, statement);
-                if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-                    return error;
-                }
-
                 nadir_i128_t statement_value; // Value of the statement expression
-                error = nadir_compiler_stack_pop(compiler, &statement_value, statement->token);
+                error = nadir_compiler_evaluate(compiler, nullptr, statement, &statement_value);
                 if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
                     return error;
                 }
@@ -208,13 +175,8 @@ nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler) {
                 continue; // Already handled in the preparation phase
             case NADIR_AST_EXPRESSION_KIND_UNTIL:
             case NADIR_AST_EXPRESSION_KIND_REPEAT: {
-                error = nadir_compiler_evaluate(compiler, nullptr, statement->padding.value);
-                if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-                    return error;
-                }
-
                 nadir_i128_t padding_value; // Value of the padding expression
-                error = nadir_compiler_stack_pop(compiler, &padding_value, statement->token);
+                error = nadir_compiler_evaluate(compiler, nullptr, statement->padding.value, &padding_value);
                 if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
                     return error;
                 }
@@ -225,13 +187,8 @@ nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler) {
                                                     statement->padding.value->token);
                 }
 
-                error = nadir_compiler_evaluate(compiler, nullptr, statement->padding.times);
-                if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-                    return error;
-                }
-
                 nadir_i128_t padding_times; // Value of the padding times expression
-                error = nadir_compiler_stack_pop(compiler, &padding_times, statement->token);
+                error = nadir_compiler_evaluate(compiler, nullptr, statement->padding.times, &padding_times);
                 if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
                     return error;
                 }
@@ -265,7 +222,6 @@ void nadir_compiler_free(nadir_compiler_t *compiler) {
 
     // The arena handles resource management, so we just reset the structure.
     compiler->output = nullptr;
-    compiler->stack = nullptr;
     compiler->procedures = nullptr;
     compiler->constants = nullptr;
     compiler->addresses = nullptr;
@@ -288,13 +244,8 @@ static nadir_compiler_error_t nadir_compiler_prepare_constant(nadir_compiler_t *
         const auto field_string_value = constant_entry->name->string.value;
         const auto field_string_count = constant_entry->name->string.count;
 
-        error = nadir_compiler_evaluate(compiler, nullptr, &constant_entry->value);
-        if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            return error;
-        }
-
         nadir_i128_t constant_value; // Variable to hold the evaluated constant value
-        error = nadir_compiler_stack_pop(compiler, &constant_value, constant_entry->name);
+        error = nadir_compiler_evaluate(compiler, nullptr, &constant_entry->value, &constant_value);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
             return error;
         }
@@ -386,13 +337,8 @@ static nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *co
             }
             case NADIR_AST_EXPRESSION_KIND_UNTIL:
             case NADIR_AST_EXPRESSION_KIND_REPEAT: {
-                auto error = nadir_compiler_evaluate(compiler, nullptr, statement->padding.times);
-                if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-                    return error;
-                }
-
                 nadir_i128_t padding_times; // Variable to hold the evaluated padding times value
-                error = nadir_compiler_stack_pop(compiler, &padding_times, statement->token);
+                const auto error = nadir_compiler_evaluate(compiler, nullptr, statement->padding.times, &padding_times);
                 if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
                     return error;
                 }
@@ -442,13 +388,8 @@ static nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *com
     for (nadir_u64_t index = 0; index < procedure->parameters->length; ++index) {
         const nadir_ast_expression_t *procedure_argument = nadir_list_get(expression->call.arguments, index);
 
-        error = nadir_compiler_evaluate(compiler, nullptr, procedure_argument);
-        if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            return error;
-        }
-
         nadir_i128_t argument_value; // Variable to hold the evaluated argument value
-        error = nadir_compiler_stack_pop(compiler, &argument_value, procedure_argument->token);
+        error = nadir_compiler_evaluate(compiler, nullptr, procedure_argument, &argument_value);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
             return error;
         }
@@ -497,13 +438,8 @@ static nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *com
         compiler->binary_calculation = compiler->binary_origin + compiler->output->length;
         const nadir_ast_expression_t *statement = nadir_list_get(procedure->statements, index);
 
-        error = nadir_compiler_evaluate(compiler, &context, statement);
-        if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            return error;
-        }
-
         nadir_i128_t statement_value; // Variable to hold the evaluated statement value
-        error = nadir_compiler_stack_pop(compiler, &statement_value, statement->token);
+        error = nadir_compiler_evaluate(compiler, &context, statement, &statement_value);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
             return error;
         }
@@ -524,16 +460,16 @@ static nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *com
 
 static nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
                                                       const nadir_context_t *context,
-                                                      const nadir_ast_expression_t *expression) {
-    nadir_compiler_error_t error;
+                                                      const nadir_ast_expression_t *expression,
+                                                      nadir_i128_t *result) {
+    auto error = (nadir_compiler_error_t){};
 
     switch (expression->kind) {
         case NADIR_AST_EXPRESSION_KIND_NUMBER:
-            error = nadir_compiler_stack_push(compiler, expression->token->number, expression->token);
+            *result = expression->token->number;
             break;
         case NADIR_AST_EXPRESSION_KIND_TYPE: {
-            const auto type_value = expression->token->kind - NADIR_TOKEN_KIND_TYPE_U8;
-            error = nadir_compiler_stack_push(compiler, type_value, expression->token);
+            *result = expression->token->kind - NADIR_TOKEN_KIND_TYPE_U8;
             break;
         }
         case NADIR_AST_EXPRESSION_KIND_MEMBER: {
@@ -561,11 +497,11 @@ static nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler
                 return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_CONSTANT, expression->member.field);
             }
 
-            error = nadir_compiler_stack_push(compiler, constant->value, expression->token);
+            *result = constant->value;
             break;
         }
         case NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL:
-            error = nadir_compiler_evaluate_comptime(compiler, context, expression);
+            error = nadir_compiler_evaluate_comptime(compiler, context, expression, result);
             break;
         case NADIR_AST_EXPRESSION_KIND_LOAD_ADDRESS: {
             // Remove the leading character to get the actual address name.
@@ -577,7 +513,7 @@ static nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler
                 return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_ADDRESS, expression->token);
             }
 
-            error = nadir_compiler_stack_push(compiler, *address, expression->token);
+            *result = *address;
             break;
         }
         default:
@@ -589,37 +525,41 @@ static nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler
 
 static nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compiler,
                                                                const nadir_context_t *context,
-                                                               const nadir_ast_expression_t *expression) {
-    nadir_compiler_error_t error;
+                                                               const nadir_ast_expression_t *expression,
+                                                               nadir_i128_t *result) {
+    auto error = (nadir_compiler_error_t){};
+
+    nadir_arena_t comptime_arena = {}; // Arena for the compile-time call arguments
+    if (!nadir_arena_init(&comptime_arena, NADIR_COMPILER_ARENA_CAPACITY)) {
+        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
+    }
 
     // List to hold the evaluated argument values for the compile-time call.
-    const auto arguments = nadir_list_new(compiler->arena, sizeof(nadir_i128_t));
+    const auto arguments = nadir_list_new(&comptime_arena, sizeof(nadir_i128_t));
     if (arguments == nullptr) {
-        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
+        error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
+        goto cleanup;
     }
 
     for (nadir_u64_t index = 0; index < expression->call.arguments->length; ++index) {
         const nadir_ast_expression_t *argument = nadir_list_get(expression->call.arguments, index);
 
-        error = nadir_compiler_evaluate(compiler, context, argument);
-        if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            return error;
-        }
-
         nadir_i128_t argument_value; // Variable to hold the evaluated argument value
-        error = nadir_compiler_stack_pop(compiler, &argument_value, argument->token);
+        error = nadir_compiler_evaluate(compiler, context, argument, &argument_value);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-            return error;
+            goto cleanup;
         }
 
         if (!nadir_list_append(arguments, &argument_value)) {
-            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
+            error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
+            goto cleanup;
         }
     }
 
     const auto kind = nadir_comptime_kind(expression->token->string.value, expression->token->string.count);
     if (kind == NADIR_COMPTIME_KIND_NONE) {
-        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_COMPTIME, expression->token);
+        error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_COMPTIME, expression->token);
+        goto cleanup;
     }
 
     const auto comptime = (nadir_comptime_t){
@@ -632,8 +572,13 @@ static nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t 
     if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
         // Since the `nadir_comptime_run` function does not have access to the token, we set it here for better error reporting.
         error.token = expression->token;
-        return error;
+        goto cleanup;
     }
 
-    return nadir_compiler_stack_push(compiler, comptime_result, expression->token);
+    *result = comptime_result;
+
+cleanup:
+    nadir_arena_reset(&comptime_arena);
+    nadir_arena_free(&comptime_arena);
+    return error;
 }

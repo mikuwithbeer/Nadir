@@ -9,7 +9,6 @@
  * the assembler.
  */
 
-#include "nadir/common/stack.h"
 #include "nadir/common/table.h"
 #include "nadir/ast.h"
 
@@ -18,6 +17,7 @@
 // [--------------------------------------------------------------] //
 
 constexpr auto NADIR_COMPILER_MEMBER_MAXIMUM = 0x82;
+constexpr auto NADIR_COMPILER_ARENA_CAPACITY = 1 << 10;
 
 // [--------------------------------------------------------------] //
 // > Data Structures                                              < //
@@ -30,7 +30,6 @@ typedef enum [[nodiscard]] : nadir_u8_t {
     NADIR_COMPILER_ERROR_KIND_NONE,
     NADIR_COMPILER_ERROR_KIND_EMPTY,
     NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY,
-    NADIR_COMPILER_ERROR_KIND_STACK_FAILED,
     NADIR_COMPILER_ERROR_KIND_MULTIPLE_CONSTANT,
     NADIR_COMPILER_ERROR_KIND_MULTIPLE_PROCEDURE,
     NADIR_COMPILER_ERROR_KIND_MULTIPLE_ADDRESS,
@@ -99,7 +98,6 @@ typedef struct {
     nadir_table_t *constants; // Table of `nadir_compiler_constant_t`
     nadir_table_t *procedures; // Table of `nadir_compiler_procedure_t`
 
-    nadir_stack_t *stack;
     nadir_list_t *output; // List of `nadir_u8_t`
 
     nadir_u64_t binary_location; // Index of the binary declaration

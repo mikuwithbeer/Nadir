@@ -144,9 +144,6 @@ char *nadir_error_encode(nadir_arena_t *arena,
                 case NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY:
                     snprintf(pointer, remaining, "memory allocation failed during compilation");
                     break;
-                case NADIR_COMPILER_ERROR_KIND_STACK_FAILED:
-                    snprintf(pointer, remaining, "internal stack operation failed");
-                    break;
                 case NADIR_COMPILER_ERROR_KIND_MULTIPLE_CONSTANT:
                     snprintf(pointer,
                              remaining,

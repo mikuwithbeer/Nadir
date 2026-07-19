@@ -63,7 +63,6 @@ target_sources(
     src/common/arena.c
     src/common/list.c
     src/common/number.c
-    src/common/stack.c
     src/common/table.c
     src/ast.c
     src/cli.c

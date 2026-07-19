@@ -56,6 +56,14 @@ typedef enum [[nodiscard]] : nadir_u8_t {
 } nadir_compiler_error_kind_t;
 
 /**
+ * @brief Context structure for the compiler.
+ */
+typedef struct {
+    nadir_i128_t value[1 << 4];
+    nadir_u8_t length;
+} nadir_context_t;
+
+/**
  * @brief Error structure for the compiler.
  */
 typedef struct [[nodiscard]] {

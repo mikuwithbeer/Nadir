@@ -87,7 +87,7 @@ typedef struct {
  */
 [[nodiscard]] nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
                                                         const nadir_compiler_t *compiler,
-                                                        const nadir_list_t *context,
+                                                        const nadir_context_t *context,
                                                         nadir_i128_t *result);
 
 #endif //NADIR_COMPTIME_H

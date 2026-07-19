@@ -45,11 +45,54 @@ static nadir_lexer_error_t nadir_lexer_collect_path(nadir_lexer_t *lexer,
 static nadir_lexer_error_t nadir_lexer_collect_eof(nadir_lexer_t *lexer);
 
 // [--------------------------------------------------------------] //
+// > Inline Functions                                             < //
+// [--------------------------------------------------------------] //
+
+static inline bool nadir_lexer_read_file(nadir_lexer_t *lexer,
+                                         const char *path) {
+    const auto file = fopen(path, "rb");
+    if (file == nullptr) {
+        return false;
+    }
+
+    fseek(file, 0, SEEK_END);
+    const auto size = ftell(file); // End of the file to determine the size
+    fseek(file, 0, SEEK_SET);
+
+    if (size <= 0) {
+        fclose(file);
+        return false;
+    }
+
+    char *source = nadir_arena_allocate(lexer->arena, (nadir_u64_t) size + 1);
+    if (source == nullptr) {
+        fclose(file);
+        return false;
+    }
+
+    const auto length = fread(source, sizeof(char), (nadir_u64_t) size, file);
+    source[length] = '\0'; // Null-terminate the buffer for safety
+
+    if ((nadir_u64_t) size != length) {
+        fclose(file);
+        return false;
+    }
+
+
+    lexer->source = source;
+    lexer->source_path = path;
+    lexer->source_length = length;
+    lexer->source_index = 0;
+
+    return true;
+}
+
+// [--------------------------------------------------------------] //
 // > Function Implementations                                     < //
 // [--------------------------------------------------------------] //
 
 nadir_lexer_t *nadir_lexer_new(nadir_arena_t *arena,
-                               const char *source_path) {
+                               const char *path) {
     nadir_lexer_t *lexer = nadir_arena_allocate(arena, sizeof(nadir_lexer_t));
     if (lexer == nullptr) {
         return nullptr;
@@ -57,38 +100,9 @@ nadir_lexer_t *nadir_lexer_new(nadir_arena_t *arena,
 
     lexer->arena = arena;
 
-    const auto source_file = fopen(source_path, "rb");
-    if (source_file == nullptr) {
+    if (!nadir_lexer_read_file(lexer, path)) {
         return nullptr;
     }
-
-    fseek(source_file, 0, SEEK_END);
-    const auto source_size = ftell(source_file); // End of the file to determine the size
-    fseek(source_file, 0, SEEK_SET);
-
-    if (source_size <= 0) {
-        fclose(source_file);
-        return nullptr;
-    }
-
-    char *source_buffer = nadir_arena_allocate(arena, (nadir_u64_t) source_size + 1);
-    if (source_buffer == nullptr) {
-        fclose(source_file);
-        return nullptr;
-    }
-
-    const auto source_length = fread(source_buffer, sizeof(char), (nadir_u64_t) source_size, source_file);
-    source_buffer[source_length] = '\0'; // Null-terminate the buffer for safety
-
-    if ((nadir_u64_t) source_size != source_length) {
-        fclose(source_file);
-        return nullptr;
-    }
-
-    lexer->source = source_buffer;
-    lexer->source_path = source_path;
-    lexer->source_length = source_length;
-    lexer->source_index = 0;
 
     const auto tokens = nadir_list_new(arena, sizeof(nadir_token_t));
     if (tokens == nullptr) {
@@ -96,7 +110,7 @@ nadir_lexer_t *nadir_lexer_new(nadir_arena_t *arena,
     }
 
     // Reserve space for tokens based on the source length.
-    if (!nadir_list_reserve(tokens, source_length / 2)) {
+    if (!nadir_list_reserve(tokens, lexer->source_length / 2)) {
         return nullptr;
     }
 

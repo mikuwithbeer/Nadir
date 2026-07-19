@@ -100,7 +100,7 @@ typedef struct {
  * @brief Creates a new lexer with the given arena and source.
  */
 [[nodiscard]] nadir_lexer_t *nadir_lexer_new(nadir_arena_t *arena,
-                                             const char *source_path);
+                                             const char *path);
 
 /**
  * @brief Collects tokens from the source and returns any lexer errors encountered.

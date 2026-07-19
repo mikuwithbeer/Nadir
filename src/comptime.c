@@ -72,7 +72,7 @@ nadir_comptime_kind_t nadir_comptime_kind(const char *name,
 
 nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
                                           const nadir_compiler_t *compiler,
-                                          const nadir_list_t *context,
+                                          const nadir_context_t *context,
                                           nadir_i128_t *result) {
     auto error = (nadir_compiler_error_t){};
 
@@ -97,13 +97,12 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
                 return error;
             }
 
-            const nadir_i128_t *context_value = nadir_list_get(context, argument_location);
-            if (context_value == nullptr) [[clang::unlikely]] {
+            if (argument_location >= context->length) [[clang::unlikely]] {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_OUT_OF_BOUND;
                 return error;
             }
 
-            *result = *context_value;
+            *result = context->value[argument_location];
             break;
         }
         case NADIR_COMPTIME_KIND_CAST: {

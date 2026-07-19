@@ -26,11 +26,11 @@ static nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *com
                                                            const nadir_compiler_procedure_t *procedure);
 
 static nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
-                                                      const nadir_list_t *context,
+                                                      const nadir_context_t *context,
                                                       const nadir_ast_expression_t *expression);
 
 static nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compiler,
-                                                               const nadir_list_t *context,
+                                                               const nadir_context_t *context,
                                                                const nadir_ast_expression_t *expression);
 
 // [--------------------------------------------------------------] //
@@ -436,11 +436,7 @@ static nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *com
         return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_ARGUMENT_MISMATCH, expression->token);
     }
 
-    // List to hold the evaluated argument values for the procedure call.
-    const auto context = nadir_list_new(compiler->arena, sizeof(nadir_i128_t));
-    if (context == nullptr) {
-        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
-    }
+    nadir_context_t context = {}; // Context for the procedure call
 
     // Argument evaluation and type checking for each parameter in the procedure.
     for (nadir_u64_t index = 0; index < procedure->parameters->length; ++index) {
@@ -492,9 +488,7 @@ static nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *com
             return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH, procedure_argument->token);
         }
 
-        if (!nadir_list_append(context, &argument_value)) {
-            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
-        }
+        context.value[context.length++] = argument_value;
     }
 
     // Evaluate each statement in the procedure and write its value to the output.
@@ -503,7 +497,7 @@ static nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *com
         compiler->binary_calculation = compiler->binary_origin + compiler->output->length;
         const nadir_ast_expression_t *statement = nadir_list_get(procedure->statements, index);
 
-        error = nadir_compiler_evaluate(compiler, context, statement);
+        error = nadir_compiler_evaluate(compiler, &context, statement);
         if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
             return error;
         }
@@ -529,7 +523,7 @@ static nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *com
 }
 
 static nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
-                                                      const nadir_list_t *context,
+                                                      const nadir_context_t *context,
                                                       const nadir_ast_expression_t *expression) {
     nadir_compiler_error_t error;
 
@@ -594,7 +588,7 @@ static nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler
 }
 
 static nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t *compiler,
-                                                               const nadir_list_t *context,
+                                                               const nadir_context_t *context,
                                                                const nadir_ast_expression_t *expression) {
     nadir_compiler_error_t error;
 

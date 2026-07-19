@@ -59,6 +59,7 @@ nadir_comptime_kind_t nadir_comptime_kind(const char *name,
         case 7:
             if (memcmp(name, "@insert", length) == 0) return NADIR_COMPTIME_KIND_INSERT;
             if (memcmp(name, "@assert", length) == 0) return NADIR_COMPTIME_KIND_ASSERT;
+            if (memcmp(name, "@popcnt", length) == 0) return NADIR_COMPTIME_KIND_POPCNT;
             return NADIR_COMPTIME_KIND_NONE;
         case 8:
             if (memcmp(name, "@extract", length) == 0) return NADIR_COMPTIME_KIND_EXTRACT;
@@ -363,6 +364,20 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             const nadir_i128_t *value = nadir_list_get(comptime->arguments, 0);
 
             *result = ~*value;
+            break;
+        }
+        case NADIR_COMPTIME_KIND_POPCNT: {
+            if (comptime->arguments->length != 1) [[clang::unlikely]] {
+                error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
+                return error;
+            }
+
+            const nadir_u128_t *value = nadir_list_get(comptime->arguments, 0);
+
+            const auto lower = (nadir_u64_t) *value;
+            const auto upper = (nadir_u64_t) (*value >> 64);
+
+            *result = __builtin_popcountll(lower) + __builtin_popcountll(upper);
             break;
         }
         case NADIR_COMPTIME_KIND_BSWAP: {

@@ -183,6 +183,7 @@ as you need.
 | **`@shl(value, bits)`**                   | Shifts the bits of `value` to the left by the specified number of `bits`.                         |
 | **`@shr(value, bits)`**                   | Shifts the bits of `value` to the right by the specified number of `bits`.                        |
 | **`@not(value)`**                         | Flips every single bit inside your `value`.                                                       |
+| **`@popcnt(value)`**                      | Returns the total number of set `1` bits (population count) inside the given `value`.             |
 | **`@bswap(value, width)`**                | Reverses the byte order of the `value`. `width` must be either `16`, `32`or `64`.                 |
 | **`@mask(width)`**                        | Generates a right-aligned bitmask of consecutive `1`s of the specified `width`.                   |
 | **`@insert(base, value, offset, width)`** | Inserts a `value` into a `base` at a specific `offset`, constrained to a specific `width`.        |

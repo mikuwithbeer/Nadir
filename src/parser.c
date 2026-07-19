@@ -70,9 +70,9 @@ static inline nadir_parser_error_t nadir_parser_consume(nadir_parser_t *parser,
                                                         nadir_token_t **output) {
     auto error = (nadir_parser_error_t){};
 
-    auto token = nadir_parser_peek(parser);
+    const auto token = nadir_parser_peek(parser);
     if (token && token->kind == kind) {
-        token = nadir_parser_advance(parser);
+        ++parser->token_index;
         if (output != nullptr) {
             *output = token;
         }
@@ -405,7 +405,7 @@ static nadir_parser_error_t nadir_parser_run_procedure_parameters(nadir_parser_t
 
             expect_parameter = next_token && next_token->kind == NADIR_TOKEN_KIND_COMMA;
             if (expect_parameter) {
-                (void) nadir_parser_advance(parser); // Consume the comma
+                ++parser->token_index; // Consume the comma
             }
         } while (expect_parameter);
     }
@@ -539,34 +539,39 @@ static nadir_parser_error_t nadir_parser_run_expression(nadir_parser_t *parser,
 
     switch (next_token->kind) {
         case NADIR_TOKEN_KIND_COMPTIME:
-            (void) nadir_parser_advance(parser);
+            ++parser->token_index;
 
             return nadir_parser_run_call(parser, next_token, expression);
         case NADIR_TOKEN_KIND_NUMBER:
-            (void) nadir_parser_advance(parser);
+            ++parser->token_index;
+
             expression->kind = NADIR_AST_EXPRESSION_KIND_NUMBER;
             expression->token = next_token;
 
             return error;
         case NADIR_TOKEN_KIND_STORE_ADDRESS:
-            (void) nadir_parser_advance(parser);
+            ++parser->token_index;
+
             expression->kind = NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS;
             expression->token = next_token;
 
             return error;
         case NADIR_TOKEN_KIND_LOAD_ADDRESS:
-            (void) nadir_parser_advance(parser);
+            ++parser->token_index;
+
             expression->kind = NADIR_AST_EXPRESSION_KIND_LOAD_ADDRESS;
             expression->token = next_token;
 
             return error;
         case NADIR_TOKEN_KIND_UNTIL:
-            (void) nadir_parser_advance(parser);
+            ++parser->token_index;
+
             expression->kind = NADIR_AST_EXPRESSION_KIND_UNTIL;
 
             return nadir_parser_run_padding(parser, next_token, expression);
         case NADIR_TOKEN_KIND_REPEAT:
-            (void) nadir_parser_advance(parser);
+            ++parser->token_index;
+
             expression->kind = NADIR_AST_EXPRESSION_KIND_REPEAT;
 
             return nadir_parser_run_padding(parser, next_token, expression);
@@ -574,7 +579,8 @@ static nadir_parser_error_t nadir_parser_run_expression(nadir_parser_t *parser,
             return nadir_parser_run_ident(parser, expression);
         default:
             if (nadir_token_value_type(next_token->kind)) {
-                (void) nadir_parser_advance(parser);
+                ++parser->token_index;
+
                 expression->kind = NADIR_AST_EXPRESSION_KIND_TYPE;
                 expression->token = next_token;
 
@@ -642,7 +648,7 @@ static nadir_parser_error_t nadir_parser_run_call(nadir_parser_t *parser,
 
             expect_argument = next_token && next_token->kind == NADIR_TOKEN_KIND_COMMA;
             if (expect_argument) {
-                (void) nadir_parser_advance(parser); // Consume the comma
+                ++parser->token_index; // Consume the comma
             }
         } while (expect_argument);
     }

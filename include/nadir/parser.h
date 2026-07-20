@@ -24,7 +24,7 @@ constexpr auto NADIR_PARSER_ARGUMENTS_MAXIMUM = 1 << 4;
 /**
  * @brief Error kinds for the parser.
  */
-typedef enum [[nodiscard]] : nadir_u8_t {
+typedef enum : nadir_u8_t {
     NADIR_PARSER_ERROR_KIND_NONE,
     NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY,
     NADIR_PARSER_ERROR_KIND_UNEXPECTED_TOKEN,

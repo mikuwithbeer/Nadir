@@ -40,7 +40,7 @@ nadir_table_t *nadir_table_new(nadir_arena_t *arena,
     table->size = size;
 
     // Allocate memory for the entry array from the arena.
-    const auto entries_size = table->capacity * sizeof(nadir_table_entry_t);
+    auto const entries_size = table->capacity * sizeof(nadir_table_entry_t);
     nadir_table_entry_t *entries = nadir_arena_allocate(arena, entries_size);
     if (entries != nullptr) {
         memset(entries, 0, entries_size);
@@ -58,7 +58,7 @@ bool nadir_table_insert(nadir_table_t *table,
                         const void *value) {
     // Expand if load factor reaches to half the capacity.
     if (table->length >= table->capacity >> 1) {
-        const auto new_entries = nadir_table_grow(table);
+        auto const new_entries = nadir_table_grow(table);
         if (!new_entries) {
             return false;
         }
@@ -67,7 +67,7 @@ bool nadir_table_insert(nadir_table_t *table,
     }
 
     // Find and locate the appropriate slot.
-    const auto entry = nadir_table_find(table->entries, table->capacity, key, length);
+    auto const entry = nadir_table_find(table->entries, table->capacity, key, length);
     if (entry->exists) {
         return false;
     }
@@ -101,7 +101,7 @@ bool nadir_table_insert(nadir_table_t *table,
 void *nadir_table_fetch(const nadir_table_t *table,
                         const char *key,
                         const nadir_u64_t length) {
-    const auto entry = nadir_table_find(table->entries, table->capacity, key, length);
+    auto const entry = nadir_table_find(table->entries, table->capacity, key, length);
     if (!entry->exists) {
         return nullptr;
     }
@@ -141,7 +141,7 @@ static nadir_table_entry_t *nadir_table_find(nadir_table_entry_t *entries,
                                              const nadir_u64_t capacity,
                                              const char *key,
                                              const nadir_u64_t length) {
-    const auto hash = nadir_table_hash(key, length);
+    auto const hash = nadir_table_hash(key, length);
     nadir_u64_t index = hash & (capacity - 1);
 
     while (entries[index].exists) {
@@ -150,15 +150,15 @@ static nadir_table_entry_t *nadir_table_find(nadir_table_entry_t *entries,
         }
 
         // Linear probe with bitwise wrap-around.
-        index = index + 1 & capacity - 1;
+        index = (index + 1) & (capacity - 1);
     }
 
     return &entries[index]; // Empty slot found
 }
 
 static nadir_table_entry_t *nadir_table_grow(nadir_table_t *table) {
-    const auto new_capacity = table->capacity << 1; // Double the capacity
-    const auto new_entries_size = new_capacity * sizeof(nadir_table_entry_t);
+    auto const new_capacity = table->capacity << 1; // Double the capacity
+    auto const new_entries_size = new_capacity * sizeof(nadir_table_entry_t);
 
     // Allocate the new array from the arena.
     nadir_table_entry_t *new_entries = nadir_arena_allocate(table->arena, new_entries_size);
@@ -169,11 +169,11 @@ static nadir_table_entry_t *nadir_table_grow(nadir_table_t *table) {
     memset(new_entries, 0, new_entries_size); // Zero out the new entries for safety.
 
     for (nadir_u64_t index = 0; index < table->capacity; index++) {
-        const auto old_entry = &table->entries[index];
+        auto const old_entry = &table->entries[index];
 
         // Rehash the old entry into the new table.
         if (old_entry->exists) {
-            const auto new_slot = nadir_table_find(
+            auto const new_slot = nadir_table_find(
                 new_entries,
                 new_capacity,
                 old_entry->key,

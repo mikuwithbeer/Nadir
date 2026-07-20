@@ -56,7 +56,7 @@ static nadir_parser_error_t nadir_parser_run_ident(nadir_parser_t *parser,
 }
 
 [[nodiscard]] static inline nadir_token_t *nadir_parser_advance(nadir_parser_t *parser) {
-    const auto token = nadir_parser_peek(parser);
+    auto const token = nadir_parser_peek(parser);
     if (token == nullptr) {
         return nullptr;
     }
@@ -70,7 +70,7 @@ static inline nadir_parser_error_t nadir_parser_consume(nadir_parser_t *parser,
                                                         nadir_token_t **output) {
     auto error = (nadir_parser_error_t){};
 
-    const auto token = nadir_parser_peek(parser);
+    auto const token = nadir_parser_peek(parser);
     if (token && token->kind == kind) {
         ++parser->token_index;
         if (output != nullptr) {
@@ -167,7 +167,7 @@ nadir_parser_error_t nadir_parser_run(nadir_parser_t *parser) {
     auto error = (nadir_parser_error_t){};
 
     while (error.kind == NADIR_PARSER_ERROR_KIND_NONE) {
-        const auto token = nadir_parser_advance(parser);
+        auto const token = nadir_parser_advance(parser);
         if (!token || token->kind == NADIR_TOKEN_KIND_EOF) {
             break;
         }
@@ -234,7 +234,7 @@ static nadir_parser_error_t nadir_parser_run_constant(nadir_parser_t *parser) {
     }
 
     // List to hold the constant entries.
-    const auto entries = nadir_list_new(parser->arena, sizeof(nadir_ast_declaration_constant_entry_t));
+    auto const entries = nadir_list_new(parser->arena, sizeof(nadir_ast_declaration_constant_entry_t));
     if (entries == nullptr) {
         return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, name_token);
     }
@@ -257,7 +257,7 @@ static nadir_parser_error_t nadir_parser_run_constant(nadir_parser_t *parser) {
         return error;
     }
 
-    const auto declaration = (nadir_ast_declaration_t){
+    auto const declaration = (nadir_ast_declaration_t){
         .token = name_token,
         .kind = NADIR_AST_DECLARATION_KIND_CONSTANT,
         .constant = {
@@ -302,7 +302,7 @@ static nadir_parser_error_t nadir_parser_run_constant_entry(nadir_parser_t *pars
         return error;
     }
 
-    const auto entry = (nadir_ast_declaration_constant_entry_t){
+    auto const entry = (nadir_ast_declaration_constant_entry_t){
         .name = name_token,
         .value = constant_expression,
     };
@@ -327,13 +327,13 @@ static nadir_parser_error_t nadir_parser_run_procedure(nadir_parser_t *parser) {
     }
 
     // List to hold the procedure parameters.
-    const auto parameters = nadir_list_new(parser->arena, sizeof(nadir_token_kind_t));
+    auto const parameters = nadir_list_new(parser->arena, sizeof(nadir_token_kind_t));
     if (parameters == nullptr) {
         return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, name_token);
     }
 
     // List to hold the procedure body statements.
-    const auto statements = nadir_list_new(parser->arena, sizeof(nadir_ast_expression_t));
+    auto const statements = nadir_list_new(parser->arena, sizeof(nadir_ast_expression_t));
     if (statements == nullptr) {
         return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, name_token);
     }
@@ -358,7 +358,7 @@ static nadir_parser_error_t nadir_parser_run_procedure(nadir_parser_t *parser) {
         return error;
     }
 
-    const auto declaration = (nadir_ast_declaration_t){
+    auto const declaration = (nadir_ast_declaration_t){
         .token = name_token,
         .kind = NADIR_AST_DECLARATION_KIND_PROCEDURE,
         .procedure = {
@@ -392,7 +392,7 @@ static nadir_parser_error_t nadir_parser_run_procedure_parameters(nadir_parser_t
                 return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
             }
 
-            const auto kind = next_token->kind;
+            auto const kind = next_token->kind;
             if (nadir_token_value_type(kind)) {
                 if (!nadir_list_append(parameters, &kind)) {
                     return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, next_token);
@@ -423,7 +423,7 @@ static nadir_parser_error_t nadir_parser_run_binary(nadir_parser_t *parser,
     }
 
     // Guard against an out-of-range origin number.
-    const auto origin_value = (nadir_u64_t) origin_token->number;
+    auto const origin_value = (nadir_u64_t) origin_token->number;
     if (origin_token->number != origin_value) {
         return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_INVALID_BINARY_ORIGIN, origin_token);
     }
@@ -434,7 +434,7 @@ static nadir_parser_error_t nadir_parser_run_binary(nadir_parser_t *parser,
     }
 
     // List to hold the binary body statements.
-    const auto statements = nadir_list_new(parser->arena, sizeof(nadir_ast_expression_t));
+    auto const statements = nadir_list_new(parser->arena, sizeof(nadir_ast_expression_t));
     if (statements == nullptr) {
         return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY, token);
     }
@@ -444,7 +444,7 @@ static nadir_parser_error_t nadir_parser_run_binary(nadir_parser_t *parser,
         return error;
     }
 
-    const auto declaration = (nadir_ast_declaration_t){
+    auto const declaration = (nadir_ast_declaration_t){
         .token = token,
         .kind = NADIR_AST_DECLARATION_KIND_BINARY,
         .binary = {
@@ -468,7 +468,7 @@ static nadir_parser_error_t nadir_parser_run_include(nadir_parser_t *parser,
         return error;
     }
 
-    const auto declaration = (nadir_ast_declaration_t){
+    auto const declaration = (nadir_ast_declaration_t){
         .token = token,
         .kind = NADIR_AST_DECLARATION_KIND_INCLUDE,
         .include.path = path_token,
@@ -529,10 +529,10 @@ static nadir_parser_error_t nadir_parser_run_statements(nadir_parser_t *parser,
 
 static nadir_parser_error_t nadir_parser_run_expression(nadir_parser_t *parser,
                                                         nadir_ast_expression_t *expression) {
-    const auto error = (nadir_parser_error_t){};
+    auto const error = (nadir_parser_error_t){};
 
     // Peek to decide how to parse the expression.
-    const auto next_token = nadir_parser_peek(parser);
+    auto const next_token = nadir_parser_peek(parser);
     if (next_token == nullptr) {
         return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, nullptr);
     }
@@ -707,7 +707,7 @@ static nadir_parser_error_t nadir_parser_run_ident(nadir_parser_t *parser,
         return error;
     }
 
-    const auto next_token = nadir_parser_peek(parser);
+    auto const next_token = nadir_parser_peek(parser);
     if (next_token == nullptr) {
         return nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF, ident_token);
     }

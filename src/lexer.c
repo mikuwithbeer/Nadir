@@ -50,13 +50,13 @@ static nadir_lexer_error_t nadir_lexer_collect_eof(nadir_lexer_t *lexer);
 
 static inline bool nadir_lexer_read_file(nadir_lexer_t *lexer,
                                          const char *path) {
-    const auto file = fopen(path, "rb");
+    auto const file = fopen(path, "rb");
     if (file == nullptr) {
         return false;
     }
 
     fseek(file, 0, SEEK_END);
-    const auto size = ftell(file); // End of the file to determine the size
+    auto const size = ftell(file); // End of the file to determine the size
     fseek(file, 0, SEEK_SET);
 
     if (size <= 0) {
@@ -70,7 +70,7 @@ static inline bool nadir_lexer_read_file(nadir_lexer_t *lexer,
         return false;
     }
 
-    const auto length = fread(source, sizeof(char), (nadir_u64_t) size, file);
+    auto const length = fread(source, sizeof(char), (nadir_u64_t) size, file);
     source[length] = '\0'; // Null-terminate the buffer for safety
 
     if ((nadir_u64_t) size != length) {
@@ -104,7 +104,7 @@ nadir_lexer_t *nadir_lexer_new(nadir_arena_t *arena,
         return nullptr;
     }
 
-    const auto tokens = nadir_list_new(arena, sizeof(nadir_token_t));
+    auto const tokens = nadir_list_new(arena, sizeof(nadir_token_t));
     if (tokens == nullptr) {
         return nullptr;
     }
@@ -450,8 +450,8 @@ static nadir_lexer_error_t nadir_lexer_collect_ident(nadir_lexer_t *lexer,
     if (nadir_token_value_whitespace(character) || nadir_token_value_single(character)) {
         lexer->state = NADIR_LEXER_STATE_DEFAULT;
 
-        const auto string_value = lexer->token.string.value;
-        const auto string_count = lexer->token.string.count;
+        auto const string_value = lexer->token.string.value;
+        auto const string_count = lexer->token.string.count;
 
         // Reserved keywords and types are also valid identifiers, so we check for them here.
         nadir_token_kind_t kind;

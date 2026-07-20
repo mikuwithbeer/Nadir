@@ -78,12 +78,12 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
 
     switch (comptime->kind) {
         case NADIR_COMPTIME_KIND_ARG: {
-            if (context == nullptr) [[clang::unlikely]] {
+            if (context == nullptr) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_NULL_CONTEXT;
                 return error;
             }
 
-            if (comptime->arguments->length != 1) [[clang::unlikely]] {
+            if (comptime->arguments->length != 1) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -91,13 +91,13 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             const nadir_i128_t *argument = nadir_list_get(comptime->arguments, 0);
 
             // Argument should be a location in the context list.
-            const auto argument_location = (nadir_u64_t) *argument;
-            if (argument_location != *argument) [[clang::unlikely]] {
+            auto const argument_location = (nadir_u64_t) *argument;
+            if (argument_location != *argument) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_OUT_OF_BOUND;
                 return error;
             }
 
-            if (argument_location >= context->length) [[clang::unlikely]] {
+            if (argument_location >= context->length) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_OUT_OF_BOUND;
                 return error;
             }
@@ -106,7 +106,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             break;
         }
         case NADIR_COMPTIME_KIND_CAST: {
-            if (comptime->arguments->length != 2) [[clang::unlikely]] {
+            if (comptime->arguments->length != 2) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -148,7 +148,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             break;
         }
         case NADIR_COMPTIME_KIND_CLAMP: {
-            if (comptime->arguments->length != 3) [[clang::unlikely]] {
+            if (comptime->arguments->length != 3) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -168,7 +168,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             break;
         }
         case NADIR_COMPTIME_KIND_MAX: {
-            if (comptime->arguments->length != 2) [[clang::unlikely]] {
+            if (comptime->arguments->length != 2) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -185,7 +185,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             break;
         }
         case NADIR_COMPTIME_KIND_MIN: {
-            if (comptime->arguments->length != 2) [[clang::unlikely]] {
+            if (comptime->arguments->length != 2) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -202,7 +202,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             break;
         }
         case NADIR_COMPTIME_KIND_HERE: {
-            if (comptime->arguments->length != 0) [[clang::unlikely]] {
+            if (comptime->arguments->length != 0) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -212,7 +212,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
         }
 
         case NADIR_COMPTIME_KIND_ABS: {
-            if (comptime->arguments->length != 1) [[clang::unlikely]] {
+            if (comptime->arguments->length != 1) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -228,7 +228,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             break;
         }
         case NADIR_COMPTIME_KIND_NEG: {
-            if (comptime->arguments->length != 1) [[clang::unlikely]] {
+            if (comptime->arguments->length != 1) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -239,7 +239,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             break;
         }
         case NADIR_COMPTIME_KIND_ADD: {
-            if (comptime->arguments->length < 2) [[clang::unlikely]] {
+            if (comptime->arguments->length < 2) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -259,7 +259,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
         case NADIR_COMPTIME_KIND_MUL:
         case NADIR_COMPTIME_KIND_DIV:
         case NADIR_COMPTIME_KIND_MOD: {
-            if (comptime->arguments->length != 2) [[clang::unlikely]] {
+            if (comptime->arguments->length != 2) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -276,7 +276,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
                     break;
                 case NADIR_COMPTIME_KIND_DIV:
                     // Guard against division by zero.
-                    if (*right == 0) [[clang::unlikely]] {
+                    if (*right == 0) {
                         error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_DIVISION_BY_ZERO;
                         return error;
                     }
@@ -285,7 +285,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
                     break;
                 case NADIR_COMPTIME_KIND_MOD:
                     // Guard against division by zero.
-                    if (*right == 0) [[clang::unlikely]] {
+                    if (*right == 0) {
                         error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_DIVISION_BY_ZERO;
                         return error;
                     }
@@ -302,7 +302,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
         case NADIR_COMPTIME_KIND_OR:
         case NADIR_COMPTIME_KIND_XOR:
         case NADIR_COMPTIME_KIND_AND: {
-            if (comptime->arguments->length < 2) [[clang::unlikely]] {
+            if (comptime->arguments->length < 2) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -332,7 +332,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
         }
         case NADIR_COMPTIME_KIND_SHL:
         case NADIR_COMPTIME_KIND_SHR: {
-            if (comptime->arguments->length != 2) [[clang::unlikely]] {
+            if (comptime->arguments->length != 2) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -341,7 +341,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             const nadir_i128_t *right = nadir_list_get(comptime->arguments, 1);
 
             // Guard against shifting by an invalid amount.
-            if (*right < 0 || *right > NADIR_I8_MAXIMUM) [[clang::unlikely]] {
+            if (*right < 0 || *right > NADIR_I8_MAXIMUM) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_SHIFT_OUT_OF_BOUND;
                 return error;
             }
@@ -355,7 +355,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             break;
         }
         case NADIR_COMPTIME_KIND_NOT: {
-            if (comptime->arguments->length != 1) [[clang::unlikely]] {
+            if (comptime->arguments->length != 1) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -366,21 +366,21 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             break;
         }
         case NADIR_COMPTIME_KIND_POPCNT: {
-            if (comptime->arguments->length != 1) [[clang::unlikely]] {
+            if (comptime->arguments->length != 1) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
 
             const nadir_u128_t *value = nadir_list_get(comptime->arguments, 0);
 
-            const auto lower = (nadir_u64_t) *value;
-            const auto upper = (nadir_u64_t) (*value >> 64);
+            auto const lower = (nadir_u64_t) *value;
+            auto const upper = (nadir_u64_t) (*value >> 64);
 
             *result = __builtin_popcountll(lower) + __builtin_popcountll(upper);
             break;
         }
         case NADIR_COMPTIME_KIND_BSWAP: {
-            if (comptime->arguments->length != 2) [[clang::unlikely]] {
+            if (comptime->arguments->length != 2) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -390,7 +390,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
 
             switch (*width) {
                 case 16:
-                    if (*value < NADIR_U16_MINIMUM || *value > NADIR_U16_MAXIMUM) [[clang::unlikely]] {
+                    if (*value < NADIR_U16_MINIMUM || *value > NADIR_U16_MAXIMUM) {
                         error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_OUT_OF_BOUND;
                         return error;
                     }
@@ -398,7 +398,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
                     *result = __builtin_bswap16((nadir_u16_t) *value);
                     break;
                 case 32:
-                    if (*value < NADIR_U32_MINIMUM || *value > NADIR_U32_MAXIMUM) [[clang::unlikely]] {
+                    if (*value < NADIR_U32_MINIMUM || *value > NADIR_U32_MAXIMUM) {
                         error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_OUT_OF_BOUND;
                         return error;
                     }
@@ -406,7 +406,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
                     *result = __builtin_bswap32((nadir_u32_t) *value);
                     break;
                 case 64:
-                    if (*value < NADIR_U64_MINIMUM || *value > NADIR_U64_MAXIMUM) [[clang::unlikely]] {
+                    if (*value < NADIR_U64_MINIMUM || *value > NADIR_U64_MAXIMUM) {
                         error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_OUT_OF_BOUND;
                         return error;
                     }
@@ -421,7 +421,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             break;
         }
         case NADIR_COMPTIME_KIND_MASK: {
-            if (comptime->arguments->length != 1) [[clang::unlikely]] {
+            if (comptime->arguments->length != 1) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -429,7 +429,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             const nadir_i128_t *width = nadir_list_get(comptime->arguments, 0);
 
             // Guard against invalid bit width.
-            if (*width < 0 || *width > 128) [[clang::unlikely]] {
+            if (*width < 0 || *width > 128) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_INVALID_BIT_WIDTH;
                 return error;
             }
@@ -443,7 +443,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             break;
         }
         case NADIR_COMPTIME_KIND_INSERT: {
-            if (comptime->arguments->length != 4) [[clang::unlikely]] {
+            if (comptime->arguments->length != 4) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -458,7 +458,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
                 || *offset > 127
                 || *width < 0
                 || *width > 128
-                || *offset + *width > 128) [[clang::unlikely]] {
+                || *offset + *width > 128) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_INVALID_BIT_WIDTH;
                 return error;
             }
@@ -474,7 +474,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             break;
         }
         case NADIR_COMPTIME_KIND_EXTRACT: {
-            if (comptime->arguments->length != 3) [[clang::unlikely]] {
+            if (comptime->arguments->length != 3) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -488,13 +488,13 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
                 || *offset > 127
                 || *width < 0
                 || *width > 128
-                || *offset + *width > 128) [[clang::unlikely]] {
+                || *offset + *width > 128) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_INVALID_BIT_WIDTH;
                 return error;
             }
 
             nadir_i128_t mask;
-            if (*width == 128) [[clang::unlikely]] {
+            if (*width == 128) {
                 mask = ~(nadir_i128_t) 0; // All bits set
             } else {
                 mask = ((nadir_i128_t) 1 << *width) - 1;
@@ -505,7 +505,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
         }
         case NADIR_COMPTIME_KIND_ROTL:
         case NADIR_COMPTIME_KIND_ROTR: {
-            if (comptime->arguments->length != 3) [[clang::unlikely]] {
+            if (comptime->arguments->length != 3) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -515,22 +515,22 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             const nadir_i128_t *width = nadir_list_get(comptime->arguments, 2);
 
             // Guard against invalid bit width.
-            if (*width < 1 || *width > 128) [[clang::unlikely]] {
+            if (*width < 1 || *width > 128) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_INVALID_BIT_WIDTH;
                 return error;
             }
 
             // Guard against negative shift values.
-            if (*shift < 0) [[clang::unlikely]] {
+            if (*shift < 0) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_SHIFT_OUT_OF_BOUND;
                 return error;
             }
 
-            const auto bits = (nadir_u32_t) *width;
-            const auto rotation = (nadir_u32_t) (*shift % bits);
+            auto const bits = (nadir_u32_t) *width;
+            auto const rotation = (nadir_u32_t) (*shift % bits);
 
-            const auto mask = bits == 128 ? NADIR_U128_MAXIMUM : ((nadir_u128_t) 1 << bits) - 1;
-            const auto normalized = (nadir_u128_t) *value & mask;
+            auto const mask = bits == 128 ? NADIR_U128_MAXIMUM : ((nadir_u128_t) 1 << bits) - 1;
+            auto const normalized = (nadir_u128_t) *value & mask;
 
             // Early out for no-op rotations.
             if (rotation == 0) {
@@ -548,7 +548,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
         }
 
         case NADIR_COMPTIME_KIND_ASSERT: {
-            if (comptime->arguments->length != 2) [[clang::unlikely]] {
+            if (comptime->arguments->length != 2) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 return error;
             }
@@ -565,7 +565,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             break;
         }
         case NADIR_COMPTIME_KIND_IF: {
-            if (comptime->arguments->length != 3) [[clang::unlikely]] {
+            if (comptime->arguments->length != 3) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 break;
             }
@@ -588,7 +588,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
         case NADIR_COMPTIME_KIND_LE:
         case NADIR_COMPTIME_KIND_GE:
         case NADIR_COMPTIME_KIND_NEQ: {
-            if (comptime->arguments->length != 2) [[clang::unlikely]] {
+            if (comptime->arguments->length != 2) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 break;
             }
@@ -623,7 +623,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
         }
         case NADIR_COMPTIME_KIND_LOR:
         case NADIR_COMPTIME_KIND_LAND: {
-            if (comptime->arguments->length != 2) [[clang::unlikely]] {
+            if (comptime->arguments->length != 2) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 break;
             }
@@ -640,7 +640,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             break;
         }
         case NADIR_COMPTIME_KIND_LNOT: {
-            if (comptime->arguments->length != 1) [[clang::unlikely]] {
+            if (comptime->arguments->length != 1) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 break;
             }
@@ -651,7 +651,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
             break;
         }
         case NADIR_COMPTIME_KIND_BETWEEN: {
-            if (comptime->arguments->length != 3) [[clang::unlikely]] {
+            if (comptime->arguments->length != 3) {
                 error.kind = NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH;
                 break;
             }

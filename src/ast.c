@@ -17,7 +17,7 @@ nadir_ast_t *nadir_ast_new(nadir_arena_t *arena) {
 
     ast->arena = arena;
 
-    const auto declarations = nadir_list_new(arena, sizeof(nadir_ast_declaration_t));
+    auto const declarations = nadir_list_new(arena, sizeof(nadir_ast_declaration_t));
     if (declarations == nullptr) {
         return nullptr;
     }

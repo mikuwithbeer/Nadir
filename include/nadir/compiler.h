@@ -26,7 +26,7 @@ constexpr auto NADIR_COMPILER_ARENA_CAPACITY = 1 << 10;
 /**
  * @brief Error kinds for the compiler.
  */
-typedef enum [[nodiscard]] : nadir_u8_t {
+typedef enum : nadir_u8_t {
     NADIR_COMPILER_ERROR_KIND_NONE,
     NADIR_COMPILER_ERROR_KIND_EMPTY,
     NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY,

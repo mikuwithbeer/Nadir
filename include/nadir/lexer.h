@@ -33,7 +33,7 @@ typedef enum : nadir_u8_t {
 /**
  * @brief Error kinds for the lexer.
  */
-typedef enum [[nodiscard]] : nadir_u8_t {
+typedef enum : nadir_u8_t {
     NADIR_LEXER_ERROR_KIND_NONE,
     NADIR_LEXER_ERROR_KIND_BUFFER_OVERFLOW,
     NADIR_LEXER_ERROR_KIND_OUT_OF_MEMORY,

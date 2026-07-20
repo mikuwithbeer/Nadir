@@ -45,7 +45,7 @@ bool nadir_cli_parse(nadir_cli_t *cli,
                      char **argv) {
     while (true) {
         // Parse the next command-line option.
-        const auto option = getopt_long(argc, argv, "hvdqi:o:", cli_options, nullptr);
+        auto const option = getopt_long(argc, argv, "hvdqi:o:", cli_options, nullptr);
         if (option == -1) {
             break;
         }
@@ -105,7 +105,7 @@ bool nadir_cli_write(const nadir_cli_t *cli,
         return false;
     }
 
-    const auto written = fwrite(output->items, output->size, output->length, output_file);
+    auto const written = fwrite(output->items, output->size, output->length, output_file);
 
     if (output->length != written) {
         fclose(output_file);

@@ -53,22 +53,22 @@ nadir_compiler_t *nadir_compiler_new(nadir_arena_t *arena,
     compiler->binary_origin = 0;
     compiler->binary_calculation = 0;
 
-    const auto addresses = nadir_table_new(arena, sizeof(nadir_u64_t));
+    auto const addresses = nadir_table_new(arena, sizeof(nadir_u64_t));
     if (addresses == nullptr) {
         return nullptr;
     }
 
-    const auto constants = nadir_table_new(arena, sizeof(nadir_compiler_constant_t));
+    auto const constants = nadir_table_new(arena, sizeof(nadir_compiler_constant_t));
     if (constants == nullptr) {
         return nullptr;
     }
 
-    const auto procedures = nadir_table_new(arena, sizeof(nadir_compiler_procedure_t));
+    auto const procedures = nadir_table_new(arena, sizeof(nadir_compiler_procedure_t));
     if (procedures == nullptr) {
         return nullptr;
     }
 
-    const auto output = nadir_list_new(arena, sizeof(nadir_u8_t));
+    auto const output = nadir_list_new(arena, sizeof(nadir_u8_t));
     if (output == nullptr) {
         return nullptr;
     }
@@ -143,7 +143,7 @@ nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler) {
                 }
 
                 // Guard against values that cannot fit in a single byte.
-                const auto statement_byte = (nadir_u8_t) statement_value;
+                auto const statement_byte = (nadir_u8_t) statement_value;
                 if (statement_value != statement_byte) {
                     return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH, statement->token);
                 }
@@ -199,7 +199,7 @@ nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler) {
                 }
 
                 for (nadir_u64_t i = 0; i < repeat_bytes; ++i) {
-                    const auto padding_byte = (nadir_u8_t) padding_value; // Already validated to be within the range
+                    auto const padding_byte = (nadir_u8_t) padding_value; // Already validated to be within the range
                     if (!nadir_list_append(compiler->output, &padding_byte)) {
                         return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, statement->token);
                     }
@@ -235,14 +235,14 @@ static nadir_compiler_error_t nadir_compiler_prepare_constant(nadir_compiler_t *
                                                               const nadir_ast_declaration_constant_t *declaration) {
     auto error = (nadir_compiler_error_t){};
 
-    const auto object_string_value = declaration->name->string.value;
-    const auto object_string_count = declaration->name->string.count;
+    auto const object_string_value = declaration->name->string.value;
+    auto const object_string_count = declaration->name->string.count;
 
     for (nadir_u64_t index = 0; index < declaration->entries->length; ++index) {
         const nadir_ast_declaration_constant_entry_t *constant_entry = nadir_list_get(declaration->entries, index);
 
-        const auto field_string_value = constant_entry->name->string.value;
-        const auto field_string_count = constant_entry->name->string.count;
+        auto const field_string_value = constant_entry->name->string.value;
+        auto const field_string_count = constant_entry->name->string.count;
 
         nadir_i128_t constant_value; // Variable to hold the evaluated constant value
         error = nadir_compiler_evaluate(compiler, nullptr, &constant_entry->value, &constant_value);
@@ -260,7 +260,7 @@ static nadir_compiler_error_t nadir_compiler_prepare_constant(nadir_compiler_t *
         memcpy(member_key + member_key_length, field_string_value, field_string_count);
         member_key_length += field_string_count;
 
-        const auto constant = (nadir_compiler_constant_t){
+        const nadir_compiler_constant_t constant = {
             .token = constant_entry->name,
             .value = constant_value,
         };
@@ -275,7 +275,7 @@ static nadir_compiler_error_t nadir_compiler_prepare_constant(nadir_compiler_t *
 
 static nadir_compiler_error_t nadir_compiler_prepare_procedure(const nadir_compiler_t *compiler,
                                                                const nadir_ast_declaration_procedure_t *declaration) {
-    const auto procedure = (nadir_compiler_procedure_t){
+    const nadir_compiler_procedure_t procedure = {
         .token = declaration->name,
         .parameters = declaration->parameters,
         .statements = declaration->statements,
@@ -320,11 +320,11 @@ static nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *co
                 break;
             }
             case NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS: {
-                const auto memory_address = compiler->binary_calculation + compiler->binary_origin;
+                auto const memory_address = compiler->binary_calculation + compiler->binary_origin;
 
                 // Remove the leading character to get the actual address name.
-                const auto address_string_value = statement->token->string.value + 1;
-                const auto address_string_count = statement->token->string.count - 1;
+                auto const address_string_value = statement->token->string.value + 1;
+                auto const address_string_count = statement->token->string.count - 1;
 
                 if (!nadir_table_insert(compiler->addresses,
                                         address_string_value,
@@ -338,7 +338,7 @@ static nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *co
             case NADIR_AST_EXPRESSION_KIND_UNTIL:
             case NADIR_AST_EXPRESSION_KIND_REPEAT: {
                 nadir_i128_t padding_times; // Variable to hold the evaluated padding times value
-                const auto error = nadir_compiler_evaluate(compiler, nullptr, statement->padding.times, &padding_times);
+                auto const error = nadir_compiler_evaluate(compiler, nullptr, statement->padding.times, &padding_times);
                 if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
                     return error;
                 }
@@ -350,7 +350,7 @@ static nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *co
                 }
 
                 // Guaranteed to be within the range of a 64-bit unsigned integer, so we can safely cast it.
-                const auto repeat_bytes = (nadir_u64_t) padding_times;
+                auto const repeat_bytes = (nadir_u64_t) padding_times;
                 if (statement->kind == NADIR_AST_EXPRESSION_KIND_UNTIL) {
                     // We need to check if the current output length does not exceed the specified padding times, as it would be out of range.
                     if (compiler->binary_calculation >= repeat_bytes) {
@@ -473,11 +473,11 @@ static nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler
             break;
         }
         case NADIR_AST_EXPRESSION_KIND_MEMBER: {
-            const auto object_string_value = expression->token->string.value;
-            const auto object_string_count = expression->token->string.count;
+            auto const object_string_value = expression->token->string.value;
+            auto const object_string_count = expression->token->string.count;
 
-            const auto field_string_value = expression->member.field->string.value;
-            const auto field_string_count = expression->member.field->string.count;
+            auto const field_string_value = expression->member.field->string.value;
+            auto const field_string_count = expression->member.field->string.count;
 
             // Create a unique member key for the constant in the format "object.field".
             char member_key[NADIR_COMPILER_MEMBER_MAXIMUM] = {};
@@ -505,8 +505,8 @@ static nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler
             break;
         case NADIR_AST_EXPRESSION_KIND_LOAD_ADDRESS: {
             // Remove the leading character to get the actual address name.
-            const auto address_value = expression->token->string.value + 1;
-            const auto address_count = expression->token->string.count - 1;
+            auto const address_value = expression->token->string.value + 1;
+            auto const address_count = expression->token->string.count - 1;
 
             const nadir_u64_t *address = nadir_table_fetch(compiler->addresses, address_value, address_count);
             if (address == nullptr) {
@@ -535,7 +535,7 @@ static nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t 
     }
 
     // List to hold the evaluated argument values for the compile-time call.
-    const auto arguments = nadir_list_new(&comptime_arena, sizeof(nadir_i128_t));
+    auto const arguments = nadir_list_new(&comptime_arena, sizeof(nadir_i128_t));
     if (arguments == nullptr) {
         error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
         goto cleanup;
@@ -556,13 +556,13 @@ static nadir_compiler_error_t nadir_compiler_evaluate_comptime(nadir_compiler_t 
         }
     }
 
-    const auto kind = nadir_comptime_kind(expression->token->string.value, expression->token->string.count);
+    auto const kind = nadir_comptime_kind(expression->token->string.value, expression->token->string.count);
     if (kind == NADIR_COMPTIME_KIND_NONE) {
         error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_UNDEFINED_COMPTIME, expression->token);
         goto cleanup;
     }
 
-    const auto comptime = (nadir_comptime_t){
+    const nadir_comptime_t comptime = {
         .kind = kind,
         .arguments = arguments,
     };

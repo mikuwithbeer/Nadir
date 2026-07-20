@@ -34,7 +34,7 @@ bool nadir_list_reserve(nadir_list_t *list,
         return true;
     }
 
-    const auto new_items = nadir_arena_allocate(list->arena, capacity * list->size);
+    auto const new_items = nadir_arena_allocate(list->arena, capacity * list->size);
     if (new_items == nullptr) {
         return false;
     }

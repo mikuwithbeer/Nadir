@@ -44,12 +44,12 @@ nadir_module_t *nadir_module_new(nadir_arena_t *arena) {
         return nullptr;
     }
 
-    const auto files = nadir_table_new(arena, sizeof(bool));
+    auto const files = nadir_table_new(arena, sizeof(bool));
     if (files == nullptr) {
         return nullptr;
     }
 
-    const auto ast = nadir_ast_new(arena);
+    auto const ast = nadir_ast_new(arena);
     if (ast == nullptr) {
         return nullptr;
     }
@@ -69,8 +69,8 @@ bool nadir_module_resolve(nadir_module_t *module,
         return false;
     }
 
-    const auto absolute_length = strlen(absolute_path);
-    const auto absolute_loaded = true;
+    auto const absolute_length = strlen(absolute_path);
+    auto const absolute_loaded = true;
 
     // Guard against importing the same module multiple times.
     if (!nadir_table_insert(module->files, absolute_path, absolute_length, &absolute_loaded)) {
@@ -78,7 +78,7 @@ bool nadir_module_resolve(nadir_module_t *module,
         return false;
     }
 
-    const auto ast = nadir_module_parse(module, absolute_path);
+    auto const ast = nadir_module_parse(module, absolute_path);
     if (ast == nullptr) {
         return false;
     }
@@ -87,8 +87,8 @@ bool nadir_module_resolve(nadir_module_t *module,
         const nadir_ast_declaration_t *declaration = nadir_list_get(ast->declarations, index);
 
         if (declaration->kind == NADIR_AST_DECLARATION_KIND_INCLUDE) {
-            const auto path_start = declaration->include.path->string.value;
-            const auto path_count = declaration->include.path->string.count;
+            auto const path_start = declaration->include.path->string.value;
+            auto const path_count = declaration->include.path->string.count;
 
             if (path_count >= NADIR_MODULE_PATH_MAXIMUM || path_count < NADIR_MODULE_PATH_MINIMUM) {
                 fprintf(stderr,
@@ -135,20 +135,20 @@ static nadir_ast_t *nadir_module_parse(const nadir_module_t *module,
                                        const char *absolute_path) {
     auto error = (nadir_error_t){};
 
-    const auto lexer = nadir_lexer_new(module->arena, absolute_path);
+    auto const lexer = nadir_lexer_new(module->arena, absolute_path);
     if (lexer == nullptr) {
         fprintf(stderr, "error(lexer): failed to initialize for '%s'\n", absolute_path);
         return nullptr;
     }
 
-    const auto lexer_error = nadir_lexer_collect(lexer);
+    auto const lexer_error = nadir_lexer_collect(lexer);
     if (lexer_error.kind != NADIR_LEXER_ERROR_KIND_NONE) {
         error = (nadir_error_t){
             .kind = NADIR_ERROR_KIND_LEXER,
             .lexer = lexer_error
         };
 
-        const auto message = nadir_error_encode(module->arena, &error);
+        auto const message = nadir_error_encode(module->arena, &error);
         if (message != nullptr) {
             fprintf(stderr, "%s\n", message);
         } else {
@@ -158,20 +158,20 @@ static nadir_ast_t *nadir_module_parse(const nadir_module_t *module,
         return nullptr;
     }
 
-    const auto parser = nadir_parser_new(module->arena, lexer->tokens);
+    auto const parser = nadir_parser_new(module->arena, lexer->tokens);
     if (parser == nullptr) {
         fprintf(stderr, "error(parser): failed to initialize for '%s'\n", absolute_path);
         return nullptr;
     }
 
-    const auto parser_error = nadir_parser_run(parser);
+    auto const parser_error = nadir_parser_run(parser);
     if (parser_error.kind != NADIR_PARSER_ERROR_KIND_NONE) {
         error = (nadir_error_t){
             .kind = NADIR_ERROR_KIND_PARSER,
             .parser = parser_error
         };
 
-        const auto message = nadir_error_encode(module->arena, &error);
+        auto const message = nadir_error_encode(module->arena, &error);
         if (message != nullptr) {
             fprintf(stderr, "%s\n", message);
         } else {
@@ -227,7 +227,7 @@ static void nadir_module_path_include(const char *current_file,
         return;
     }
 
-    const auto directory_length = (int) (last_seperator - current_file + 1);
+    auto const directory_length = (int) (last_seperator - current_file + 1);
     snprintf(output,
              NADIR_MODULE_PATH_MAXIMUM,
              "%.*s%.*s",

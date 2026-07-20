@@ -26,7 +26,7 @@ constexpr auto NADIR_ERROR_STRING_MAXIMUM = 1 << 10;
 /**
  * @brief Error kinds for the assembler.
  */
-typedef enum [[nodiscard]] : nadir_u8_t {
+typedef enum : nadir_u8_t {
     NADIR_ERROR_KIND_NONE,
     NADIR_ERROR_KIND_LEXER,
     NADIR_ERROR_KIND_PARSER,

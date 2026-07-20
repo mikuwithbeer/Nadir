@@ -150,7 +150,7 @@ print:
             .compiler = compiler_error,
         };
 
-        const auto message = nadir_error_encode(&arena, &error);
+        auto const message = nadir_error_encode(&arena, &error);
         if (message != nullptr) {
             fprintf(stderr, "%s\n", message);
         } else {

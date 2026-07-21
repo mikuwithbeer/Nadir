@@ -46,22 +46,22 @@ char *nadir_error_encode(nadir_arena_t *arena,
                 case NADIR_LEXER_ERROR_KIND_NONE:
                     break;
                 case NADIR_LEXER_ERROR_KIND_BUFFER_OVERFLOW:
-                    snprintf(pointer, remaining, "token exceeded the maximum allowed size");
+                    snprintf(pointer, remaining, "token is too long");
                     break;
                 case NADIR_LEXER_ERROR_KIND_OUT_OF_MEMORY:
-                    snprintf(pointer, remaining, "memory allocation failed during tokenization");
+                    snprintf(pointer, remaining, "failed to allocate memory while tokenizing");
                     break;
                 case NADIR_LEXER_ERROR_KIND_ILLEGAL_CHARACTER:
                     snprintf(pointer, remaining, "unrecognized character '%c'", error->lexer.character);
                     break;
                 case NADIR_LEXER_ERROR_KIND_INVALID_NUMBER:
-                    snprintf(pointer, remaining, "malformed numeric literal");
+                    snprintf(pointer, remaining, "invalid numeric literal");
                     break;
                 case NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER:
                     snprintf(pointer, remaining, "unexpected character '%c'", error->lexer.character);
                     break;
                 case NADIR_LEXER_ERROR_KIND_UNEXPECTED_STATE:
-                    snprintf(pointer, remaining, "reached an invalid internal state");
+                    snprintf(pointer, remaining, "oops, the lexer reached an unexpected internal state");
                     break;
             }
             break;
@@ -85,10 +85,10 @@ char *nadir_error_encode(nadir_arena_t *arena,
                 case NADIR_PARSER_ERROR_KIND_NONE:
                     break;
                 case NADIR_PARSER_ERROR_KIND_OUT_OF_MEMORY:
-                    snprintf(pointer, remaining, "memory allocation failed during parsing");
+                    snprintf(pointer, remaining, "failed to allocate memory while parsing");
                     break;
                 case NADIR_PARSER_ERROR_KIND_UNEXPECTED_TOKEN:
-                    snprintf(pointer, remaining, "expected '%s' instead of '%s'",
+                    snprintf(pointer, remaining, "expected token '%s', found '%s'",
                              nadir_token_kind_encode(error->parser.expected),
                              nadir_token_kind_encode(error->parser.token->kind));
                     break;
@@ -96,25 +96,25 @@ char *nadir_error_encode(nadir_arena_t *arena,
                     snprintf(pointer, remaining, "unexpected end of file");
                     break;
                 case NADIR_PARSER_ERROR_KIND_UNEXPECTED_EXPRESSION:
-                    snprintf(pointer, remaining, "unexpected expression");
+                    snprintf(pointer, remaining, "this expression is not valid here");
                     break;
                 case NADIR_PARSER_ERROR_KIND_EMPTY_BLOCK:
-                    snprintf(pointer, remaining, "code block cannot be empty");
+                    snprintf(pointer, remaining, "this block cannot be empty");
                     break;
                 case NADIR_PARSER_ERROR_KIND_MISSING_EXPRESSION:
                     snprintf(pointer, remaining, "expected an expression");
                     break;
                 case NADIR_PARSER_ERROR_KIND_MISSING_BINARY_ORIGIN:
-                    snprintf(pointer, remaining, "missing origin in binary declaration");
+                    snprintf(pointer, remaining, "binary declaration requires an origin");
                     break;
                 case NADIR_PARSER_ERROR_KIND_TOO_MANY_ARGUMENTS:
-                    snprintf(pointer, remaining, "too many arguments provided to procedure call");
+                    snprintf(pointer, remaining, "too many arguments in procedure call");
                     break;
                 case NADIR_PARSER_ERROR_KIND_ALREADY_FOUND_BINARY:
-                    snprintf(pointer, remaining, "redefinition of binary declaration");
+                    snprintf(pointer, remaining, "binary has already been declared");
                     break;
                 case NADIR_PARSER_ERROR_KIND_INVALID_BINARY_ORIGIN:
-                    snprintf(pointer, remaining, "binary origin address is out of range");
+                    snprintf(pointer, remaining, "binary origin is out of range");
                     break;
             }
             break;
@@ -138,136 +138,136 @@ char *nadir_error_encode(nadir_arena_t *arena,
                 case NADIR_COMPILER_ERROR_KIND_NONE:
                     break;
                 case NADIR_COMPILER_ERROR_KIND_EMPTY:
-                    snprintf(pointer, remaining, "input file contains no compilable code");
+                    snprintf(pointer, remaining, "nothing to compile");
                     break;
                 case NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY:
-                    snprintf(pointer, remaining, "memory allocation failed during compilation");
+                    snprintf(pointer, remaining, "failed to allocate memory during compilation");
                     break;
                 case NADIR_COMPILER_ERROR_KIND_MULTIPLE_CONSTANT:
                     snprintf(pointer,
                              remaining,
-                             "redefinition of constant '%.*s'",
+                             "constant '%.*s' is already defined",
                              (int) error->compiler.token->string.count,
                              error->compiler.token->string.value);
                     break;
                 case NADIR_COMPILER_ERROR_KIND_MULTIPLE_PROCEDURE:
                     snprintf(pointer,
                              remaining,
-                             "redefinition of procedure '%.*s'",
+                             "procedure '%.*s' is already defined",
                              (int) error->compiler.token->string.count,
                              error->compiler.token->string.value);
                     break;
                 case NADIR_COMPILER_ERROR_KIND_MULTIPLE_ADDRESS:
                     snprintf(pointer,
                              remaining,
-                             "redefinition of address '%.*s'",
+                             "address '%.*s' is already defined",
                              (int) error->compiler.token->string.count,
                              error->compiler.token->string.value);
                     break;
                 case NADIR_COMPILER_ERROR_KIND_UNDEFINED_CONSTANT:
                     snprintf(pointer,
                              remaining,
-                             "use of undeclared constant '%.*s'",
+                             "unknown constant '%.*s'",
                              (int) error->compiler.token->string.count,
                              error->compiler.token->string.value);
                     break;
                 case NADIR_COMPILER_ERROR_KIND_UNDEFINED_COMPTIME:
                     snprintf(pointer,
                              remaining,
-                             "use of undefined comptime '%.*s'",
+                             "unknown comptime function '%.*s'",
                              (int) error->compiler.token->string.count,
                              error->compiler.token->string.value);
                     break;
                 case NADIR_COMPILER_ERROR_KIND_UNDEFINED_PROCEDURE:
                     snprintf(pointer,
                              remaining,
-                             "use of undeclared procedure '%.*s'",
+                             "unknown procedure '%.*s'",
                              (int) error->compiler.token->string.count,
                              error->compiler.token->string.value);
                     break;
                 case NADIR_COMPILER_ERROR_KIND_UNDEFINED_ADDRESS:
                     snprintf(pointer,
                              remaining,
-                             "use of undeclared address '%.*s'",
+                             "unknown address '%.*s'",
                              (int) error->compiler.token->string.count,
                              error->compiler.token->string.value);
                     break;
                 case NADIR_COMPILER_ERROR_KIND_UNDEFINED_BINARY:
-                    snprintf(pointer, remaining, "binary declaration is missing");
+                    snprintf(pointer, remaining, "missing binary declaration");
                     break;
                 case NADIR_COMPILER_ERROR_KIND_ARGUMENT_MISMATCH:
                     snprintf(pointer,
                              remaining,
-                             "argument count mismatch in call to '%.*s'",
+                             "wrong number of arguments for '%.*s'",
                              (int) error->compiler.token->string.count,
                              error->compiler.token->string.value);
                     break;
-                case NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH:
-                    snprintf(pointer, remaining, "incompatible type for given value");
-                    break;
-                case NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH:
-                    snprintf(pointer, remaining, "value out of byte range");
+                case NADIR_COMPILER_ERROR_KIND_VALUE_OUT_OF_BOUNDS:
+                    snprintf(pointer,
+                             remaining,
+                             "expected a value of type %s",
+                             nadir_token_kind_encode(error->compiler.expected));
                     break;
                 case NADIR_COMPILER_ERROR_KIND_PADDING_OUT_OF_RANGE:
-                    snprintf(pointer, remaining, "padding value exceeds the bound size");
+                    snprintf(pointer, remaining, "padding value is out of range");
                     break;
                 case NADIR_COMPILER_ERROR_KIND_ALREADY_FOUND_BINARY:
-                    snprintf(pointer, remaining, "redefinition of binary declaration");
+                    snprintf(pointer, remaining, "binary has already been declared");
                     break;
 
                 case NADIR_COMPILER_ERROR_KIND_COMPTIME_NULL_CONTEXT:
                     snprintf(pointer,
                              remaining,
-                             "cannot evaluate comptime '%.*s' without an execution context",
+                             "cannot evaluate '%.*s' in this context",
                              (int) error->compiler.token->string.count,
                              error->compiler.token->string.value);
                     break;
                 case NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_COUNT_MISMATCH:
                     snprintf(pointer,
                              remaining,
-                             "incorrect number of arguments passed to comptime function '%.*s'",
+                             "'%.*s' was called with the wrong number of arguments",
                              (int) error->compiler.token->string.count,
                              error->compiler.token->string.value);
                     break;
                 case NADIR_COMPILER_ERROR_KIND_COMPTIME_ARGUMENT_OUT_OF_BOUND:
                     snprintf(pointer,
                              remaining,
-                             "argument to comptime '%.*s' evaluates out of bounds",
+                             "an argument to '%.*s' is out of range",
                              (int) error->compiler.token->string.count,
                              error->compiler.token->string.value);
                     break;
                 case NADIR_COMPILER_ERROR_KIND_COMPTIME_INVALID_ARGUMENT:
                     snprintf(pointer,
                              remaining,
-                             "invalid argument value passed to comptime '%.*s'",
+                             "invalid argument for '%.*s'",
                              (int) error->compiler.token->string.count,
                              error->compiler.token->string.value);
                     break;
                 case NADIR_COMPILER_ERROR_KIND_COMPTIME_DIVISION_BY_ZERO:
                     snprintf(pointer,
                              remaining,
-                             "division by zero during evaluation of comptime '%.*s'",
+                             "division by zero while evaluating '%.*s'",
                              (int) error->compiler.token->string.count,
                              error->compiler.token->string.value);
                     break;
                 case NADIR_COMPILER_ERROR_KIND_COMPTIME_SHIFT_OUT_OF_BOUND:
                     snprintf(pointer,
                              remaining,
-                             "bit shift operation in '%.*s' exceeds the 0-127 bit range",
+                             "shift amount must be between 0 and 127 while evaluating '%.*s'",
                              (int) error->compiler.token->string.count,
                              error->compiler.token->string.value);
                     break;
                 case NADIR_COMPILER_ERROR_KIND_COMPTIME_INVALID_BIT_WIDTH:
                     snprintf(pointer,
                              remaining,
-                             "invalid bit width specified in comptime '%.*s'",
+                             "invalid bit width for '%.*s'",
                              (int) error->compiler.token->string.count,
                              error->compiler.token->string.value);
                     break;
                 case NADIR_COMPILER_ERROR_KIND_COMPTIME_ASSERTION_FAILED:
                     snprintf(pointer,
                              remaining,
-                             "assertion failed during evaluation of comptime '%.*s'",
+                             "assertion failed while evaluating '%.*s'",
                              (int) error->compiler.token->string.count,
                              error->compiler.token->string.value);
                     break;

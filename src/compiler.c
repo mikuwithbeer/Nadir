@@ -25,6 +25,9 @@ static nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *com
                                                            const nadir_ast_expression_t *expression,
                                                            const nadir_compiler_procedure_t *procedure);
 
+static nadir_compiler_error_t nadir_compiler_run_padding(nadir_compiler_t *compiler,
+                                                         const nadir_ast_expression_t *expression);
+
 static nadir_compiler_error_t nadir_compiler_evaluate(nadir_compiler_t *compiler,
                                                       const nadir_context_t *context,
                                                       const nadir_ast_expression_t *expression,
@@ -145,7 +148,10 @@ nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler) {
                 // Guard against values that cannot fit in a single byte.
                 auto const statement_byte = (nadir_u8_t) statement_value;
                 if (statement_value != statement_byte) {
-                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH, statement->token);
+                    error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_VALUE_OUT_OF_BOUNDS, statement->token);
+                    error.expected = NADIR_TOKEN_KIND_TYPE_U8;
+
+                    return error;
                 }
 
                 if (!nadir_list_append(compiler->output, &statement_byte)) {
@@ -171,45 +177,17 @@ nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler) {
 
                 break;
             }
-            case NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS:
-                continue; // Already handled in the preparation phase
             case NADIR_AST_EXPRESSION_KIND_UNTIL:
             case NADIR_AST_EXPRESSION_KIND_REPEAT: {
-                nadir_i128_t padding_value; // Value of the padding expression
-                error = nadir_compiler_evaluate(compiler, nullptr, statement->padding.value, &padding_value);
+                error = nadir_compiler_run_padding(compiler, statement);
                 if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
                     return error;
-                }
-
-                // Guard against padding values that cannot fit in a single byte.
-                if (padding_value < NADIR_U8_MINIMUM || padding_value > NADIR_U8_MAXIMUM) {
-                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH,
-                                                    statement->padding.value->token);
-                }
-
-                nadir_i128_t padding_times; // Value of the padding times expression
-                error = nadir_compiler_evaluate(compiler, nullptr, statement->padding.times, &padding_times);
-                if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
-                    return error;
-                }
-
-                nadir_u64_t repeat_bytes = (nadir_u64_t) padding_times;
-                if (statement->kind == NADIR_AST_EXPRESSION_KIND_UNTIL) {
-                    if (repeat_bytes < compiler->output->length) {
-                        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_PADDING_OUT_OF_RANGE,
-                                                        statement->padding.times->token);
-                    }
-
-                    repeat_bytes -= compiler->output->length;
-                }
-
-                auto const padding_byte = (nadir_u8_t) padding_value; // Already validated to be within the range
-                if (!nadir_list_fill(compiler->output, &padding_byte, repeat_bytes)) {
-                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, statement->token);
                 }
 
                 break;
             }
+            case NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS:
+                continue; // Already handled in the preparation phase
             default:
                 unreachable();
         }
@@ -397,9 +375,11 @@ static nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *com
             return error;
         }
 
-        // Guard against a type mismatch between the parameter and the argument.
         bool is_valid_type = false;
-        switch (*(nadir_token_kind_t *) nadir_list_get(procedure->parameters, index)) {
+
+        // Guard against a type mismatch between the parameter and the argument.
+        auto const type_kind = *(nadir_token_kind_t *) nadir_list_get(procedure->parameters, index);
+        switch (type_kind) {
             case NADIR_TOKEN_KIND_TYPE_U8:
                 is_valid_type = argument_value >= NADIR_U8_MINIMUM && argument_value <= NADIR_U8_MAXIMUM;
                 break;
@@ -429,7 +409,10 @@ static nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *com
         }
 
         if (!is_valid_type) {
-            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH, procedure_argument->token);
+            error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_VALUE_OUT_OF_BOUNDS, procedure_argument->token);
+            error.expected = type_kind;
+
+            return error;
         }
 
         context.value[context.length++] = argument_value;
@@ -450,12 +433,58 @@ static nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *com
         // Every statement value must fit in a single byte, so we check for that here.
         nadir_u8_t statement_byte = (nadir_u8_t) statement_value;
         if (statement_byte != statement_value) {
-            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH, statement->token);
+            error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_VALUE_OUT_OF_BOUNDS, statement->token);
+            error.expected = NADIR_TOKEN_KIND_TYPE_U8;
+
+            return error;
         }
 
         if (!nadir_list_append(compiler->output, &statement_byte)) {
             return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
         }
+    }
+
+    return error;
+}
+
+static nadir_compiler_error_t nadir_compiler_run_padding(nadir_compiler_t *compiler,
+                                                         const nadir_ast_expression_t *expression) {
+    auto error = (nadir_compiler_error_t){};
+
+    nadir_i128_t padding_value; // Value of the padding expression
+    error = nadir_compiler_evaluate(compiler, nullptr, expression->padding.value, &padding_value);
+    if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+        return error;
+    }
+
+    // Guard against padding values that cannot fit in a single byte.
+    if (padding_value < NADIR_U8_MINIMUM || padding_value > NADIR_U8_MAXIMUM) {
+        error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_VALUE_OUT_OF_BOUNDS,
+                                         expression->padding.value->token);
+        error.expected = NADIR_TOKEN_KIND_TYPE_U8;
+
+        return error;
+    }
+
+    nadir_i128_t padding_times; // Value of the padding times expression
+    error = nadir_compiler_evaluate(compiler, nullptr, expression->padding.times, &padding_times);
+    if (error.kind != NADIR_COMPILER_ERROR_KIND_NONE) {
+        return error;
+    }
+
+    auto repeat_bytes = (nadir_u64_t) padding_times; // Already validated to be within the range
+    if (expression->kind == NADIR_AST_EXPRESSION_KIND_UNTIL) {
+        if (repeat_bytes < compiler->output->length) {
+            return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_PADDING_OUT_OF_RANGE,
+                                            expression->padding.times->token);
+        }
+
+        repeat_bytes -= compiler->output->length;
+    }
+
+    auto const padding_byte = (nadir_u8_t) padding_value; // Already validated to be within the range
+    if (!nadir_list_fill(compiler->output, &padding_byte, repeat_bytes)) {
+        error = nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, expression->token);
     }
 
     return error;

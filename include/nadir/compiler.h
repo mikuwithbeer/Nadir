@@ -39,8 +39,7 @@ typedef enum : nadir_u8_t {
     NADIR_COMPILER_ERROR_KIND_UNDEFINED_ADDRESS,
     NADIR_COMPILER_ERROR_KIND_UNDEFINED_BINARY,
     NADIR_COMPILER_ERROR_KIND_ARGUMENT_MISMATCH,
-    NADIR_COMPILER_ERROR_KIND_TYPE_MISMATCH,
-    NADIR_COMPILER_ERROR_KIND_BYTE_MISMATCH,
+    NADIR_COMPILER_ERROR_KIND_VALUE_OUT_OF_BOUNDS,
     NADIR_COMPILER_ERROR_KIND_PADDING_OUT_OF_RANGE,
     NADIR_COMPILER_ERROR_KIND_ALREADY_FOUND_BINARY,
 
@@ -68,6 +67,8 @@ typedef struct {
 typedef struct [[nodiscard]] {
     nadir_compiler_error_kind_t kind;
     nadir_token_t *token;
+
+    nadir_token_kind_t expected;
 } nadir_compiler_error_t;
 
 /**

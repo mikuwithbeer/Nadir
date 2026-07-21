@@ -32,13 +32,16 @@ bool nadir_arena_init(nadir_arena_t *arena,
 
 void *nadir_arena_allocate(nadir_arena_t *arena,
                            const nadir_u64_t size) {
-    auto const alignment = (size + 7) & ~(nadir_u64_t) 7; // Align to 8 bytes
+    // Align the allocation to a 16-byte boundary.
+    auto const current_pointer = (nadir_u64_t) (arena->current->value + arena->current->offset);
+    auto const aligned_pointer = (current_pointer + 15) & ~(nadir_u64_t) 15;
+    auto const padding_pointer = aligned_pointer - current_pointer;
 
-    // Check if the current packet has enough space for the requested allocation.
-    if (arena->current->offset + alignment > arena->current->capacity) {
+    if (arena->current->offset + padding_pointer + size > arena->current->capacity) {
         auto new_capacity = arena->default_capacity;
-        if (new_capacity < alignment) {
-            new_capacity = alignment;
+        if (new_capacity < size + 16) {
+            // Make sure the requested allocation still fits after alignment.
+            new_capacity = size + 16;
         }
 
         auto const new_packet = nadir_arena_allocate_packet(new_capacity);
@@ -46,16 +49,20 @@ void *nadir_arena_allocate(nadir_arena_t *arena,
             return nullptr;
         }
 
-        // Link the new packet and advance.
         arena->current->next = new_packet;
         arena->current = new_packet;
+
+        // Align the allocation to a 16-byte boundary.
+        auto const new_current_pointer = (nadir_u64_t) arena->current->value;
+        auto const new_aligned_pointer = (new_current_pointer + 15) & ~(nadir_u64_t) 15;
+        auto const new_padding_pointer = new_aligned_pointer - new_current_pointer;
+
+        arena->current->offset = new_padding_pointer + size;
+        return (void *) new_aligned_pointer;
     }
 
-
-    auto const pointer = arena->current->value + arena->current->offset;
-    arena->current->offset += alignment; // Bump the offset
-
-    return pointer;
+    arena->current->offset += padding_pointer + size;
+    return (void *) aligned_pointer;
 }
 
 void nadir_arena_reset(nadir_arena_t *arena) {
@@ -86,6 +93,7 @@ void nadir_arena_free(nadir_arena_t *arena) {
 // [--------------------------------------------------------------] //
 
 static nadir_arena_packet_t *nadir_arena_allocate_packet(const nadir_u64_t capacity) {
+    // Flexible array to avoid multiple allocation.
     nadir_arena_packet_t *packet = malloc(sizeof(nadir_arena_packet_t) + capacity);
     if (packet == nullptr) {
         return nullptr;

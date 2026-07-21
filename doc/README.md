@@ -449,7 +449,7 @@ Nadir is written entirely in **C23**[^2].
 There are no heavy frameworks or hidden dependencies included, just `libc`. Because of this strict diet, the whole
 assembler compiles down to a tiny executable that easily fits under **100KB**.
 
-Keeping the design simple also makes it fast. On an **M4 MacBook Air**, Nadir assembles nearly **three million lines of
+Keeping the design simple also makes it fast. On an **M4 MacBook Air**, Nadir assembles nearly **two million lines of
 code per second**. To achieve that, it keeps most of its data in memory instead of repeatedly reading from or writing to
 disk. The trade-off is memory usage grows with the size of your source code.
 
@@ -459,9 +459,9 @@ disk. The trade-off is memory usage grows with the size of your source code.
 |:--------------:|------------:|
 |  **1k lines**  |       ~2 MB |
 | **10k lines**  |       ~8 MB |
-| **100k lines** |      ~70 MB |
-| **500k lines** |     ~330 MB |
-|  **1M lines**  |     ~650 MB |
+| **100k lines** |      ~72 MB |
+| **500k lines** |     ~345 MB |
+|  **1M lines**  |     ~680 MB |
 
 While it is not fully memory-optimized, you can compile an average project in a fraction of a second with a memory cost
 you will barely notice.

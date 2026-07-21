@@ -199,22 +199,40 @@ static const char *nadir_module_path_last_seperator(const char *path) {
 
 static char *nadir_module_path_absolute(nadir_arena_t *arena,
                                         const char *path) {
-    char *absolute_path = nadir_arena_allocate(arena, NADIR_MODULE_PATH_MAXIMUM * sizeof(char));
+#if defined(_WIN32) || defined(_WIN64)
+    char *absolute_path = nadir_arena_allocate(arena, NADIR_MODULE_PATH_MAXIMUM);
     if (absolute_path == nullptr) {
         fprintf(stderr, "error(module): out of memory\n");
         return nullptr;
     }
 
-#if defined(_WIN32) || defined(_WIN64)
     if (_fullpath(absolute_path, path, NADIR_MODULE_PATH_MAXIMUM) == nullptr) {
-#else
-    if (realpath(path, absolute_path) == nullptr) {
-#endif
         fprintf(stderr, "error(module): failed to resolve path for '%s'\n", path);
         return nullptr;
     }
 
     return absolute_path;
+#else
+    char *resolved_path = realpath(path, nullptr);
+    if (resolved_path == nullptr) {
+        fprintf(stderr, "error(module): failed to resolve path for '%s'\n", path);
+        return nullptr;
+    }
+
+    auto const length = strlen(resolved_path) + 1;
+    char *absolute_path = nadir_arena_allocate(arena, length);
+
+    if (absolute_path == nullptr) {
+        free(absolute_path);
+        fprintf(stderr, "error(module): out of memory\n");
+        return nullptr;
+    }
+
+    memcpy(absolute_path, resolved_path, length);
+    free(resolved_path);
+
+    return absolute_path;
+#endif
 }
 
 static void nadir_module_path_include(const char *current_file,

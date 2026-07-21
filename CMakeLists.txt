@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 4.0)
 project(
     Nadir
     LANGUAGES C
-    VERSION 0.2.1
+    VERSION 0.2.2
 )
 
 # --- Language Standards ---

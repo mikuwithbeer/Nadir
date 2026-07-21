@@ -51,7 +51,7 @@ char *nadir_error_encode(nadir_arena_t *arena,
                 case NADIR_LEXER_ERROR_KIND_OUT_OF_MEMORY:
                     snprintf(pointer, remaining, "memory allocation failed during tokenization");
                     break;
-                case NADIR_LEXER_ERROR_KIND_UNKNOWN_CHARACTER:
+                case NADIR_LEXER_ERROR_KIND_ILLEGAL_CHARACTER:
                     snprintf(pointer, remaining, "unrecognized character '%c'", error->lexer.character);
                     break;
                 case NADIR_LEXER_ERROR_KIND_INVALID_NUMBER:
@@ -88,7 +88,9 @@ char *nadir_error_encode(nadir_arena_t *arena,
                     snprintf(pointer, remaining, "memory allocation failed during parsing");
                     break;
                 case NADIR_PARSER_ERROR_KIND_UNEXPECTED_TOKEN:
-                    snprintf(pointer, remaining, "unexpected token");
+                    snprintf(pointer, remaining, "expected '%s' instead of '%s'",
+                             nadir_token_kind_encode(error->parser.expected),
+                             nadir_token_kind_encode(error->parser.token->kind));
                     break;
                 case NADIR_PARSER_ERROR_KIND_UNEXPECTED_EOF:
                     snprintf(pointer, remaining, "unexpected end of file");
@@ -101,9 +103,6 @@ char *nadir_error_encode(nadir_arena_t *arena,
                     break;
                 case NADIR_PARSER_ERROR_KIND_MISSING_EXPRESSION:
                     snprintf(pointer, remaining, "expected an expression");
-                    break;
-                case NADIR_PARSER_ERROR_KIND_MISSING_SEMICOLON:
-                    snprintf(pointer, remaining, "expected ';' after statement");
                     break;
                 case NADIR_PARSER_ERROR_KIND_MISSING_BINARY_ORIGIN:
                     snprintf(pointer, remaining, "missing origin in binary declaration");

@@ -77,12 +77,8 @@ static inline nadir_parser_error_t nadir_parser_consume(nadir_parser_t *parser,
             *output = token;
         }
     } else {
-        // Special case for missing semicolon to provide a more specific error message.
-        if (kind == NADIR_TOKEN_KIND_SEMICOLON) {
-            error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_MISSING_SEMICOLON, token);
-        } else {
-            error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_TOKEN, token);
-        }
+        error = nadir_parser_error_new(NADIR_PARSER_ERROR_KIND_UNEXPECTED_TOKEN, token);
+        error.expected = kind;
     }
 
     return error;

@@ -44,3 +44,68 @@ bool nadir_token_increment(nadir_token_t *token) {
 
     return false;
 }
+
+const char *nadir_token_kind_encode(const nadir_token_kind_t kind) {
+    switch (kind) {
+        case NADIR_TOKEN_KIND_NUMBER:
+            return "number";
+        case NADIR_TOKEN_KIND_IDENT:
+            return "identifier";
+        case NADIR_TOKEN_KIND_PATH:
+            return "path";
+        case NADIR_TOKEN_KIND_COMPTIME:
+            return "comptime";
+        case NADIR_TOKEN_KIND_STORE_ADDRESS:
+            return "store address";
+        case NADIR_TOKEN_KIND_LOAD_ADDRESS:
+            return "load address";
+        case NADIR_TOKEN_KIND_UNTIL:
+            return "until";
+        case NADIR_TOKEN_KIND_REPEAT:
+            return "repeat";
+        case NADIR_TOKEN_KIND_LEFT_BRACE:
+            return "{";
+        case NADIR_TOKEN_KIND_RIGHT_BRACE:
+            return "}";
+        case NADIR_TOKEN_KIND_LEFT_PAREN:
+            return "(";
+        case NADIR_TOKEN_KIND_RIGHT_PAREN:
+            return ")";
+        case NADIR_TOKEN_KIND_EQUAL:
+            return "=";
+        case NADIR_TOKEN_KIND_COMMA:
+            return ",";
+        case NADIR_TOKEN_KIND_DOT:
+            return ".";
+        case NADIR_TOKEN_KIND_SEMICOLON:
+            return ";";
+        case NADIR_TOKEN_KIND_CONSTANT:
+            return "constant";
+        case NADIR_TOKEN_KIND_PROCEDURE:
+            return "procedure";
+        case NADIR_TOKEN_KIND_BINARY:
+            return "binary";
+        case NADIR_TOKEN_KIND_INCLUDE:
+            return "include";
+        case NADIR_TOKEN_KIND_TYPE_U8:
+            return "u8";
+        case NADIR_TOKEN_KIND_TYPE_U16:
+            return "u16";
+        case NADIR_TOKEN_KIND_TYPE_U32:
+            return "u32";
+        case NADIR_TOKEN_KIND_TYPE_U64:
+            return "u64";
+        case NADIR_TOKEN_KIND_TYPE_I8:
+            return "i8";
+        case NADIR_TOKEN_KIND_TYPE_I16:
+            return "i16";
+        case NADIR_TOKEN_KIND_TYPE_I32:
+            return "i32";
+        case NADIR_TOKEN_KIND_TYPE_I64:
+            return "i64";
+        case NADIR_TOKEN_KIND_EOF:
+            return "EOF";
+        default:
+            return "unknown";
+    }
+}

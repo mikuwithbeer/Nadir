@@ -327,7 +327,7 @@ static nadir_lexer_error_t nadir_lexer_collect_default(nadir_lexer_t *lexer,
     }
 
     // Fallback for unrecognized characters.
-    error.kind = NADIR_LEXER_ERROR_KIND_UNKNOWN_CHARACTER;
+    error.kind = NADIR_LEXER_ERROR_KIND_ILLEGAL_CHARACTER;
     error.character = character;
     return error;
 }

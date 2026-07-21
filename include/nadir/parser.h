@@ -32,7 +32,6 @@ typedef enum : nadir_u8_t {
     NADIR_PARSER_ERROR_KIND_UNEXPECTED_EXPRESSION,
     NADIR_PARSER_ERROR_KIND_EMPTY_BLOCK,
     NADIR_PARSER_ERROR_KIND_MISSING_EXPRESSION,
-    NADIR_PARSER_ERROR_KIND_MISSING_SEMICOLON,
     NADIR_PARSER_ERROR_KIND_MISSING_BINARY_ORIGIN,
     NADIR_PARSER_ERROR_KIND_TOO_MANY_ARGUMENTS,
     NADIR_PARSER_ERROR_KIND_ALREADY_FOUND_BINARY,
@@ -45,6 +44,8 @@ typedef enum : nadir_u8_t {
 typedef struct [[nodiscard]] {
     nadir_parser_error_kind_t kind;
     nadir_token_t *token;
+
+    nadir_token_kind_t expected;
 } nadir_parser_error_t;
 
 /**

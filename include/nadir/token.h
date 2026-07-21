@@ -126,6 +126,11 @@ void nadir_token_start(nadir_token_t *token,
 [[nodiscard]] bool nadir_token_increment(nadir_token_t *token);
 
 /**
+ * @brief Encodes the token kind into a string.
+ */
+[[nodiscard]] const char *nadir_token_kind_encode(nadir_token_kind_t kind);
+
+/**
  * @brief Checks if a character is a whitespace character (' ', '\\n', '\\t', '\\r').
  */
 [[nodiscard, maybe_unused]] static inline bool nadir_token_value_whitespace(const char character) {

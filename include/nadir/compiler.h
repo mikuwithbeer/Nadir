@@ -102,7 +102,7 @@ typedef struct {
 
     nadir_u64_t binary_location; // Index of the binary declaration
     nadir_u64_t binary_origin; // Memory address origin
-    nadir_u64_t binary_calculation; // Memory address calculation
+    nadir_u64_t binary_offset; // Binary file offset
 } nadir_compiler_t;
 
 // [--------------------------------------------------------------] //

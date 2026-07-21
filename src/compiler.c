@@ -51,7 +51,7 @@ nadir_compiler_t *nadir_compiler_new(nadir_arena_t *arena,
 
     compiler->binary_location = (nadir_u64_t) -1;
     compiler->binary_origin = 0;
-    compiler->binary_calculation = 0;
+    compiler->binary_offset = 0;
 
     auto const addresses = nadir_table_new(arena, sizeof(nadir_u64_t));
     if (addresses == nullptr) {
@@ -129,7 +129,7 @@ nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler) {
     const nadir_ast_declaration_t *binary = nadir_list_get(compiler->ast->declarations, compiler->binary_location);
 
     for (nadir_u64_t index = 0; index < binary->binary.statements->length; ++index) {
-        compiler->binary_calculation = compiler->binary_origin + compiler->output->length;
+        compiler->binary_offset = compiler->output->length;
 
         const nadir_ast_expression_t *statement = nadir_list_get(binary->binary.statements, index);
         switch (statement->kind) {
@@ -195,7 +195,12 @@ nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler) {
 
                 nadir_u64_t repeat_bytes = (nadir_u64_t) padding_times;
                 if (statement->kind == NADIR_AST_EXPRESSION_KIND_UNTIL) {
-                    repeat_bytes -= compiler->output->length; // Already validated to be within the range
+                    if (repeat_bytes < compiler->output->length) {
+                        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_PADDING_OUT_OF_RANGE,
+                                                        statement->padding.times->token);
+                    }
+
+                    repeat_bytes -= compiler->output->length;
                 }
 
                 auto const padding_byte = (nadir_u8_t) padding_value; // Already validated to be within the range
@@ -300,7 +305,7 @@ static nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *co
             case NADIR_AST_EXPRESSION_KIND_COMPTIME_CALL:
             case NADIR_AST_EXPRESSION_KIND_MEMBER:
             case NADIR_AST_EXPRESSION_KIND_NUMBER: {
-                ++compiler->binary_calculation; // Expected to be a single byte in the output
+                ++compiler->binary_offset; // Expected to be a single byte in the output
                 break;
             }
             case NADIR_AST_EXPRESSION_KIND_PROCEDURE_CALL: {
@@ -314,11 +319,11 @@ static nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *co
                 }
 
                 // We can safely add the length of the procedure statements to the binary calculation.
-                compiler->binary_calculation += procedure->statements->length;
+                compiler->binary_offset += procedure->statements->length;
                 break;
             }
             case NADIR_AST_EXPRESSION_KIND_STORE_ADDRESS: {
-                auto const memory_address = compiler->binary_calculation + compiler->binary_origin;
+                auto const memory_address = compiler->binary_offset + compiler->binary_origin;
 
                 // Remove the leading character to get the actual address name.
                 auto const address_string_value = statement->token->string.value + 1;
@@ -351,14 +356,14 @@ static nadir_compiler_error_t nadir_compiler_prepare_binary(nadir_compiler_t *co
                 auto const repeat_bytes = (nadir_u64_t) padding_times;
                 if (statement->kind == NADIR_AST_EXPRESSION_KIND_UNTIL) {
                     // We need to check if the current output length does not exceed the specified padding times, as it would be out of range.
-                    if (compiler->binary_calculation >= repeat_bytes) {
+                    if (compiler->binary_offset >= repeat_bytes) {
                         return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_PADDING_OUT_OF_RANGE,
                                                         statement->padding.times->token);
                     }
 
-                    compiler->binary_calculation = repeat_bytes;
+                    compiler->binary_offset = repeat_bytes;
                 } else {
-                    compiler->binary_calculation += repeat_bytes;
+                    compiler->binary_offset += repeat_bytes;
                 }
 
                 break;
@@ -433,7 +438,7 @@ static nadir_compiler_error_t nadir_compiler_run_procedure(nadir_compiler_t *com
     // Evaluate each statement in the procedure and write its value to the output.
     for (nadir_u64_t index = 0; index < procedure->statements->length; ++index) {
         // Must be updated before evaluating each statement.
-        compiler->binary_calculation = compiler->binary_origin + compiler->output->length;
+        compiler->binary_offset = compiler->output->length;
         const nadir_ast_expression_t *statement = nadir_list_get(procedure->statements, index);
 
         nadir_i128_t statement_value; // Variable to hold the evaluated statement value

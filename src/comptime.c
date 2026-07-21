@@ -207,7 +207,7 @@ nadir_compiler_error_t nadir_comptime_run(const nadir_comptime_t *comptime,
                 return error;
             }
 
-            *result = (nadir_i128_t) compiler->binary_calculation;
+            *result = compiler->binary_origin + compiler->binary_offset;
             break;
         }
 

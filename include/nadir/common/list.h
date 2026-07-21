@@ -59,6 +59,15 @@ typedef struct {
                                      const void *item);
 
 /**
+ * @brief Fills the list with the given item and count.
+ *
+ * @return false if the reallocation fails, true otherwise.
+ */
+[[nodiscard]] bool nadir_list_fill(nadir_list_t *list,
+                                   const void *item,
+                                   nadir_u64_t count);
+
+/**
  * @brief Gets an item from the list at the given index.
  */
 [[nodiscard]] void *nadir_list_get(const nadir_list_t *list,

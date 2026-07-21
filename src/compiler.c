@@ -198,11 +198,9 @@ nadir_compiler_error_t nadir_compiler_run(nadir_compiler_t *compiler) {
                     repeat_bytes -= compiler->output->length; // Already validated to be within the range
                 }
 
-                for (nadir_u64_t i = 0; i < repeat_bytes; ++i) {
-                    auto const padding_byte = (nadir_u8_t) padding_value; // Already validated to be within the range
-                    if (!nadir_list_append(compiler->output, &padding_byte)) {
-                        return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, statement->token);
-                    }
+                auto const padding_byte = (nadir_u8_t) padding_value; // Already validated to be within the range
+                if (!nadir_list_fill(compiler->output, &padding_byte, repeat_bytes)) {
+                    return nadir_compiler_error_new(NADIR_COMPILER_ERROR_KIND_OUT_OF_MEMORY, statement->token);
                 }
 
                 break;

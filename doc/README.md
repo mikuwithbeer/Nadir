@@ -65,7 +65,7 @@ move(Register.A, 10); # This note sits right next to the code
 
 ### Numbers
 
-The assembler understands both standard decimal and hexadecimal numbers.
+The assembler understands decimal, hexadecimal, and binary numbers.
 
 Under the hood, the compiler treats every number as a massive `i128` by default. When it is time to write the output, it
 automatically shrinks them down to `u8`.
@@ -95,6 +95,19 @@ addresses:
 Just like decimals, you can use underscores here too:
 
 - `$AD_CD` (equivalent to `$ADCD`)
+
+#### Binary
+
+Binary numbers start with `'` and might include an optional sign. This is usually the best format when working with bit
+patterns, flags, and masks:
+
+- `'0110`
+- `'+11111111`
+- `'-010`
+
+Just like decimals, you can use underscores here too:
+
+- `'1111_1101` (equivalent to `'11111101`)
 
 ### Data Types
 

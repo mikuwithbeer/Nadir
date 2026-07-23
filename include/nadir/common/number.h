@@ -66,6 +66,13 @@ constexpr nadir_i128_t NADIR_I128_MINIMUM = -NADIR_I128_MAXIMUM - 1; // -2^127
 // [--------------------------------------------------------------] //
 
 /**
+ * @brief Decodes a base-2 string into a 128-bit signed integer.
+ */
+[[nodiscard]] bool nadir_i128_decode_base2(const char *input,
+                                           nadir_u64_t length,
+                                           nadir_i128_t *value);
+
+/**
  * @brief Decodes a base-10 string into a 128-bit signed integer.
  */
 [[nodiscard]] bool nadir_i128_decode_base10(const char *input,

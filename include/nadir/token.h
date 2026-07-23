@@ -16,12 +16,13 @@
 // [--------------------------------------------------------------] //
 
 constexpr auto NADIR_TOKEN_DEFAULT_MAXIMUM = 1 << 6;
-constexpr auto NADIR_TOKEN_NUMBER_MAXIMUM = 0x30;
+constexpr auto NADIR_TOKEN_NUMBER_MAXIMUM = 0x82;
 constexpr auto NADIR_TOKEN_PATH_MAXIMUM = 1 << 9;
 
 constexpr auto NADIR_TOKEN_VALUE_COMMENT = '#';
 constexpr auto NADIR_TOKEN_VALUE_COMPTIME = '@';
-constexpr auto NADIR_TOKEN_VALUE_HEXADECIMAL = '$';
+constexpr auto NADIR_TOKEN_VALUE_BASE2 = '\'';
+constexpr auto NADIR_TOKEN_VALUE_BASE16 = '$';
 constexpr auto NADIR_TOKEN_VALUE_STORE_ADDRESS = '<';
 constexpr auto NADIR_TOKEN_VALUE_LOAD_ADDRESS = '>';
 constexpr auto NADIR_TOKEN_VALUE_LEFT_BRACE = '{';
@@ -166,7 +167,14 @@ void nadir_token_start(nadir_token_t *token,
 }
 
 /**
- * @brief Checks if a character is a hexadecimal (0-9, A-F, a-f).
+ * @brief Checks if a character is a binary number (0-1).
+ */
+[[nodiscard, maybe_unused]] static inline bool nadir_token_value_binary(const char character) {
+    return character == '0' || character == '1';
+}
+
+/**
+ * @brief Checks if a character is a hexadecimal number (0-9, A-F, a-f).
  */
 [[nodiscard, maybe_unused]] static inline bool nadir_token_value_hexadecimal(const char character) {
     return (character >= '0' && character <= '9') ||

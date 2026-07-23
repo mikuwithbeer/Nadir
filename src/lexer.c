@@ -19,6 +19,10 @@ static nadir_lexer_error_t nadir_lexer_collect_default(nadir_lexer_t *lexer,
 static nadir_lexer_error_t nadir_lexer_collect_comment(nadir_lexer_t *lexer,
                                                        char character);
 
+static nadir_lexer_error_t nadir_lexer_collect_number_base2(nadir_lexer_t *lexer,
+                                                            char character,
+                                                            bool *recollect);
+
 static nadir_lexer_error_t nadir_lexer_collect_number_base10(nadir_lexer_t *lexer,
                                                              char character,
                                                              bool *recollect);
@@ -139,6 +143,9 @@ nadir_lexer_error_t nadir_lexer_collect(nadir_lexer_t *lexer) {
             case NADIR_LEXER_STATE_COMMENT:
                 error = nadir_lexer_collect_comment(lexer, character);
                 break;
+            case NADIR_LEXER_STATE_NUMBER_BASE2:
+                error = nadir_lexer_collect_number_base2(lexer, character, &recollect);
+                break;
             case NADIR_LEXER_STATE_NUMBER_BASE10:
                 error = nadir_lexer_collect_number_base10(lexer, character, &recollect);
                 break;
@@ -254,7 +261,16 @@ static nadir_lexer_error_t nadir_lexer_collect_default(nadir_lexer_t *lexer,
             }
 
             return error;
-        case NADIR_TOKEN_VALUE_HEXADECIMAL:
+        case NADIR_TOKEN_VALUE_BASE2:
+            lexer->token.kind = NADIR_TOKEN_KIND_NUMBER;
+            lexer->state = NADIR_LEXER_STATE_NUMBER_BASE2;
+
+            if (!nadir_token_increment(&lexer->token)) {
+                error.kind = NADIR_LEXER_ERROR_KIND_BUFFER_OVERFLOW;
+            }
+
+            return error;
+        case NADIR_TOKEN_VALUE_BASE16:
             lexer->token.kind = NADIR_TOKEN_KIND_NUMBER;
             lexer->state = NADIR_LEXER_STATE_NUMBER_BASE16;
 
@@ -340,6 +356,56 @@ static nadir_lexer_error_t nadir_lexer_collect_comment(nadir_lexer_t *lexer,
     }
 
     return (nadir_lexer_error_t){};
+}
+
+static nadir_lexer_error_t nadir_lexer_collect_number_base2(nadir_lexer_t *lexer,
+                                                            char character,
+                                                            bool *recollect) {
+    auto error = nadir_lexer_error_new(lexer, NADIR_LEXER_ERROR_KIND_NONE);
+
+    // Check for whitespace or single-character tokens to end the binary number.
+    if (nadir_token_value_whitespace(character) || nadir_token_value_single(character)) {
+        lexer->state = NADIR_LEXER_STATE_DEFAULT;
+
+        // Check if the number is not empty or just a sign.
+        if (lexer->token.string.count == 1 ||
+            (lexer->token.string.count == 2 && nadir_token_value_sign(lexer->token.string.value[1]))) {
+            error.kind = NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER;
+            error.character = character;
+
+            return error;
+        }
+
+        nadir_i128_t number;
+        if (!nadir_i128_decode_base2(lexer->token.string.value, lexer->token.string.count, &number)) {
+            error.kind = NADIR_LEXER_ERROR_KIND_INVALID_NUMBER;
+            return error;
+        }
+
+        lexer->token.number = number;
+        if (!nadir_list_append(lexer->tokens, &lexer->token)) {
+            error.kind = NADIR_LEXER_ERROR_KIND_OUT_OF_MEMORY;
+        }
+
+        *recollect = true;
+        return error;
+    }
+
+    // Check for valid characters.
+    if (!(nadir_token_value_binary(character) ||
+          nadir_token_value_underscore(character) ||
+          (lexer->token.string.count == 1 && nadir_token_value_sign(character)))) {
+        error.kind = NADIR_LEXER_ERROR_KIND_UNEXPECTED_CHARACTER;
+        error.character = character;
+
+        return error;
+    }
+
+    if (!nadir_token_increment(&lexer->token)) {
+        error.kind = NADIR_LEXER_ERROR_KIND_BUFFER_OVERFLOW;
+    }
+
+    return error;
 }
 
 static nadir_lexer_error_t nadir_lexer_collect_number_base10(nadir_lexer_t *lexer,
